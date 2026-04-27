@@ -39,7 +39,7 @@ the same skills, hooks, model routing, and multi-agent capabilities — consiste
 │   ├── /wrap-up                 ← session-end: persist history, todo, lessons
 │   └── /avengers                ← multi-agent missions (see below)
 │
-├── plugins/                     ← 11 auto-installed plugins (on CC restart)
+├── plugins/                     ← 13 plugins (11 enabled + 2 disabled by default, auto-install on CC restart)
 │   ├── nr                       ← New Relic MCP: NRQL, dashboards, alerts, entities
 │   ├── nr-kafka                 ← Kafka MCP: topic analysis, lag investigation
 │   ├── superpowers              ← auto-loads brainstorming + systematic-debugging skills
@@ -72,13 +72,19 @@ the same skills, hooks, model routing, and multi-agent capabilities — consiste
 ### /avengers — Multi-Agent Orchestration
 
 ```
-/avengers → Nick Fury (Opus, Captain)
-              ├── stark-senior    (Senior Data Engineer, Sonnet)
-              ├── stark-techlead  (Tech Lead, Sonnet)        } code in parallel
-              ├── stark-seasoned  (Seasoned Data Engineer, Sonnet)
-              ├── natasha-reviewer  (Code Reviewer, Sonnet)   → reviews coder output
-              ├── banner-tester     (Tester, Sonnet)          → runs validation
-              └── hawkeye-validator (Final Gate, Sonnet)      → confirms all criteria PASS
+/avengers → fury-captain        (Nick Fury, Opus — orchestrates everything)
+              │
+              ├── stark-engineer-1…N  (Tony Stark, Sonnet — coders, run in parallel)
+              │
+              ├── natasha-reviewer    (Black Widow, Sonnet  — reviews coder output)
+              ├── banner-tester       (Bruce Banner, Sonnet — runs validation)
+              └── hawkeye-validator   (Hawkeye, Sonnet      — final gate, confirms PASS)
+
+Optional specialists (spawned on demand by Fury):
+  strange-architect        (Doctor Strange  — system design, API contracts)
+  rogers-data-engineer     (Captain America — pipelines, ETL, warehouse)
+  maximoff-python-engineer (Scarlet Witch   — PySpark, Airflow, pandas)
+  thor-devops              (Thor            — Terraform, CI/CD, K8s, secrets)
 
 Dashboard: https://avengers:2026  (live mission view while agents work)
 Pipeline: Mission → Plan → Spawn → Code → Review → Test → Validate → Shutdown
@@ -101,8 +107,8 @@ Pipeline: Mission → Plan → Spawn → Code → Review → Test → Validate �
 ## Install
 
 ```bash
-git clone git@github.com:<your-org>/cc-team-setup.git ~/cc-team-setup
-cd ~/cc-team-setup
+git clone git@github.com:nr-mdakilahmed/claude_code_setup.git ~/claude_code_setup
+cd ~/claude_code_setup
 chmod +x install.sh
 ./install.sh
 ```
@@ -143,7 +149,7 @@ Then **restart Claude Code**. Plugins auto-install on first start.
 | `/bootstrap` | First-visit repo setup — run once per new repo |
 | `/graphify` | Knowledge graph — 25x token reduction |
 | `/wrap-up` | Session end — persist history, todo, lessons |
-| `/avengers` | Complex multi-file missions — Fury orchestrates 6 specialists |
+| `/avengers` | Complex multi-file missions — Fury (Opus) orchestrates parallel coders + reviewer + tester + validator |
 
 ---
 
@@ -196,7 +202,7 @@ You watch the dashboard at https://avengers:2026 and get a VALIDATED result.
 Skills, hooks, CLAUDE.md, and RTK.md are copied (not symlinked), so updates require a re-run:
 
 ```bash
-cd ~/cc-team-setup
+cd ~/claude_code_setup
 git pull
 ./install.sh   # re-runs safely — backs up existing files before overwriting
 ```
