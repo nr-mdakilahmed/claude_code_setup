@@ -7,6 +7,11 @@ the same skills, hooks, model routing, and multi-agent capabilities — consiste
 
 ## Architecture
 
+![Claude Code System Architecture](architecture.png)
+
+<details>
+<summary>Text version (expand)</summary>
+
 ```
 ~/.claude/
 │
@@ -60,6 +65,8 @@ the same skills, hooks, model routing, and multi-agent capabilities — consiste
         ├── lessons.md           ← self-improving pattern library
         └── history.md           ← session append log
 ```
+
+</details>
 
 ### Model Routing
 
