@@ -4,17 +4,17 @@ Avengers Bridge — Shell + Claude Code Session Integration
 ==========================================================
 Two modes:
   SHELL mode  — POST /exec  → subprocess.run, returns stdout/stderr
-  CC mode     — POST /cc    → tmux send-keys into running Claude Code pane
-                GET  /cc-poll → returns new lines from Claude Code pane since last poll
+  CC mode     — POST /cc    → iTerm2 API send_text into running Claude Code session
+                GET  /cc-poll → returns new lines from Claude Code session since last poll
 
-Auto-detects Claude Code pane in tmux (looks for 'node' or 'claude' process).
-Set CC_TMUX_TARGET env var to override (e.g. "main:0.1").
+Auto-detects Claude Code session in iTerm2 (looks for 'node' or 'claude' process).
+Set CC_ITERM_SESSION env var to override with a specific session ID.
 
 Usage:
   python3 ~/.claude/skills/avengers/bridge.py
 
 Then open the dashboard — it will auto-connect and show CC LIVE if Claude
-Code is running in tmux.
+Code is running in iTerm2.
 """
 import json
 import subprocess
@@ -40,8 +40,13 @@ _CERT_FILE = os.path.join(_CERTS_DIR, 'avengers.pem')
 _KEY_FILE = os.path.join(_CERTS_DIR, 'avengers-key.pem')
 _USE_TLS = os.path.exists(_CERT_FILE) and os.path.exists(_KEY_FILE)
 
-# ── tmux / Claude Code state ──────────────────────────────────────────────
-CC_TARGET = os.environ.get('CC_TMUX_TARGET', None)  # e.g. "main:0.0"
+# ── iTerm2 / Claude Code state ───────────────────────────────────────────
+_ITERM2_PYTHON = os.path.expanduser(
+    "~/Library/Application Support/iTerm2/iterm2env/versions/3.10.19/bin/python3"
+)
+_ITERM2_HELPER = os.path.join(_SCRIPT_DIR, 'iterm2_helper.py')
+
+CC_TARGET = os.environ.get('CC_ITERM_SESSION', None)  # iTerm2 session ID
 _CC_SNAPSHOT = []   # last captured lines from pane (for diffing)
 _ANSI_RE = re.compile(r'\x1b\[[0-9;]*[mGKHJABCDsuhlr]|\x1b\(B|\x1b=|\r')
 
@@ -92,36 +97,31 @@ def _is_noise(line: str) -> bool:
     return False
 
 
-def find_cc_pane():
-    """Return tmux pane target running Claude Code, or None."""
+def _run_helper(*args):
+    """Run iterm2_helper.py with given args, return (stdout, success)."""
     try:
         r = subprocess.run(
-            "tmux list-panes -a -F "
-            "'#{session_name}:#{window_index}.#{pane_index}|#{pane_current_command}'",
-            shell=True, capture_output=True, text=True, timeout=5
+            [_ITERM2_PYTHON, _ITERM2_HELPER, *args],
+            capture_output=True, text=True, timeout=8
         )
-        for line in r.stdout.strip().splitlines():
-            if '|' not in line:
-                continue
-            target, cmd = line.split('|', 1)
-            # Claude Code runs as 'node' (it's Node.js) or via 'claude' shim
-            if cmd.lower() in ('node', 'claude') or 'claude' in cmd.lower():
-                return target.strip()
+        return r.stdout.strip(), r.returncode == 0
     except Exception:
-        pass
-    return None
+        return '', False
 
 
-def get_pane_lines(target, history=120):
-    """Capture recent lines from a tmux pane (ANSI stripped)."""
+def find_cc_pane():
+    """Return iTerm2 session ID running Claude Code, or None."""
+    out, ok = _run_helper('find')
+    return out if ok and out else None
+
+
+def get_pane_lines(session_id, history=120):
+    """Get visible lines from iTerm2 session."""
+    out, ok = _run_helper('capture', session_id)
+    if not ok or not out:
+        return []
     try:
-        r = subprocess.run(
-            f"tmux capture-pane -t {target} -p -J -S -{history}",
-            shell=True, capture_output=True, text=True, timeout=5
-        )
-        raw = r.stdout
-        lines = [_strip_ansi(l) for l in raw.split('\n')]
-        return [l for l in lines if l.strip()]
+        return json.loads(out)
     except Exception:
         return []
 
@@ -147,18 +147,10 @@ def poll_new_lines(target):
     return new_lines
 
 
-def send_to_pane(target, message):
-    """Send message + Enter to a tmux pane."""
-    # Escape single quotes inside the message for shell safety
-    safe = message.replace("'", "'\\''")
-    try:
-        subprocess.run(
-            f"tmux send-keys -t {target} '{safe}' Enter",
-            shell=True, timeout=5
-        )
-        return True, None
-    except Exception as e:
-        return False, str(e)
+def send_to_pane(session_id, message):
+    """Send message + Enter to an iTerm2 session."""
+    _, ok = _run_helper('send', session_id, message)
+    return ok, None if ok else 'Failed to send to iTerm2 session'
 
 
 # ── HTTP handler ─────────────────────────────────────────────────────────
@@ -221,18 +213,42 @@ class Bridge(BaseHTTPRequestHandler):
             new_lines = poll_new_lines(target)
             self._respond(200, {'lines': new_lines, 'cc_pane': target})
 
+        elif self.path == '/iterm2-sessions':
+            out, ok = _run_helper('list')
+            if ok and out:
+                try:
+                    self._respond(200, {'sessions': json.loads(out)})
+                except Exception:
+                    self._respond(200, {'sessions': []})
+            else:
+                self._respond(200, {'sessions': []})
+
         elif self.path == '/avengers-state':
             files = glob.glob('/tmp/avengers-*.json')
             if not files:
                 self._respond(200, {'active': False})
                 return
-            latest = max(files, key=os.path.getmtime)
-            try:
-                with open(latest) as f:
-                    state = json.load(f)
-                state['active'] = True
-                self._respond(200, state)
-            except Exception:
+            # Only serve state for a team that still exists — stale files from
+            # completed/cleaned missions show a dead dashboard otherwise.
+            teams_dir = os.path.expanduser('~/.claude/teams')
+            active_state = None
+            for f in sorted(files, key=os.path.getmtime, reverse=True):
+                try:
+                    with open(f) as fh:
+                        s = json.load(fh)
+                    team_name = s.get('team', '')
+                    team_dir = os.path.join(teams_dir, team_name)
+                    if os.path.isdir(team_dir):
+                        active_state = s
+                        break
+                    # Team gone — delete the orphaned state file
+                    os.remove(f)
+                except Exception:
+                    pass
+            if active_state:
+                active_state['active'] = True
+                self._respond(200, active_state)
+            else:
                 self._respond(200, {'active': False})
 
         else:
@@ -279,7 +295,7 @@ class Bridge(BaseHTTPRequestHandler):
             if not target:
                 self._respond(200, {
                     'ok': False,
-                    'error': 'Claude Code pane not found. Run: tmux new-session -s cc -d "claude --dangerously-skip-permissions"'
+                    'error': 'Claude Code session not found in iTerm2. Run claude in an iTerm2 window first.'
                 })
                 return
             CC_TARGET = target
@@ -288,7 +304,7 @@ class Bridge(BaseHTTPRequestHandler):
             ok, err = send_to_pane(target, msg)
             self._respond(200, {'ok': ok, 'error': err, 'cc_pane': target})
 
-        # ── /cc-target — manually override tmux target ───────────────────
+        # ── /cc-target — manually override iTerm2 session ID ────────────
         elif self.path == '/cc-target':
             t = data.get('target', '').strip()
             if t:
@@ -296,6 +312,16 @@ class Bridge(BaseHTTPRequestHandler):
                 _CC_SNAPSHOT = []
                 print(f'[bridge] CC target set to: {t}', flush=True)
             self._respond(200, {'cc_pane': CC_TARGET})
+
+        # ── /close-sessions — close iTerm2 tabs by session ID ───────────
+        elif self.path == '/close-sessions':
+            session_ids = data.get('session_ids') or []
+            results = {}
+            for sid in session_ids:
+                _, ok = _run_helper('close', sid)
+                results[sid] = 'closed' if ok else 'not_found'
+                print(f'[bridge/iterm2] close {sid} → {"ok" if ok else "not found"}', flush=True)
+            self._respond(200, {'results': results})
 
         # ── /avengers-answer — write answer file for Fury to pick up ─────
         elif self.path == '/avengers-answer':
@@ -341,14 +367,12 @@ if __name__ == '__main__':
     print(f'Dashboard:       {protocol}://avengers:{PORT}/')
     print(f'TLS:             {"enabled (mkcert)" if _USE_TLS else "disabled — run start.sh to generate certs"}')
     print(f'Working dir:     {CWD}')
-    print(f'Claude pane:     {CC_TARGET or "not detected (run claude in tmux)"}')
+    print(f'Claude session:  {CC_TARGET or "not detected (run claude in an iTerm2 window)"}')
     print(f'Dashboard file:  {DASHBOARD_HTML or "NOT FOUND"}')
     print()
     if not CC_TARGET:
-        print('  To enable CC mode, run Claude Code in tmux first:')
-        print('    tmux new-session -s cc -d')
-        print('    tmux send-keys -t cc "claude" Enter')
-        print('  Or set CC_TMUX_TARGET=<session:window.pane> env var.')
+        print('  To enable CC mode, open an iTerm2 window and run: claude')
+        print('  Or set CC_ITERM_SESSION=<session_id> env var.')
         print()
     print('  Dashboard auto-connects. Ctrl+C to stop.\n')
     try:

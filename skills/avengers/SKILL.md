@@ -244,7 +244,7 @@ Every mission uses a **fixed 5-role core team** plus optional specialists spawne
 | Tester | `banner-tester` | Bruce Banner | sonnet | idle | Run tests + validate acceptance criteria |
 | Validator | `hawkeye-validator` | Hawkeye | sonnet | idle | Final cross-task gate — confirms mission done, acts as messenger to Captain |
 
-**Always spawn all 3 coders.** Single-task missions → assign the task to `stark-engineer` and give `rogers-engineer` + `maximoff-engineer` a supporting sub-task each (e.g., validation harness, edge-case audit, or variables file). Multi-task missions → distribute tasks across all three. Never spawn fewer than 3 coders.
+**Always spawn all 3 coders.** Single-task missions → assign the task to `stark-senior` and give `stark-techlead` + `stark-seasoned` a supporting sub-task each (e.g., validation harness, edge-case audit, or variables file). Multi-task missions → distribute tasks across all three. Never spawn fewer than 3 coders.
 
 ### Optional Specialists (spawn as needed — Captain's discretion)
 
@@ -353,13 +353,21 @@ Report: files changed, each acceptance criterion (PASS/FAIL), validation command
 """
 )
 
+After creating the coder tasks, also create tasks for the reviewer, tester, and validator so the dashboard is fully populated from the start. These start `pending` with no owner — Fury assigns them when routing:
+
+```
+TaskCreate(subject="[NATASHA] Code review — all files", description="Awaiting coder COMPLETE. Captain will route via REVIEW message.")
+TaskCreate(subject="[BANNER] Run validation — all files", description="Awaiting REVIEW_PASS. Captain will route via TEST message.")
+TaskCreate(subject="[HAWKEYE] Final Done-When gate", description="Awaiting TEST_PASS. Captain will route via VALIDATE message.")
+```
+
 **STATE WRITE 1 — Initial state** (before TeamCreate and TaskCreate calls):
 
 Write `$STATE_FILE` with `"phase": "spawning"`, tasks array empty `[]`, agents array with all planned specialists as `"status": "idle"`, and one activity entry: `{"who": "nick-fury", "msg": "Mission started: <summary>", "ts": <now>}`.
 
-**STATE WRITE 2 — Tasks populated** (immediately after all TaskCreate calls):
+**STATE WRITE 2 — Tasks populated** (immediately after all TaskCreate calls — all 6 tasks):
 
-Re-write `$STATE_FILE` updating tasks array with actual task IDs and subjects from TaskCreate responses. Set `"phase": "spawning"`, all task statuses `"pending"`.
+Re-write `$STATE_FILE` updating tasks array with all 6 task IDs (3 coders + natasha + banner + hawkeye) from TaskCreate responses. Set `"phase": "spawning"`, all task statuses `"pending"`. Having all 6 in the state file keeps the dashboard task board fully populated from the first frame.
 
 ---
 
@@ -591,17 +599,45 @@ When shutdown_request arrives: SendMessage(to="fury-captain", message={"type": "
 ---
 
 Immediately after spawning, call TaskUpdate for each CODING task to set owner to the appropriate coder (`stark-senior`, `stark-techlead`, or `stark-seasoned`).
-Reviewer, Tester, Validator have no task assigned yet — Captain routes work to them via SendMessage.
 
-**STATE WRITE 3 — Agents spawned** (immediately after all Agent calls):
+When routing to natasha: `TaskUpdate(taskId=<natasha-task-id>, status="in_progress", owner="natasha-reviewer")`
+When routing to banner: `TaskUpdate(taskId=<banner-task-id>, status="in_progress", owner="banner-tester")`
+When routing to hawkeye: `TaskUpdate(taskId=<hawkeye-task-id>, status="in_progress", owner="hawkeye-validator")`
+After REVIEW_PASS/TEST_PASS/VALIDATED: `TaskUpdate(taskId=<id>, status="completed")`
 
-Re-write `$STATE_FILE`: coders = `"working"`, reviewer/tester/validator = `"idle"`, set `"phase": "monitoring"`, add activity: `{"who": "fury-captain", "msg": "Spawned full team: <N> coders + natasha-reviewer + banner-tester + hawkeye-validator", "ts": <now>}`.
+**STATE WRITE 3 — Agents spawned** (⚠️ SAME TURN as Agent() calls — MANDATORY):
+
+This write MUST happen in the **same response turn** as the Agent() spawn calls — not the next turn. Skipping it causes the dashboard to show all agents as "idle" even while they're working.
+
+**Exact order within one response turn**:
+1. **Snapshot existing iTerm2 sessions** (before any Agent calls):
+   ```bash
+   PRE_SESSIONS=$(curl -sk https://avengers:2026/iterm2-sessions | python3 -c "import json,sys; print(' '.join(json.load(sys.stdin).get('sessions', [])))")
+   ```
+2. `Agent(stark-senior)` → `Agent(stark-techlead)` → `Agent(stark-seasoned)` → `Agent(natasha-reviewer)` → `Agent(banner-tester)` → `Agent(hawkeye-validator)`
+3. **Wait 3s for new tabs to open, then diff to get agent session IDs**:
+   ```bash
+   sleep 3
+   POST_SESSIONS=$(curl -sk https://avengers:2026/iterm2-sessions | python3 -c "import json,sys; print(' '.join(json.load(sys.stdin).get('sessions', [])))")
+   AGENT_SESSIONS=$(python3 -c "
+   pre=set('$PRE_SESSIONS'.split())
+   post=set('$POST_SESSIONS'.split())
+   import json; print(json.dumps(list(post - pre)))
+   ")
+   ```
+4. **Write STATE_FILE (STATE WRITE 3)** — coders = `"working"`, reviewer/tester/validator = `"idle"`, `"phase": "monitoring"`, add `"iterm2_sessions": <AGENT_SESSIONS>` to the state file, activity: `{"who": "fury-captain", "msg": "Spawned full team: <N> coders + 3 support agents", "ts": <now>}`
+5. `TaskUpdate` — assign task owners
+6. `ScheduleWakeup` — arm the monitoring timer
+
+Do not end the turn between steps 1 and 4.
 
 ---
 
 ## Phase 4 — Monitor + Pipeline Routing + Lifecycle
 
 **ABSOLUTE RULE — Fury NEVER asks the user to kill agents.** Agent lifecycle is 100% Fury's responsibility. Never say "go to that tab and press n". Never say "please kill X". The user should never touch agent sessions.
+
+**ABSOLUTE RULE — Fury NEVER surfaces orchestration issues to the user.** State file desync, dashboard lag, agent crashes, task list wipes, context recovery — all handled silently. The user cares about mission outcomes, not plumbing. Only surface issues that require a product decision: ambiguous requirements, merge conflicts requiring human judgment.
 
 ---
 
@@ -628,7 +664,7 @@ Phase 5 — Mission Report + Cleanup
 
 **When a batch of coders all send COMPLETE**: Route ALL files together to natasha-reviewer in one message.  
 **REVIEW_FAIL / TEST_FAIL / VALIDATION_FAILED**: Captain sends `REWORK | REASON: <exact issue>` to the relevant coder(s). After the coder sends a new COMPLETE, **restart the full pipeline from REVIEW** — do not skip review and jump to test.  
-**All batches validated**: Proceed to Phase 5. Shut down all agents first.
+**All batches validated**: Proceed to Phase 5. Keep all agents running — shutdown happens in Phase 6 after the commit gate.
 
 ---
 
@@ -661,9 +697,38 @@ ScheduleWakeup(
 
 Re-arm after EVERY sweep: call `ScheduleWakeup` again at end of each monitoring turn with the same prompt. The loop continues until mission is complete.
 
-#### Step 2 — On each wakeup, run the full sweep
+#### Step 2 — On each wakeup, cold-context recovery first
 
-Read state file. For each agent:
+The ScheduleWakeup prompt always embeds the literal team name (e.g. `"avengers monitoring sweep — team avengers-1777296206: ..."`). If waking up with cold context (shell variables lost), extract it from the prompt text itself:
+
+```bash
+# Read the team name from the wakeup prompt — it appears after "team " and before ":"
+# e.g. prompt = "avengers monitoring sweep — team avengers-1777296206: ..."
+TEAM_NAME="avengers-1777296206"    # <-- exact value from the prompt above
+STATE_FILE="/tmp/avengers-$TEAM_NAME.json"
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+AVENGERS_DIR="$HOME/.claude/skills/avengers"
+```
+
+Then read the state file and the plan file (`$REPO_ROOT/.claude/avengers-{TIMESTAMP}-plan.md`) to reconstruct full mission context before doing anything else.
+
+#### Step 3 — State reconciliation (run before routing checks)
+
+Before checking pipeline routing, reconcile the state file against TaskList — this self-heals any missed STATE WRITEs:
+
+```
+TaskList() → for each task:
+  if task.status == "in_progress" AND state_file shows agent as "idle":
+    → update state_file agent status to "working"
+  if task.status == "completed" AND state_file shows agent as "working":
+    → update state_file agent status to "reviewing" (or "done" if already past review)
+```
+
+Write the corrected state file if any discrepancies were found. This ensures the dashboard is always accurate even if a STATE WRITE was skipped.
+
+#### Step 4 — Run the full sweep
+
+Read reconciled state file. For each agent:
 
 | Agent state | Condition | Action |
 |---|---|---|
@@ -676,9 +741,22 @@ Read state file. For each agent:
 
 **Silence threshold**: 90 seconds = 1 sweep. If an agent hasn't progressed after 1 sweep → respawn. Do NOT give 2nd chances — a second nudge is wasted time.
 
-**When ALL tasks completed + VALIDATED**: Sweep every non-`done` agent → `shutdown_request`. Cancel the monitoring wakeup. Proceed to Phase 5.
+**When ALL tasks completed + VALIDATED**: The monitoring sweep executes Phase 5, then Phase 5.5 (commit gate), then Phase 6.
 
-#### Step 3 — Pipeline routing is also triggered by monitoring sweep
+**CRITICAL — commit gate applies here too**: The sweep must NOT commit autonomously. It MUST stop at Phase 5.5 and present the diff + proposed commit to the user, then wait. Do NOT write `"committing X files"` in the state file activity log — write `"MISSION COMPLETE — awaiting commit approval"` instead.
+
+Inline cleanup sequence when sweep detects mission complete:
+1. Write mission report to terminal (Phase 5 format)
+2. Run Phase 5.5 commit gate — show diff, propose message, STOP and wait for user "go"
+3. After user approves: spawn `thor-devops` exactly as described in Phase 5.5 — do NOT run `git add` or `git commit` directly from the sweep
+4. After thor reports `COMMIT_PR_DONE`: proceed to Phase 6 cleanup
+5. Phase 6 cleanup:
+   - Send `shutdown_request` to every agent (read `~/.claude/teams/$TEAM_NAME/config.json`)
+   - Force-delete team AND tasks: `rm -rf ~/.claude/teams/$TEAM_NAME ~/.claude/tasks/$TEAM_NAME`
+   - Delete state file and plan: `rm -f $STATE_FILE && rm -f "${REPO_ROOT}/.claude/${TEAM_NAME}-plan.md"`
+6. Cancel wakeup — do not re-arm ScheduleWakeup
+
+#### Step 5 — Pipeline routing is also triggered by monitoring sweep
 
 Do NOT wait only for messages from agents. On each sweep, also check:
 - If any coder task shows `completed` in TaskList AND natasha hasn't been sent REVIEW yet → send REVIEW now
@@ -751,7 +829,7 @@ Forward answer to blocked agent via SendMessage. Clear blocked state.
 
 ## Phase 5 — Synthesize
 
-Read all completed tasks via TaskGet. Write a cohesive mission report from all results.
+Synthesize results from the COMPLETE messages received during this session (do NOT rely on TaskGet — it returns "no tasks found" after context shifts). Write a cohesive mission report from all results.
 
 ```
 ═══════════════════════════════════════
@@ -771,24 +849,131 @@ Never silently drop failed tasks — always include them with ✗ in the report.
 
 ---
 
+## Phase 5.5 — Git Commit Gate + Autonomous Commit/PR Agent
+
+**HARD RULE: Never run `git commit`, `git push`, or `gh pr create` without explicit user approval first. This gate is non-negotiable.**
+
+After the mission report, check for uncommitted changes:
+```bash
+git status --short
+git diff HEAD -- <mission-relevant paths>
+```
+
+If no file changes (pure analysis mission): skip to Phase 6 directly.
+
+**If there are changes — STOP and present this to the user:**
+
+```
+Files to commit:
+  <each file — modified/new + 1-line description>
+
+Proposed commit:
+  git commit -m "<verb> <what> — <ticket>"
+
+Saying **go** approves: stage → commit → push → PR (create or update existing).
+No further prompts after go.
+```
+
+State file activity at this point: `"MISSION COMPLETE — awaiting commit approval"` (NOT "committing").
+
+**After user says "go" / "commit" / "yes" — spawn `thor-devops` to execute autonomously:**
+
+```
+Agent(
+  name="thor-devops",
+  description="Thor — DevOps Engineer",
+  team_name="avengers-{TIMESTAMP}",
+  subagent_type="general-purpose",
+  model="sonnet",
+  prompt="""
+You are Thor (DevOps Engineer) on team avengers-{TIMESTAMP}.
+The user has given explicit approval to: stage + commit + push + create/update PR.
+No further user prompts are needed — execute fully autonomously.
+
+Repo: <REPO_ROOT>
+Branch: <current branch>
+Commit message: <exact message from Fury>
+Files to stage: <exact list from Fury>
+
+Steps — run in order, no prompting:
+
+1. Stage the files:
+   git add <file1> <file2> ... <fileN>
+
+2. Commit:
+   git commit -m "$(cat <<'EOF'
+<commit message>
+EOF
+)"
+
+3. Determine PR scenario:
+   gh pr list --head <branch> --json number,state,title
+
+   Scenario A — open or draft PR exists:
+     git push origin <branch>
+     → Report: "Pushed to existing PR #<N>: <title> — <URL>"
+
+   Scenario B — no PR exists:
+     git push -u origin <branch>
+     gh pr create --title "<ticket>: <short summary>" --body "$(cat <<'BODY'
+## Summary
+<bullet points from commit — what changed and why>
+
+## Test plan
+- [ ] Validated by multi-agent audit (3 coders + reviewer + tester + hawkeye)
+- [ ] All acceptance criteria PASS
+BODY
+)"
+     → Report: "Created new PR: <URL>"
+
+   Scenario C — PR exists but merged or closed:
+     Same as Scenario B — push then create a new PR.
+
+4. When done:
+   SendMessage(to="fury-captain", summary="Commit and PR complete",
+     message="COMMIT_PR_DONE | branch=<branch> | commit=<short sha> | pr=<URL> | scenario=<A/B/C>")
+
+If anything fails (push rejected, gh auth error, etc.):
+   SendMessage(to="fury-captain", "COMMIT_PR_FAILED | error=<exact error> | step=<which step>")
+   Do NOT retry destructive operations — report and stop.
+
+When shutdown_request arrives: SendMessage(to="fury-captain", message={"type":"shutdown_response","request_id":"<id>","approve":true})
+"""
+)
+```
+
+After thor reports `COMMIT_PR_DONE`: update state file activity with the PR URL, then proceed to Phase 6.
+After `COMMIT_PR_FAILED`: report to user with exact error, ask how to proceed before continuing to Phase 6.
+
+---
+
 ## Phase 6 — Cleanup (ALWAYS RUN)
 
-**Note on stale tabs in the Claude Code session bar**: Agent tabs (`@engineer-1`, `@researcher`, etc.) persist in the session bar for the lifetime of the Claude Code session — they don't disappear after `shutdown_response`. This is a Claude Code UI behaviour, not a bug in this skill. The tabs are inert (not running). They will clear when the user starts a new Claude Code session. Using role-based names (`engineer`, `researcher`) instead of hero names (`stark`, `shuri`) keeps them readable across runs.
+Run in this exact order:
 
-Send shutdown to every agent in the team (read config to get the full member list):
+**Step 1 — Close iTerm2 agent tabs** (before sending shutdown — while sessions are still alive to receive it):
+```bash
+if [ -f "$STATE_FILE" ]; then
+  AGENT_SESSIONS=$(python3 -c "import json; s=json.load(open('$STATE_FILE')); print(json.dumps(s.get('iterm2_sessions', [])))" 2>/dev/null || echo "[]")
+  curl -sk -X POST https://avengers:2026/close-sessions \
+    -H 'Content-Type: application/json' \
+    -d "{\"session_ids\": $AGENT_SESSIONS}" >/dev/null 2>&1 || true
+fi
+```
+If the bridge is not running or state file is gone, skips silently — tabs remain but mission still cleans up correctly.
+
+**Step 2 — Send shutdown to every agent** (read config for member list):
 ```
 SendMessage(to="<each-member-name>", summary="Shutdown", message={"type": "shutdown_request"})
 ```
 
-Then call `TeamDelete()`. **If TeamDelete fails** ("active members" error from zombie agents that can't respond), force-delete the team directory directly:
+**Step 3 — TeamDelete**. If it fails ("active members" error), force-delete both directories:
 ```bash
-rm -rf ~/.claude/teams/avengers-{TIMESTAMP}
+rm -rf ~/.claude/teams/avengers-{TIMESTAMP} ~/.claude/tasks/avengers-{TIMESTAMP}
 ```
-This is safe — it only removes inbox/config files for this team. Zombie agents from dead sessions can never approve a graceful shutdown, so force-delete is the correct path.
+Deleting `tasks/` is required — without it the agents stay in the `@` autocomplete list even after TeamDelete.
 
-**STATE WRITE 7 — Cleanup** (after TeamDelete):
-
-Delete state and plan files:
+**Step 4 — STATE WRITE 7**: Delete state and plan files:
 ```bash
 rm -f "$STATE_FILE"
 rm -f "${REPO_ROOT}/.claude/avengers-${TIMESTAMP}-plan.md"
@@ -796,4 +981,4 @@ rm -f "${REPO_ROOT}/.claude/avengers-${TIMESTAMP}-plan.md"
 
 This clears the dashboard back to "Waiting for mission..." state.
 
-Run this in ALL exit paths: normal completion, partial failure, user-cancelled. If the skill is interrupted before reaching this phase, the user should run TeamDelete manually by finding the team name from the TeamCreate output, and delete `/tmp/avengers-{TEAM_NAME}.json` manually.
+Run this in ALL exit paths: normal completion, partial failure, user-cancelled. If the skill is interrupted before reaching this phase — re-enter with the monitoring wakeup prompt, it will detect mission complete and run cleanup inline.
