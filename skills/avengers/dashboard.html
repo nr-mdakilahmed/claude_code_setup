@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>⚡ Avengers Mission Room</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050912;--bg1:#080f1c;--bg2:#0b1528;
+  --glass:rgba(12,22,48,0.75);--glass2:rgba(6,12,30,0.9);
+  --border:rgba(50,90,200,0.18);--border2:rgba(60,110,240,0.38);
+  --blue:#3b82f6;--blue2:#1d4ed8;--blue-g:rgba(59,130,246,0.35);
+  --amber:#fbbf24;--amber-g:rgba(251,191,36,0.35);
+  --green:#22c55e;--green-g:rgba(34,197,94,0.35);
+  --red:#ef4444;--red-g:rgba(239,68,68,0.35);
+  --purple:#a78bfa;--teal:#14b8a6;--pink:#d946ef;--sky:#0ea5e9;--orange:#f59e0b;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#475569;--text4:#2d3f5a;
+  --r:12px;--r2:8px;--r3:6px;
+}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,sans-serif;font-size:12px;
+  display:flex;flex-direction:column;
+  background-image:
+    radial-gradient(ellipse 60% 50% at 15% 50%,rgba(15,40,120,0.12) 0%,transparent 100%),
+    radial-gradient(ellipse 40% 40% at 85% 15%,rgba(100,15,80,0.08) 0%,transparent 100%);
+}
+
+/* ── TOP BAR ── */
+#topbar{
+  height:40px;flex-shrink:0;
+  background:var(--glass2);border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:12px;padding:0 16px;
+  backdrop-filter:blur(20px);position:relative;z-index:200;
+}
+#topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 5%,var(--blue) 40%,var(--amber) 60%,transparent 95%);opacity:.4}
+.logo{font-weight:900;font-size:15px;letter-spacing:.06em;
+  background:linear-gradient(135deg,var(--amber) 0%,#fff 45%,var(--blue) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#mission-text{flex:1;color:var(--text2);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phase{padding:3px 12px;border-radius:20px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;border:1px solid;transition:all .3s}
+.ph-idle{background:rgba(71,85,105,.15);color:var(--text3);border-color:var(--border)}
+.ph-spawning{background:rgba(59,130,246,.12);color:var(--blue);border-color:rgba(59,130,246,.4);box-shadow:0 0 12px var(--blue-g)}
+.ph-monitoring{background:rgba(34,197,94,.12);color:var(--green);border-color:rgba(34,197,94,.4);box-shadow:0 0 12px var(--green-g)}
+.ph-done{background:rgba(167,139,250,.12);color:var(--purple);border-color:rgba(167,139,250,.4);box-shadow:0 0 12px rgba(167,139,250,.3)}
+.ph-blocked{background:rgba(239,68,68,.12);color:var(--red);border-color:rgba(239,68,68,.4);box-shadow:0 0 12px var(--red-g)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--text4);transition:all .3s}
+.live-dot.on{background:var(--green);box-shadow:0 0 8px var(--green-g);animation:blink 2s ease-in-out infinite}
+#conn-lbl{font-size:9px;color:var(--text3)}
+
+/* ── MAIN ── */
+#layout{display:flex;flex:1;overflow:hidden}
+
+/* ── LEFT: AGENTS ── */
+#left{
+  width:260px;min-width:180px;flex-shrink:0;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+  resize:horizontal;
+}
+#left-inner{flex:1;overflow-y:auto;padding:8px}
+.slabel{
+  font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-weight:700;
+  padding:4px 6px 8px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);margin-bottom:6px;
+}
+.slabel .badge{background:rgba(59,130,246,.2);color:var(--blue);padding:1px 6px;border-radius:8px;font-size:8px}
+
+.ac{
+  background:var(--glass);border:1px solid var(--border);border-radius:var(--r2);
+  padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;
+}
+.ac::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac-color,#334155);transition:opacity .2s;opacity:0}
+.ac:hover{transform:translateX(3px);border-color:var(--border2);background:rgba(16,28,65,.8)}
+.ac:hover::after,.ac.active::after{opacity:1}
+.ac.st-working{border-left:3px solid var(--blue)}
+.ac.st-working::after{opacity:1;background:var(--blue)}
+.ac.st-reviewing{border-left:3px solid var(--purple)}
+.ac.st-reviewing::after{opacity:1;background:var(--purple)}
+.ac.st-done{border-left:3px solid var(--green);opacity:.65}
+.ac.st-done::after{opacity:1;background:var(--green)}
+.ac.st-blocked{border-left:3px solid var(--red);animation:card-glow 1.5s ease-in-out infinite}
+.ac.st-blocked::after{opacity:1;background:var(--red)}
+.ac.st-idle{opacity:.5}
+
+.ac-top{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.av{
+  width:28px;height:28px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;position:relative;
+}
+.av .spin{
+  position:absolute;inset:-2px;border-radius:9px;
+  border:1.5px solid transparent;pointer-events:none;
+}
+.st-working .spin,.st-reviewing .spin{animation:spin 3s linear infinite}
+.st-working .spin{border-color:var(--blue);box-shadow:0 0 6px var(--blue-g)}
+.st-reviewing .spin{border-color:var(--purple);box-shadow:0 0 6px rgba(167,139,250,.4)}
+.st-blocked .spin{border-color:var(--red);box-shadow:0 0 8px var(--red-g)}
+.st-done .spin{border-color:var(--green)}
+.ai{flex:1;min-width:0}
+.an{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ar{font-size:9px;color:var(--text3)}
+.mtag{padding:2px 5px;border-radius:4px;font-size:8px;font-weight:800;border:1px solid;flex-shrink:0}
+.mt-S{background:rgba(59,130,246,.15);color:var(--blue);border-color:rgba(59,130,246,.3)}
+.mt-O{background:rgba(167,139,250,.15);color:var(--purple);border-color:rgba(167,139,250,.3)}
+.mt-H{background:rgba(34,197,94,.15);color:var(--green);border-color:rgba(34,197,94,.3)}
+.ac-task{
+  font-size:10px;color:var(--text3);background:rgba(0,0,0,.3);border-radius:4px;
+  padding:3px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  border-left:2px solid var(--border2);transition:all .2s;
+}
+.st-working .ac-task,.st-reviewing .ac-task{color:var(--text2)}
+.st-blocked .ac-task{color:#fca5a5;border-left-color:var(--red)}
+.ac-status-row{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sdot-working{background:var(--blue);box-shadow:0 0 4px var(--blue-g);animation:blink 2s infinite}
+.sdot-reviewing{background:var(--purple);box-shadow:0 0 4px rgba(167,139,250,.4);animation:blink 2s infinite}
+.sdot-done{background:var(--green)}
+.sdot-blocked{background:var(--red);animation:blink 1s infinite}
+.sdot-idle{background:#334155}
+.slbl{font-size:9px;color:var(--text2);text-transform:capitalize}
+
+/* ── CENTER ── */
+#center{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+
+/* Mission room */
+#room{position:relative;height:240px;flex-shrink:0;border-bottom:1px solid var(--border);overflow:hidden;cursor:crosshair}
+#room-canvas{position:absolute;inset:0;width:100%;height:100%}
+#room-label{position:absolute;top:8px;left:10px;font-size:8px;text-transform:uppercase;letter-spacing:.12em;color:var(--text4);z-index:5;pointer-events:none}
+#canvas-tooltip{
+  position:absolute;z-index:20;pointer-events:none;display:none;
+  background:rgba(6,14,36,.97);border:1px solid var(--border2);border-radius:var(--r2);
+  padding:8px 12px;min-width:160px;max-width:240px;box-shadow:0 8px 32px rgba(0,0,0,.7);
+}
+.ct-name{font-size:12px;font-weight:700;margin-bottom:2px}
+.ct-role{font-size:10px;color:var(--text3);margin-bottom:6px}
+.ct-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:3px}
+.ct-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text4);flex-shrink:0;padding-top:1px}
+.ct-val{font-size:10px;color:var(--text2);line-height:1.4}
+
+/* Stats strip */
+#stats-strip{
+  display:flex;gap:6px;padding:7px 14px;flex-shrink:0;
+  border-bottom:1px solid var(--border);background:rgba(6,12,30,.3);
+}
+.kpi{
+  flex:1;background:var(--glass);border:1px solid var(--border);border-radius:var(--r2);
+  padding:6px 10px;text-align:center;transition:border-color .2s;
+}
+.kpi:hover{border-color:var(--border2)}
+.kpi-v{font-size:18px;font-weight:900;line-height:1.1}
+.kpi-l{font-size:7px;text-transform:uppercase;letter-spacing:.1em;color:var(--text4);margin-top:2px}
+.kpi-bar{height:2px;background:var(--border);border-radius:1px;margin-top:4px;overflow:hidden}
+.kpi-bar-fill{height:100%;border-radius:1px;transition:width .4s ease;width:0%}
+
+/* Kanban Task Board */
+#kanban-wrap{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;padding:8px 14px 10px;
+}
+.kb-board{flex:1;display:flex;gap:8px;overflow:hidden}
+.kb-col{
+  flex:1;display:flex;flex-direction:column;
+  background:rgba(8,15,40,.4);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;
+  transition:border-color .2s;
+}
+.kb-col:hover{border-color:var(--border2)}
+.kb-col-hd{
+  padding:7px 10px;font-size:8px;text-transform:uppercase;letter-spacing:.13em;font-weight:800;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+.kb-cnt{
+  padding:1px 6px;border-radius:8px;font-size:8px;font-weight:800;
+}
+.kb-body{flex:1;overflow-y:auto;padding:6px 6px;display:flex;flex-direction:column;gap:4px}
+.kb-empty{font-size:9px;color:var(--text4);text-align:center;padding:10px 0;opacity:.5}
+.kb-card{
+  background:rgba(12,22,50,.75);border:1px solid var(--border);border-radius:var(--r3);
+  padding:7px 9px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;
+}
+.kb-card::before{content:'';position:absolute;top:0;left:0;width:2.5px;bottom:0;border-radius:3px 0 0 3px}
+.kb-card.kc-pending::before{background:var(--text3)}
+.kb-card.kc-in_progress::before{background:var(--blue)}
+.kb-card.kc-blocked::before{background:var(--red)}
+.kb-card.kc-completed::before{background:var(--green)}
+.kb-card.kc-failed::before{background:var(--red)}
+.kb-card:hover{background:rgba(20,36,80,.85);border-color:var(--border2);transform:translateY(-1px)}
+.kb-card.kc-completed{opacity:.6}
+.kb-card.kc-blocked{animation:card-glow 1.5s ease-in-out infinite}
+.kb-subj{font-size:10px;font-weight:500;line-height:1.35;margin-bottom:5px;padding-left:5px;color:var(--text)}
+.kb-foot{display:flex;align-items:center;gap:5px;padding-left:5px}
+.kb-owner-av{width:16px;height:16px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;flex-shrink:0}
+.kb-owner-name{font-size:8px;color:var(--text4);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb-badge{padding:1px 5px;border-radius:4px;font-size:7.5px;font-weight:800}
+.kbb-in_progress{background:rgba(59,130,246,.2);color:var(--blue)}
+.kbb-blocked{background:rgba(239,68,68,.2);color:var(--red)}
+.kbb-completed{background:rgba(34,197,94,.2);color:var(--green)}
+.kbb-pending{background:rgba(71,85,105,.2);color:var(--text3)}
+.kbb-failed{background:rgba(239,68,68,.2);color:var(--red)}
+
+/* ── RIGHT PANEL (wide) ── */
+#right{
+  width:520px;min-width:360px;flex-shrink:0;
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+  resize:horizontal;direction:rtl;
+}
+#right>*{direction:ltr}
+
+/* Blocked section */
+#blocked-wrap{
+  flex-shrink:0;max-height:55%;overflow-y:auto;
+  border-bottom:1px solid var(--border);padding:10px 12px;
+  background:linear-gradient(180deg,rgba(40,6,6,.15) 0%,transparent 100%);
+}
+#bl-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-shrink:0}
+.bl-title{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--red);font-weight:800}
+#bl-badge{background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.35);padding:1px 7px;border-radius:10px;font-size:8px;font-weight:800;display:none}
+#blocked-list{display:flex;flex-direction:column;gap:10px}
+
+/* Conflict-resolution style blocked card */
+.bl-card{
+  background:rgba(30,6,6,.55);border:1px solid rgba(239,68,68,.28);border-radius:var(--r);overflow:hidden;
+  position:relative;
+}
+.bl-card::before{content:'';position:absolute;top:0;left:0;width:3px;bottom:0;background:var(--red);border-radius:var(--r) 0 0 var(--r)}
+.bl-body{padding:10px 10px 10px 14px}
+.bl-who{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.bl-who-name{font-size:11px;font-weight:700}
+.bl-who-tag{font-size:9px;color:rgba(239,68,68,.8)}
+.bl-q{font-size:12px;font-weight:600;color:#fde8e8;line-height:1.4;margin-bottom:4px}
+.bl-ctx{font-size:10px;color:#9ca3af;font-style:italic;margin-bottom:10px;line-height:1.4}
+/* Conflict-resolution options */
+.bl-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.bl-opt{
+  background:rgba(25,10,10,.6);border:1.5px solid rgba(239,68,68,.2);border-radius:var(--r2);
+  padding:8px 12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px;
+  font-family:inherit;color:var(--text);text-align:left;width:100%;
+}
+.bl-opt:hover{background:rgba(50,15,15,.7);border-color:rgba(239,68,68,.4)}
+.bl-opt.sel{background:rgba(239,68,68,.18);border-color:var(--red);color:#fff}
+.bl-opt .opt-radio{
+  width:16px;height:16px;border-radius:50%;border:2px solid rgba(239,68,68,.4);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
+}
+.bl-opt.sel .opt-radio{border-color:var(--red);background:var(--red)}
+.bl-opt.sel .opt-radio::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
+.bl-opt-text{font-size:11px;font-weight:500;line-height:1.35}
+.bl-opt .opt-num{font-size:9px;color:var(--text3);font-weight:700;min-width:14px}
+/* Custom input area */
+.bl-divider{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:9px;color:var(--text3)}
+.bl-divider::before,.bl-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.bl-custom-row{display:flex;gap:6px}
+.bl-input{
+  flex:1;background:rgba(0,0,0,.45);border:1px solid rgba(71,85,105,.4);
+  color:var(--text);padding:7px 10px;border-radius:var(--r2);font-size:11px;font-family:inherit;outline:none;transition:border-color .15s;
+}
+.bl-input:focus{border-color:rgba(239,68,68,.5)}
+.bl-send{
+  background:rgba(239,68,68,.18);border:1.5px solid rgba(239,68,68,.4);color:var(--red);
+  padding:7px 14px;border-radius:var(--r2);cursor:pointer;font-size:10px;font-weight:800;
+  font-family:inherit;white-space:nowrap;transition:all .15s;
+}
+.bl-send:hover{background:rgba(239,68,68,.3);color:#fff;border-color:var(--red)}
+.bl-send:active{transform:scale(.97)}
+
+/* Activity */
+#act-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:8px 12px 0}
+#act-feed{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-bottom:4px}
+.ae{display:grid;grid-template-columns:36px 68px 1fr;gap:4px;align-items:start;padding:3px 4px;border-radius:5px;transition:background .15s}
+.ae:hover{background:rgba(16,28,70,.4)}
+.ae-ts{font-size:8px;color:var(--text4);padding-top:2px;white-space:nowrap}
+.ae-who{font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-top:1px}
+.ae-msg{font-size:10px;color:var(--text2);line-height:1.4;word-break:break-word}
+.mt-complete{color:#4ade80}.mt-blocked{color:#f87171}.mt-rework{color:#fbbf24}
+.mt-spawn{color:var(--blue)}.mt-approved{color:var(--purple)}.mt-error{color:#f87171}
+
+/* Recently Answered */
+#answered-wrap{
+  flex-shrink:0;border-bottom:1px solid var(--border);padding:0;overflow:hidden;
+  max-height:0;transition:max-height .3s ease;
+}
+#answered-wrap.has-answers{max-height:80px}
+.ans-strip{
+  background:rgba(6,40,20,.45);border-bottom:1px solid rgba(34,197,94,.18);
+  padding:5px 12px;display:flex;align-items:flex-start;gap:8px;
+}
+.ans-tick{font-size:9px;font-weight:800;color:var(--green);flex-shrink:0;padding-top:2px}
+.ans-content{flex:1;min-width:0}
+.ans-header{font-size:9px;color:var(--green);margin-bottom:1px;font-weight:600}
+.ans-text{font-size:9px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ans-more{font-size:8px;color:var(--text4);margin-top:1px}
+
+/* Code context in blocked cards */
+.bl-code{
+  background:rgba(0,0,0,.55);border:1px solid rgba(59,130,246,.15);border-radius:var(--r3);
+  padding:8px 10px;margin-bottom:10px;font-family:monospace;font-size:9.5px;
+  line-height:1.55;color:#a5b4fc;overflow-x:auto;white-space:pre;
+  position:relative;
+}
+.bl-code-label{
+  position:absolute;top:5px;right:8px;font-size:7.5px;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--text4);font-family:system-ui;
+}
+.bl-code .hl{color:#fbbf24;font-weight:700}
+.bl-queued{
+  margin-top:6px;font-size:9px;color:var(--text3);display:flex;align-items:center;gap:5px;
+}
+.bl-queued::before{content:'';width:5px;height:5px;border-radius:50%;background:#f97316;display:inline-block;flex-shrink:0}
+
+/* CMD */
+#cmd-wrap{border-top:1px solid var(--border);padding:8px 12px;flex-shrink:0}
+.cmd-row{display:flex;gap:6px;margin-bottom:4px}
+#cmd-in{
+  flex:1;background:rgba(0,0,0,.5);border:1px solid rgba(71,85,105,.4);
+  color:var(--text);padding:5px 8px;border-radius:var(--r2);font-size:10px;font-family:monospace;outline:none;
+}
+#cmd-in:focus{border-color:rgba(59,130,246,.45)}
+#cmd-btn{
+  background:rgba(59,130,246,.15);border:1.5px solid rgba(59,130,246,.35);color:var(--blue);
+  padding:5px 12px;border-radius:var(--r2);cursor:pointer;font-size:10px;font-weight:800;font-family:inherit;transition:all .15s;
+}
+#cmd-btn:hover{background:rgba(59,130,246,.3);color:#fff}
+#cmd-out{font-size:9px;font-family:monospace;color:var(--green);max-height:50px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;background:rgba(0,0,0,.4);border-radius:5px;padding:4px 7px;display:none}
+
+/* Agent Detail Popover */
+#popover{
+  position:fixed;z-index:600;display:none;
+  background:var(--bg1);border:1px solid var(--border2);border-radius:var(--r);
+  width:300px;max-width:90vw;max-height:72vh;overflow-y:auto;
+  padding:16px;box-shadow:0 20px 60px rgba(0,0,0,.85),0 0 0 1px rgba(59,130,246,.08);
+}
+#popover.show{display:block;animation:pop-in .14s ease}
+#popover::before{content:'';position:absolute;top:0;left:18px;right:18px;height:1px;background:linear-gradient(90deg,transparent,var(--blue),var(--amber),transparent)}
+@keyframes pop-in{0%{transform:scale(.93) translateY(-5px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+.pop-av{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;margin-bottom:8px}
+.pop-name{font-size:14px;font-weight:800;margin-bottom:1px}
+.pop-sub{font-size:9px;color:var(--text2);margin-bottom:10px}
+.pop-field{margin-bottom:7px}
+.pop-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:3px}
+.pop-val{font-size:10px;background:rgba(0,0,0,.3);border-radius:5px;padding:5px 8px;line-height:1.5;border-left:2px solid var(--border2);margin-bottom:2px}
+.pop-val.st-w{border-left-color:var(--blue)}.pop-val.st-r{border-left-color:var(--purple)}.pop-val.st-d{border-left-color:var(--green)}.pop-val.st-b{border-left-color:var(--red)}
+
+/* Canvas tooltip */
+#ctip{
+  position:fixed;z-index:1000;pointer-events:none;
+  background:rgba(5,12,32,.97);border:1px solid var(--border2);border-radius:var(--r2);
+  padding:9px 13px;min-width:180px;box-shadow:0 10px 40px rgba(0,0,0,.8);
+  transition:opacity .12s;opacity:0;
+}
+#ctip.show{opacity:1}
+.ct-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ct-av{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0}
+.ct-name{font-size:12px;font-weight:700}
+.ct-role{font-size:9px;color:var(--text3);margin-top:1px}
+.ct-field{display:flex;gap:6px;margin-bottom:3px;align-items:flex-start}
+.ct-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--text4);flex-shrink:0;padding-top:2px;min-width:38px}
+.ct-val{font-size:10px;color:var(--text2);line-height:1.4;word-break:break-word}
+.ct-task{font-size:10px;color:var(--text2);background:rgba(0,0,0,.3);border-radius:4px;padding:4px 6px;margin-top:4px;line-height:1.35;border-left:2px solid var(--border2)}
+
+/* ── KEYFRAMES ── */
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes card-glow{0%,100%{box-shadow:0 0 0 rgba(239,68,68,0)}50%{box-shadow:0 0 14px rgba(239,68,68,.28)}}
+@keyframes float-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes speech-in{0%{transform:scale(0) translateY(6px);opacity:0}70%{transform:scale(1.1) translateY(-2px)}100%{transform:scale(1) translateY(0);opacity:1}}
+
+/* Scrollbars */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(59,130,246,.2);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:rgba(59,130,246,.4)}
+::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <span class="logo">⚡ AVENGERS</span>
+  <div id="mission-text">Waiting for mission...</div>
+  <div class="live-dot" id="ldot"></div>
+  <span id="conn-lbl" style="font-size:9px;color:var(--text3)">Connecting</span>
+  <div class="phase ph-idle" id="phase-badge">Idle</div>
+</div>
+
+<!-- LAYOUT -->
+<div id="layout">
+
+  <!-- LEFT: AGENTS -->
+  <div id="left">
+    <div id="left-inner">
+      <div class="slabel">Agents <span class="badge" id="agent-cnt">0</span></div>
+      <div id="agents-list">
+        <div style="color:var(--text4);text-align:center;padding:30px 0;font-size:11px">No agents yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div id="center">
+
+    <!-- Mission Room Canvas -->
+    <div id="room">
+      <div id="room-label">Mission Room</div>
+      <canvas id="room-canvas"></canvas>
+      <!-- Canvas hover tooltip -->
+      <div id="canvas-tooltip"></div>
+    </div>
+
+    <!-- Stats Strip -->
+    <div id="stats-strip">
+      <div class="kpi"><div class="kpi-v" id="kpi-tasks" style="color:var(--blue)">0/0</div><div class="kpi-l">Tasks</div></div>
+      <div class="kpi"><div class="kpi-v" id="kpi-active" style="color:var(--green)">0</div><div class="kpi-l">Active</div></div>
+      <div class="kpi"><div class="kpi-v" id="kpi-elapsed" style="color:var(--amber)">—</div><div class="kpi-l">Elapsed</div></div>
+      <div class="kpi">
+        <div class="kpi-v" id="kpi-pct" style="color:var(--purple)">0%</div>
+        <div class="kpi-l">Progress</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="kpi-bar-fill" style="background:var(--purple)"></div></div>
+      </div>
+    </div>
+
+    <!-- Kanban Task Board -->
+    <div id="kanban-wrap">
+      <div class="slabel" style="margin-bottom:7px;border-bottom:none;padding-bottom:0">
+        Task Board
+        <span style="font-size:8px;color:var(--text4);font-weight:400;text-transform:none;letter-spacing:0">— click card to view agent</span>
+      </div>
+      <div class="kb-board">
+        <div class="kb-col" id="kb-pending">
+          <div class="kb-col-hd" style="color:var(--text3)">
+            ⬜ Queued
+            <span class="kb-cnt" style="background:rgba(71,85,105,.2);color:var(--text3)" id="kb-cnt-pending">0</span>
+          </div>
+          <div class="kb-body" id="kb-body-pending"><div class="kb-empty">Empty</div></div>
+        </div>
+        <div class="kb-col" id="kb-active">
+          <div class="kb-col-hd" style="color:var(--blue)">
+            🔵 Active
+            <span class="kb-cnt" style="background:rgba(59,130,246,.2);color:var(--blue)" id="kb-cnt-active">0</span>
+          </div>
+          <div class="kb-body" id="kb-body-active"><div class="kb-empty">Empty</div></div>
+        </div>
+        <div class="kb-col" id="kb-done">
+          <div class="kb-col-hd" style="color:var(--green)">
+            ✅ Done
+            <span class="kb-cnt" style="background:rgba(34,197,94,.2);color:var(--green)" id="kb-cnt-done">0</span>
+          </div>
+          <div class="kb-body" id="kb-body-done"><div class="kb-empty">Empty</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div id="right">
+
+    <div id="answered-wrap">
+      <div id="answered-list"></div>
+    </div>
+
+    <div id="blocked-wrap">
+      <div id="bl-header">
+        <span class="bl-title">🚨 Blocked</span>
+        <span id="bl-badge">0</span>
+      </div>
+      <div id="blocked-list">
+        <div style="color:var(--text4);font-size:10px;opacity:.6">No blockers</div>
+      </div>
+    </div>
+
+    <div id="act-wrap">
+      <div class="slabel" style="border-bottom:none;margin-bottom:4px">Activity Log</div>
+      <div id="act-feed"></div>
+    </div>
+
+    <div id="cmd-wrap">
+      <div class="cmd-row">
+        <input id="cmd-in" placeholder="$ shell command..." />
+        <button id="cmd-btn">RUN</button>
+      </div>
+      <pre id="cmd-out"></pre>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Agent Detail Popover (inline, no backdrop) -->
+<div id="popover"></div>
+
+<!-- Canvas tooltip (fixed pos) -->
+<div id="ctip"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// AGENT METADATA
+// ══════════════════════════════════════════════════════════════════
+const META = {
+  'fury-captain':             {color:'#fbbf24',emoji:'⚡',init:'NF',name:'Nick Fury',    role:'Captain',   gender:'m',skin:'#e0a97a',hair:'#2d1f0e',uni:'#b8860b'},
+  'stark-engineer':           {color:'#3b82f6',emoji:'🔧',init:'TS',name:'Tony Stark',   role:'Engineer',  gender:'m',skin:'#e0a97a',hair:'#1a0e06',uni:'#1e40af'},
+  'natasha-reviewer':         {color:'#f43f5e',emoji:'🔍',init:'NR',name:'Black Widow',  role:'Reviewer',  gender:'f',skin:'#ffd5b5',hair:'#1a0808',uni:'#9f1239'},
+  'banner-tester':            {color:'#10b981',emoji:'🧪',init:'BB',name:'Bruce Banner', role:'Tester',    gender:'m',skin:'#c5d9a4',hair:'#2d1f0e',uni:'#065f46'},
+  'hawkeye-validator':        {color:'#8b5cf6',emoji:'🏹',init:'HE',name:'Hawkeye',      role:'Validator', gender:'m',skin:'#e0c09a',hair:'#3d2b1f',uni:'#4c1d95'},
+  'strange-architect':        {color:'#6366f1',emoji:'🌀',init:'DS',name:'Dr. Strange',  role:'Architect', gender:'m',skin:'#d4a574',hair:'#1a1a2e',uni:'#312e81'},
+  'rogers-data-engineer':     {color:'#0ea5e9',emoji:'🛡️',init:'SR',name:'Steve Rogers', role:'Data Eng',  gender:'m',skin:'#f0c090',hair:'#6b4423',uni:'#0c4a6e'},
+  'maximoff-python-engineer': {color:'#d946ef',emoji:'🔮',init:'WM',name:'Scarlet Witch',role:'Python Eng',gender:'f',skin:'#ffd5b5',hair:'#7f1d1d',uni:'#86198f'},
+  'thor-devops':              {color:'#f59e0b',emoji:'⚡',init:'TH',name:'Thor',          role:'DevOps',    gender:'m',skin:'#e8c090',hair:'#c8a028',uni:'#92400e'},
+  'you':   {color:'#93c5fd',emoji:'👤',init:'ME',name:'You',   role:'User',   gender:'m',skin:'#e0c09a',hair:'#333',uni:'#1e3a5f'},
+  'sys':   {color:'rgba(140,80,255,.8)',emoji:'🤖',init:'SY',name:'System',role:'System',gender:'m',skin:'#888',hair:'#333',uni:'#2d1f5e'},
+};
+function meta(id) {
+  if (!id) return {color:'#475569',emoji:'?',init:'??',name:id||'?',role:'',gender:'m',skin:'#888',hair:'#333',uni:'#333'};
+  if (META[id]) return META[id];
+  if (id.startsWith('stark-engineer')) return {...META['stark-engineer'],name:`Tony Stark ${id.replace('stark-engineer','').replace('-','')}`.trim(),init:'TS'};
+  if (id.startsWith('natasha-')) return META['natasha-reviewer'];
+  return {color:'#475569',emoji:'?',init:id.slice(0,2).toUpperCase(),name:id,role:'',gender:'m',skin:'#ccc',hair:'#333',uni:'#334'};
+}
+function mTag(model) {
+  if (!model) return 'S';
+  const m = model.toLowerCase();
+  return m.includes('opus')?'O':m.includes('haiku')?'H':'S';
+}
+function fmtTs(ts) {
+  if (!ts) return '';
+  return new Date(ts*1000).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}
+function msgClass(msg) {
+  if (!msg) return '';
+  const m = msg.toLowerCase();
+  if (m.includes('complete')||m.includes('done')||m.includes('approved')) return 'mt-complete';
+  if (m.includes('blocked')||m.includes('block')) return 'mt-blocked';
+  if (m.includes('rework')||m.includes('redirect')) return 'mt-rework';
+  if (m.includes('spawn')||m.includes('started')) return 'mt-spawn';
+  if (m.includes('shut down')) return 'mt-approved';
+  if (m.includes('error')||m.includes('fail')) return 'mt-error';
+  return '';
+}
+function findTask(id, tasks) {
+  if (!tasks) return null;
+  const owned = tasks.find(t=>t.owner===id);
+  if (owned) return owned.subject;
+  const code = id.split('-').map(s=>s[0]?.toUpperCase()).join('').slice(0,4);
+  const byCode = tasks.find(t=>t.subject?.toUpperCase().includes(`[${code}`));
+  return byCode?.subject||null;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════
+let lastUpd = 0, actCount = 0, chosen = {};
+let gState = null;
+let nodes = []; // canvas character nodes
+
+// ══════════════════════════════════════════════════════════════════
+// LEFT: AGENT CARDS
+// ══════════════════════════════════════════════════════════════════
+function renderAgents(agents, tasks) {
+  const list = document.getElementById('agents-list');
+  document.getElementById('agent-cnt').textContent = agents?.length||0;
+  if (!agents?.length) {
+    list.innerHTML = '<div style="color:var(--text4);text-align:center;padding:30px 0;font-size:11px">No agents yet</div>';
+    return;
+  }
+  list.innerHTML = agents.map(a => {
+    const m = meta(a.id);
+    const st = a.status||'idle';
+    const task = a.task || findTask(a.id, tasks) || '—';
+    const tag = mTag(a.model);
+    return `<div class="ac st-${st}" data-id="${a.id}" style="--ac-color:${m.color}">
+      <div class="ac-top">
+        <div class="av" style="background:${m.color}22;color:${m.color};border:1px solid ${m.color}44">
+          ${m.init}<div class="spin"></div>
+        </div>
+        <div class="ai">
+          <div class="an" style="color:${m.color}">${m.name}</div>
+          <div class="ar">${m.role}</div>
+        </div>
+        <span class="mtag mt-${tag}">${tag}</span>
+      </div>
+      <div class="ac-status-row">
+        <span class="sdot sdot-${st}"></span>
+        <span class="slbl">${st}</span>
+      </div>
+      <div class="ac-task">${task}</div>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.ac').forEach(el=>el.addEventListener('click',e=>openModal(el.dataset.id,e)));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BLOCKED (conflict-resolution style + code context + queue)
+// ══════════════════════════════════════════════════════════════════
+let answeredHistory = []; // track past answers for the green strip
+
+function renderAnswered() {
+  const wrap = document.getElementById('answered-wrap');
+  const list = document.getElementById('answered-list');
+  if (!answeredHistory.length) { wrap.classList.remove('has-answers'); return; }
+  wrap.classList.add('has-answers');
+  const last = answeredHistory[answeredHistory.length-1];
+  const m = meta(last.agent);
+  list.innerHTML = `<div class="ans-strip">
+    <span class="ans-tick">✓ ANSWERED ${fmtTs(last.ts)}</span>
+    <div class="ans-content">
+      <div class="ans-header" style="color:${m.color}">${m.name} asked — ${last.question}</div>
+      <div class="ans-text">You said: "${last.answer}"</div>
+      ${answeredHistory.length>1?`<div class="ans-more">${answeredHistory.length-1} earlier answer${answeredHistory.length>2?'s':''} in this session</div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderBlocked(blocked) {
+  const list = document.getElementById('blocked-list');
+  const badge = document.getElementById('bl-badge');
+  if (!blocked||!Object.keys(blocked).length) {
+    badge.style.display='none';
+    list.innerHTML='<div style="color:var(--text4);font-size:10px;opacity:.6">No blockers</div>';
+    return;
+  }
+  const entries = Object.entries(blocked);
+  badge.textContent = entries.length; badge.style.display='';
+  list.innerHTML = entries.map(([aid, b], idx)=>{
+    if (!b) return '';
+    const m = meta(aid), choices = Array.isArray(b.choices)?b.choices:[];
+    const key = `${aid}:${b.task_id||''}`;
+    const otherCount = entries.length - idx - 1;
+    const codeHtml = b.code_context
+      ? `<div class="bl-code"><span class="bl-code-label">${b.code_file||'Context'}</span>${b.code_context.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
+      : '';
+    return `<div class="bl-card">
+      <div class="bl-body">
+        <div class="bl-who">
+          <span class="bl-who-name" style="color:${m.color}">${m.emoji} ${m.name}</span>
+          <span class="bl-who-tag">· ${m.role} · is blocked</span>
+        </div>
+        <div class="bl-q">${b.question||'Needs input'}</div>
+        ${b.context?`<div class="bl-ctx">${b.context}</div>`:''}
+        ${codeHtml}
+        ${choices.length?`<div style="font-size:9px;color:var(--text4);margin-bottom:6px">Hover an option to preview — click to answer instantly:</div>`:''}
+        <div class="bl-opts">
+          ${choices.map((c,i)=>`<button class="bl-opt ${chosen[key]===c?'sel':''}"
+            onclick="selectOpt(this,'${aid}','${(b.task_id||'').replace(/'/g,"\\'")}',\`${c.replace(/`/g,'\\`').replace(/\n/g,' ')}\`)"
+            title="${c}">
+            <div class="opt-radio"></div>
+            <span class="opt-num">${i+1}</span>
+            <span class="bl-opt-text">${c}</span>
+          </button>`).join('')}
+        </div>
+        ${choices.length?'<div class="bl-divider">or type custom answer</div>':''}
+        <div class="bl-custom-row">
+          <input class="bl-input" id="bci-${aid}" placeholder="Custom answer? Type here and press Enter..."
+            value="${chosen[key]&&!choices.includes(chosen[key])?chosen[key]:''}"
+            onkeydown="if(event.key==='Enter')sendAns('${aid}','${(b.task_id||'').replace(/'/g,"\\'")}');"
+            oninput="onCustom('${aid}','${(b.task_id||'').replace(/'/g,"\\'")}',this.value)" />
+          <button class="bl-send" onclick="sendAns('${aid}','${(b.task_id||'').replace(/'/g,"\\'")}')">SEND</button>
+        </div>
+        ${otherCount>0?`<div class="bl-queued">${otherCount} more question${otherCount>1?'s':''} queued — appear${otherCount===1?'s':''} after this is answered</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STATS STRIP
+// ══════════════════════════════════════════════════════════════════
+function renderStats(agents, tasks, activity) {
+  const total = tasks?.length||0;
+  const done = tasks?.filter(t=>t.status==='completed').length||0;
+  const active = agents?.filter(a=>a.status==='working'||a.status==='reviewing').length||0;
+  const startTs = activity?.[0]?.ts;
+  const elapsed = startTs ? Math.floor(Date.now()/1000-startTs) : 0;
+  const elStr = elapsed>0 ? `${Math.floor(elapsed/60)}m ${elapsed%60}s` : '—';
+  const pct = total>0 ? Math.round(done/total*100) : 0;
+  document.getElementById('kpi-tasks').textContent=`${done}/${total}`;
+  document.getElementById('kpi-active').textContent=active;
+  document.getElementById('kpi-elapsed').textContent=elStr;
+  document.getElementById('kpi-pct').textContent=`${pct}%`;
+  document.getElementById('kpi-bar-fill').style.width=`${pct}%`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// KANBAN TASK BOARD
+// ══════════════════════════════════════════════════════════════════
+function renderKanban(agents, tasks) {
+  const ACTIVE_ST = new Set(['in_progress','blocked','reviewing']);
+  const DONE_ST = new Set(['completed','failed']);
+  const cols = {
+    pending: (tasks||[]).filter(t=>!ACTIVE_ST.has(t.status)&&!DONE_ST.has(t.status)),
+    active:  (tasks||[]).filter(t=>ACTIVE_ST.has(t.status)),
+    done:    (tasks||[]).filter(t=>DONE_ST.has(t.status)),
+  };
+  ['pending','active','done'].forEach(col=>{
+    const items = cols[col];
+    document.getElementById(`kb-cnt-${col}`).textContent=items.length;
+    const body = document.getElementById(`kb-body-${col}`);
+    if (!items.length) { body.innerHTML='<div class="kb-empty">Empty</div>'; return; }
+    body.innerHTML = items.map(t=>{
+      const owner = agents?.find(a=>a.id===t.owner);
+      const m = owner ? meta(owner.id) : null;
+      const s = t.status||'pending';
+      const cleanSubj = (t.subject||t.id).replace(/^\[[A-Z0-9_-]+\]\s*/,'');
+      return `<div class="kb-card kc-${s}" data-id="${t.owner||''}" onclick="if(this.dataset.id)openModal(this.dataset.id,event)">
+        <div class="kb-subj">${cleanSubj}</div>
+        <div class="kb-foot">
+          ${m?`<div class="kb-owner-av" style="background:${m.color}22;color:${m.color};border:1px solid ${m.color}33">${m.init}</div>
+               <span class="kb-owner-name" style="color:${m.color}">${m.name}</span>`
+             :'<span class="kb-owner-name">unassigned</span>'}
+          <span class="kb-badge kbb-${s}">${s.replace('_',' ')}</span>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+function selectOpt(btn, aid, tid, choice) {
+  const key=`${aid}:${tid}`;
+  chosen[key]=choice;
+  btn.closest('.bl-card').querySelectorAll('.bl-opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  const ci=document.getElementById(`bci-${aid}`);
+  if(ci) ci.value='';
+}
+function onCustom(aid, tid, val) {
+  const key=`${aid}:${tid}`;
+  if(val){ chosen[key]=val; document.querySelector(`.bl-opt.sel`)?.classList.remove('sel'); }
+}
+async function sendAns(aid, tid) {
+  const key=`${aid}:${tid}`;
+  const ci=document.getElementById(`bci-${aid}`);
+  const ans=ci?.value?.trim()||chosen[key];
+  if(!ans){ ci?.focus(); return; }
+  try {
+    await fetch('/avengers-answer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:aid,task_id:tid,answer:ans})});
+    const q = gState?.blocked?.[aid]?.question||'question';
+    answeredHistory.push({agent:aid,question:q,answer:ans,ts:Math.floor(Date.now()/1000)});
+    renderAnswered();
+    delete chosen[key];
+    pushAct({who:'you',msg:`Answered ${meta(aid).name}: "${ans}"`,ts:Math.floor(Date.now()/1000)});
+  } catch(e) { pushAct({who:'sys',msg:`Send failed: ${e.message}`,ts:Math.floor(Date.now()/1000)}); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ACTIVITY FEED
+// ══════════════════════════════════════════════════════════════════
+function renderActivity(activity) {
+  if (!activity?.length) return;
+  const newE = activity.slice(actCount);
+  actCount = activity.length;
+  newE.forEach(e=>pushAct(e));
+}
+function pushAct(e) {
+  const m = meta(e.who), feed = document.getElementById('act-feed');
+  const cls = msgClass(e.msg||'');
+  const div = document.createElement('div');
+  div.className='ae';
+  div.innerHTML=`<span class="ae-ts">${fmtTs(e.ts)}</span><span class="ae-who" style="color:${m.color}" title="${e.who}">${m.name.split(' ')[0]}</span><span class="ae-msg ${cls}">${e.msg||''}</span>`;
+  feed.appendChild(div);
+  feed.scrollTop=feed.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// POPOVER — inline agent detail, no backdrop
+// ══════════════════════════════════════════════════════════════════
+const pop = document.getElementById('popover');
+let popOpenId = null;
+
+function openModal(id, evt) {
+  const agents=gState?.agents||[], tasks=gState?.tasks||[];
+  const a=agents.find(x=>x.id===id)||{id,status:'unknown'};
+  const m=meta(id), st=a.status||'idle';
+  const task=a.task||findTask(id,tasks)||'No active task';
+  const recentActs=(gState?.activity||[]).filter(e=>e.who===id).slice(-5).reverse();
+  const stCls={working:'st-w',reviewing:'st-r',done:'st-d',blocked:'st-b'}[st]||'';
+  const modelLbl=mTag(a.model)==='O'?'Opus':mTag(a.model)==='H'?'Haiku':'Sonnet';
+
+  // If same agent clicked again, toggle close
+  if (popOpenId===id && pop.classList.contains('show')) { pop.classList.remove('show'); popOpenId=null; return; }
+  popOpenId=id;
+
+  pop.innerHTML=`
+    <div class="pop-av" style="background:${m.color}22;color:${m.color};border:2px solid ${m.color}44;box-shadow:0 0 20px ${m.color}28">${m.init}</div>
+    <div class="pop-name" style="color:${m.color}">${m.name}</div>
+    <div class="pop-sub">${m.role} · ${id} · ${modelLbl}</div>
+    <div class="pop-field"><div class="pop-lbl">Status</div><div class="pop-val ${stCls}">${st.toUpperCase()}</div></div>
+    <div class="pop-field"><div class="pop-lbl">Current Task</div><div class="pop-val ${stCls}">${task}</div></div>
+    ${recentActs.length?`<div class="pop-field"><div class="pop-lbl">Recent Activity</div>${recentActs.map(e=>`<div class="pop-val" style="margin-bottom:2px;font-size:9.5px"><span style="color:var(--text3)">${fmtTs(e.ts)}</span> — ${e.msg}</div>`).join('')}</div>`:''}
+  `;
+
+  // Position near click, clamp inside viewport
+  pop.classList.add('show');
+  const cx = evt ? evt.clientX : window.innerWidth/2;
+  const cy = evt ? evt.clientY : window.innerHeight/2;
+  const pw=300, ph=Math.min(pop.scrollHeight+4, window.innerHeight*.72);
+  let left=cx+14, top=cy-20;
+  if (left+pw > window.innerWidth-8) left=cx-pw-14;
+  if (top+ph > window.innerHeight-8) top=window.innerHeight-ph-8;
+  if (top<8) top=8;
+  if (left<8) left=8;
+  pop.style.left=left+'px'; pop.style.top=top+'px';
+}
+
+// Close popover on click outside
+document.addEventListener('click', e=>{
+  if (!pop.contains(e.target) && !e.target.closest('.ac,.kb-card,.lf-row') && !e.target.closest('#room-canvas')) {
+    pop.classList.remove('show'); popOpenId=null;
+  }
+});
+// Escape key closes
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ pop.classList.remove('show'); popOpenId=null; } });
+
+// ══════════════════════════════════════════════════════════════════
+// CANVAS — OFFICE SCENE WITH ROBLOX-STYLE CHARACTERS
+// ══════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('room-canvas');
+const ctx = canvas.getContext('2d');
+let animT = 0;
+let msgBullets = []; // {fromId, toId, prog, color}
+let speeches = {}; // id → {text, timer}
+
+// Office zone fractions (relative to canvas size)
+const ZONE = {
+  kitchen:    {fx:0.73, fy:0.03, fw:0.25, fh:0.28},
+  breakTable: {fx:0.37, fy:0.68, fw:0.26, fh:0.16},
+  whiteboard: {fx:0.03, fy:0.06, fw:0.18, fh:0.20},
+  waterCooler:{fx:0.89, fy:0.76, fw:0.06, fh:0.10},
+};
+
+function resizeCanvas() {
+  const room = document.getElementById('room');
+  canvas.width = room.clientWidth * devicePixelRatio;
+  canvas.height = room.clientHeight * devicePixelRatio;
+  canvas.style.width = room.clientWidth + 'px';
+  canvas.style.height = room.clientHeight + 'px';
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  layoutNodes();
+}
+window.addEventListener('resize', resizeCanvas);
+
+function W() { return canvas.width / devicePixelRatio; }
+function H() { return canvas.height / devicePixelRatio; }
+
+// ── Office desk positions (avoid kitchen top-right and break table bottom-center) ──
+function getDeskPositions(n) {
+  const w=W(), h=H();
+  return [
+    {x:w*.12,y:h*.24,deskDir:0},  // top-far-left
+    {x:w*.30,y:h*.18,deskDir:0},  // top-left
+    {x:w*.47,y:h*.15,deskDir:0},  // top-center
+    {x:w*.63,y:h*.18,deskDir:0},  // top-center-right (clear of kitchen)
+    {x:w*.12,y:h*.48,deskDir:0},  // left-mid
+    {x:w*.10,y:h*.70,deskDir:1},  // left-lower
+    {x:w*.22,y:h*.83,deskDir:1},  // bottom-left
+    {x:w*.74,y:h*.83,deskDir:1},  // bottom-right
+    {x:w*.86,y:h*.60,deskDir:1},  // right-mid (clear of water cooler)
+  ].slice(0, Math.max(n, 1));
+}
+
+function layoutNodes() {
+  const agents = gState?.agents || [];
+  const nonFury = agents.filter(a => a.id !== 'fury-captain');
+  const desks = getDeskPositions(nonFury.length);
+  const cx = W()/2, cy = H()/2;
+
+  nodes = agents.map(a => {
+    const m = meta(a.id);
+    let deskX, deskY;
+    if (a.id === 'fury-captain') {
+      deskX = cx; deskY = cy;
+    } else {
+      const ni = nonFury.indexOf(a);
+      const dp = desks[ni % desks.length] || {x:cx,y:cy};
+      deskX = dp.x; deskY = dp.y;
+    }
+    const existing = nodes.find(n=>n.id===a.id);
+    return {
+      id: a.id, m,
+      deskX, deskY,
+      x: existing?.x ?? deskX,
+      y: existing?.y ?? deskY,
+      targetX: deskX, targetY: deskY,
+      status: a.status||'idle',
+      task: a.task||findTask(a.id, gState?.tasks),
+      walkPhase: existing?.walkPhase ?? Math.random()*Math.PI*2,
+      bobPhase: existing?.bobPhase ?? Math.random()*Math.PI*2,
+      facing: 0,
+      isTalking: false,
+      talkTarget: null,
+      behavior: existing?.behavior ?? 'at_desk',
+      behaviorTimer: existing?.behaviorTimer ?? (Math.random()*8+4),
+      behaviorTargetX: existing?.behaviorTargetX ?? deskX,
+      behaviorTargetY: existing?.behaviorTargetY ?? deskY,
+    };
+  });
+}
+
+// ── Draw functions ──
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function drawOfficeScene() {
+  const w=W(), h=H();
+
+  // ── Floor ──
+  ctx.fillStyle='#05090f';
+  ctx.fillRect(0,0,w,h);
+  // Tile grid
+  ctx.strokeStyle='rgba(20,40,100,.09)';
+  ctx.lineWidth=1;
+  const gs=40;
+  for(let x=0;x<w;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+  for(let y=0;y<h;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+  // Subtle tile squares (every other tile lighter)
+  ctx.fillStyle='rgba(14,24,60,.04)';
+  for(let x=0;x<w;x+=gs*2) for(let y=0;y<h;y+=gs*2) ctx.fillRect(x,y,gs,gs);
+  // Center ambient glow
+  const grd=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w*.5);
+  grd.addColorStop(0,'rgba(15,30,80,.14)'); grd.addColorStop(1,'transparent');
+  ctx.fillStyle=grd; ctx.fillRect(0,0,w,h);
+
+  // ── Top wall strip ──
+  ctx.fillStyle='rgba(6,12,35,.97)';
+  ctx.fillRect(0,0,w,h*.052);
+  ctx.strokeStyle='rgba(40,70,180,.18)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,h*.052); ctx.lineTo(w,h*.052); ctx.stroke();
+
+  // ── Windows on top wall (3 evenly spaced, avoid kitchen area) ──
+  for(let i=0;i<3;i++){
+    const wx=w*.14+i*w*.2-24;
+    ctx.fillStyle='rgba(140,200,255,.06)';
+    ctx.fillRect(wx,2,48,h*.038);
+    ctx.strokeStyle='rgba(100,170,255,.15)'; ctx.lineWidth=1;
+    ctx.strokeRect(wx,2,48,h*.038);
+    // Window divider
+    ctx.strokeStyle='rgba(80,130,220,.1)'; ctx.lineWidth=.5;
+    ctx.beginPath(); ctx.moveTo(wx+24,2); ctx.lineTo(wx+24,h*.038+2); ctx.stroke();
+    // Window sill glow
+    ctx.fillStyle='rgba(100,160,255,.04)';
+    ctx.fillRect(wx-2,h*.038,52,3);
+  }
+
+  // ── Kitchen area (top-right) ──
+  const kz=ZONE.kitchen, kx=w*kz.fx, ky=h*kz.fy, kw=w*kz.fw, kh=h*kz.fh;
+  // Floor tint
+  ctx.fillStyle='rgba(8,16,44,.5)';
+  rr(ctx,kx,ky,kw,kh,4); ctx.fill();
+  ctx.strokeStyle='rgba(40,70,160,.12)'; ctx.lineWidth=1;
+  rr(ctx,kx,ky,kw,kh,4); ctx.stroke();
+  // Counter top (along top wall and right wall)
+  const ctH=13;
+  ctx.fillStyle='rgba(16,28,72,.95)';
+  ctx.fillRect(kx,ky,kw,ctH);           // top counter
+  ctx.fillRect(kx+kw-12,ky,12,kh);      // right counter
+  ctx.strokeStyle='rgba(45,75,180,.22)'; ctx.lineWidth=1;
+  ctx.strokeRect(kx,ky,kw,ctH);
+  ctx.strokeRect(kx+kw-12,ky,12,kh);
+  // Counter edge highlight
+  ctx.strokeStyle='rgba(60,100,220,.1)'; ctx.lineWidth=.5;
+  ctx.beginPath(); ctx.moveTo(kx,ky+ctH); ctx.lineTo(kx+kw-12,ky+ctH); ctx.stroke();
+
+  // Coffee machine
+  const cmx=kx+12, cmy=ky+1;
+  ctx.fillStyle='rgba(12,22,58,.95)';
+  rr(ctx,cmx,cmy,22,ctH-2,2); ctx.fill();
+  ctx.strokeStyle='rgba(70,110,230,.25)'; ctx.lineWidth=1;
+  rr(ctx,cmx,cmy,22,ctH-2,2); ctx.stroke();
+  // Machine display (orange glow)
+  ctx.fillStyle='rgba(255,110,20,.65)';
+  ctx.beginPath(); ctx.arc(cmx+16,cmy+4,2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,110,20,.15)';
+  ctx.beginPath(); ctx.arc(cmx+16,cmy+4,5,0,Math.PI*2); ctx.fill();
+  // Machine button row
+  ctx.fillStyle='rgba(40,80,200,.3)';
+  [cmx+4,cmx+8,cmx+12].forEach(bx=>{ ctx.beginPath(); ctx.arc(bx,cmy+8,1.5,0,Math.PI*2); ctx.fill(); });
+  // Steam lines
+  ctx.strokeStyle='rgba(200,210,230,.1)'; ctx.lineWidth=.8;
+  [cmx+8,cmx+12].forEach(sx=>{
+    ctx.beginPath(); ctx.moveTo(sx,cmy-2); ctx.bezierCurveTo(sx-1,cmy-5,sx+1,cmy-7,sx,cmy-10); ctx.stroke();
+  });
+
+  // Sink
+  const sx=kx+44, sy=ky+2;
+  ctx.fillStyle='rgba(6,14,42,.9)';
+  rr(ctx,sx,sy,20,ctH-4,3); ctx.fill();
+  ctx.strokeStyle='rgba(50,80,180,.2)'; ctx.lineWidth=1;
+  rr(ctx,sx,sy,20,ctH-4,3); ctx.stroke();
+  // Faucet
+  ctx.strokeStyle='rgba(70,100,200,.3)'; ctx.lineWidth=1.5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(sx+10,sy-1); ctx.lineTo(sx+10,sy-6); ctx.lineTo(sx+14,sy-6); ctx.stroke();
+  ctx.fillStyle='rgba(14,165,233,.2)';
+  ctx.beginPath(); ctx.arc(sx+14,sy-6,2,0,Math.PI*2); ctx.fill();
+
+  // Mugs on counter
+  [[kx+8,ky+ctH+3,'rgba(200,60,60,.6)'],[kx+22,ky+ctH+2,'rgba(60,120,220,.6)'],[kx+35,ky+ctH+3,'rgba(60,180,80,.5)']].forEach(([mx,my,mc])=>{
+    ctx.fillStyle=mc; rr(ctx,mx,my,7,7,1); ctx.fill();
+    ctx.strokeStyle='rgba(60,90,180,.2)'; ctx.lineWidth=.5; rr(ctx,mx,my,7,7,1); ctx.stroke();
+    // Handle
+    ctx.strokeStyle=mc; ctx.lineWidth=.8;
+    ctx.beginPath(); ctx.arc(mx+9,my+3.5,2.5,-.5,Math.PI*.7); ctx.stroke();
+  });
+
+  // Cabinet panels (vertical lines on right counter)
+  ctx.strokeStyle='rgba(35,60,150,.15)'; ctx.lineWidth=.5;
+  for(let cy=ky+20;cy<ky+kh-10;cy+=18){
+    ctx.strokeRect(kx+kw-10,cy,8,15);
+  }
+  // Zone label
+  ctx.fillStyle='rgba(90,130,210,.3)';
+  ctx.font='600 7px Segoe UI,system-ui'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText('☕  Kitchen',kx+kw*.45,ky+kh-2);
+
+  // ── Whiteboard (top-left) ──
+  const wb=ZONE.whiteboard, wbx=w*wb.fx, wby=h*wb.fy, wbw=w*wb.fw, wbh=h*wb.fh;
+  // Frame
+  ctx.fillStyle='rgba(14,24,60,.95)';
+  rr(ctx,wbx-2,wby-2,wbw+4,wbh+4,3); ctx.fill();
+  ctx.strokeStyle='rgba(50,80,170,.3)'; ctx.lineWidth=1.5;
+  rr(ctx,wbx-2,wby-2,wbw+4,wbh+4,3); ctx.stroke();
+  // Board surface
+  ctx.fillStyle='rgba(18,32,75,.7)';
+  rr(ctx,wbx,wby,wbw,wbh,2); ctx.fill();
+  // Writing lines
+  ctx.font='700 6.5px monospace'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(251,191,36,.4)';
+  ctx.fillText('MISSION',wbx+5,wby+8);
+  ctx.strokeStyle='rgba(251,191,36,.15)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(wbx+4,wby+14); ctx.lineTo(wbx+wbw-8,wby+14); ctx.stroke();
+  // Fake text lines
+  const wbLins=[.30,.48,.52,.36,.44,.28,.40];
+  wbLins.forEach((len,i)=>{
+    ctx.fillStyle='rgba(100,150,255,.12)';
+    ctx.fillRect(wbx+5,wby+18+i*9,wbw*len,1.5);
+  });
+  // Status dot
+  const dotColor=gState?.phase==='monitoring'?'#22c55e':gState?.phase==='spawning'?'#3b82f6':gState?.phase==='done'?'#a78bfa':'#374151';
+  ctx.fillStyle=dotColor;
+  ctx.beginPath(); ctx.arc(wbx+wbw-7,wby+7,3.5,0,Math.PI*2); ctx.fill();
+  if(dotColor!=='#374151'){
+    ctx.fillStyle=dotColor+'28';
+    ctx.beginPath(); ctx.arc(wbx+wbw-7,wby+7,7,0,Math.PI*2); ctx.fill();
+  }
+  // Label
+  ctx.fillStyle='rgba(90,130,210,.3)';
+  ctx.font='600 7px Segoe UI,system-ui'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillText('📋  Board',wbx+wbw/2,wby+wbh-2);
+
+  // ── Break table (bottom-center) ──
+  const bt=ZONE.breakTable, btx=w*bt.fx, bty=h*bt.fy, btw=w*bt.fw, bth=h*bt.fh;
+  const btcx=btx+btw/2, btcy=bty+bth/2;
+  // Table surface
+  ctx.fillStyle='rgba(12,22,58,.88)';
+  rr(ctx,btx,bty,btw,bth,5); ctx.fill();
+  ctx.strokeStyle='rgba(40,70,170,.2)'; ctx.lineWidth=1;
+  rr(ctx,btx,bty,btw,bth,5); ctx.stroke();
+  // Table reflection
+  ctx.fillStyle='rgba(25,50,140,.07)';
+  rr(ctx,btx+5,bty+5,btw-10,bth*.38,3); ctx.fill();
+  // Table legs (4 dots)
+  [[btx+8,bty+bth-6],[btx+btw-10,bty+bth-6],[btx+8,bty+4],[btx+btw-10,bty+4]].forEach(([lx,ly])=>{
+    ctx.fillStyle='rgba(20,35,80,.8)'; ctx.beginPath(); ctx.arc(lx,ly,3,0,Math.PI*2); ctx.fill();
+  });
+  // Chairs (top and bottom)
+  [[btcx-btw*.28,bty-9,0],[btcx,bty-9,0],[btcx+btw*.28,bty-9,0],
+   [btcx-btw*.28,bty+bth+3,1],[btcx,bty+bth+3,1],[btcx+btw*.28,bty+bth+3,1]].forEach(([cx,cy,flip])=>{
+    ctx.fillStyle='rgba(14,26,68,.85)';
+    rr(ctx,cx-9,cy,18,9,2); ctx.fill();
+    ctx.strokeStyle='rgba(35,65,160,.18)'; ctx.lineWidth=.5; rr(ctx,cx-9,cy,18,9,2); ctx.stroke();
+    // Chair back
+    ctx.fillStyle='rgba(16,30,72,.6)';
+    rr(ctx,cx-8,flip?cy-4:cy+9,16,4,1); ctx.fill();
+  });
+  // Items on table (mugs + laptop)
+  ctx.fillStyle='rgba(16,30,75,.8)'; rr(ctx,btcx-18,btcy-5,24,16,2); ctx.fill();
+  ctx.strokeStyle='rgba(50,90,200,.2)'; ctx.lineWidth=.5; rr(ctx,btcx-18,btcy-5,24,16,2); ctx.stroke();
+  ctx.fillStyle='rgba(40,100,240,.15)'; rr(ctx,btcx-16,btcy-3,20,11,1); ctx.fill();
+  // Mugs on table
+  [[btcx+10,btcy-4,'rgba(220,100,40,.6)'],[btcx+20,btcy+2,'rgba(40,140,200,.6)']].forEach(([mx,my,mc])=>{
+    ctx.fillStyle=mc; rr(ctx,mx,my,6,6,1); ctx.fill();
+  });
+  // Zone label
+  ctx.fillStyle='rgba(90,130,210,.3)';
+  ctx.font='600 7px Segoe UI,system-ui'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText('🪑  Break Room',btcx,bty+bth+15);
+
+  // ── Water cooler (bottom-right) ──
+  const wc=ZONE.waterCooler, wcx=w*wc.fx, wcy=h*wc.fy;
+  // Base unit
+  ctx.fillStyle='rgba(12,22,60,.92)';
+  rr(ctx,wcx,wcy+13,16,20,2); ctx.fill();
+  ctx.strokeStyle='rgba(35,65,160,.2)'; ctx.lineWidth=.8; rr(ctx,wcx,wcy+13,16,20,2); ctx.stroke();
+  // Water tank (blue bottle)
+  const wtg=ctx.createLinearGradient(wcx+3,wcy,wcx+13,wcy+15);
+  wtg.addColorStop(0,'rgba(14,165,233,.3)'); wtg.addColorStop(1,'rgba(7,90,180,.15)');
+  ctx.fillStyle=wtg; rr(ctx,wcx+3,wcy,10,14,4); ctx.fill();
+  ctx.strokeStyle='rgba(14,165,233,.3)'; ctx.lineWidth=.8; rr(ctx,wcx+3,wcy,10,14,4); ctx.stroke();
+  // Water level line
+  ctx.strokeStyle='rgba(14,165,233,.2)'; ctx.lineWidth=.5;
+  ctx.beginPath(); ctx.moveTo(wcx+3,wcy+8); ctx.lineTo(wcx+13,wcy+8); ctx.stroke();
+  // Spout
+  ctx.fillStyle='rgba(14,165,233,.2)';
+  ctx.beginPath(); ctx.arc(wcx+8,wcy+22,3,0,Math.PI*2); ctx.fill();
+  // Label
+  ctx.fillStyle='rgba(90,130,210,.3)';
+  ctx.font='600 7px Segoe UI,system-ui'; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText('💧',wcx+8,wcy+34);
+
+  // ── Plants (bottom-left, bottom-right corner, top-far-left) ──
+  [[10,h-36],[w-28,h-36],[10,h*.38]].forEach(([px,py])=>{
+    // Pot
+    ctx.fillStyle='rgba(50,25,15,.55)';
+    rr(ctx,px-5,py+10,10,9,2); ctx.fill();
+    // Foliage clusters
+    [[0,0,10,'rgba(14,65,28,.7)'],[-4,-4,7,'rgba(18,85,35,.55)'],[4,-5,6,'rgba(22,100,40,.45)']].forEach(([ox,oy,r,c])=>{
+      ctx.fillStyle=c; ctx.beginPath(); ctx.arc(px+ox,py+oy,r,0,Math.PI*2); ctx.fill();
+    });
+  });
+}
+
+function drawDesk(x, y, dir, color, active) {
+  // dir: 0=monitor above desk (agent sits below), 1=monitor below (agent sits above)
+  const dw=34, dh=18;
+
+  // Chair (opposite side from monitor)
+  const chairY = dir===0 ? y+dh/2+5 : y-dh/2-12;
+  ctx.fillStyle='rgba(13,24,62,.88)';
+  rr(ctx, x-9, chairY, 18, 9, 2); ctx.fill();
+  ctx.strokeStyle=active?`${color}22`:'rgba(35,65,150,.18)'; ctx.lineWidth=.8;
+  rr(ctx, x-9, chairY, 18, 9, 2); ctx.stroke();
+  // Chair back rest
+  const backY = dir===0 ? chairY+9 : chairY-4;
+  ctx.fillStyle='rgba(16,28,68,.7)';
+  rr(ctx, x-8, backY, 16, 4, 1); ctx.fill();
+  // Chair legs (2 small dots)
+  ctx.fillStyle='rgba(20,35,80,.6)';
+  [[x-6,chairY+10],[x+4,chairY+10]].forEach(([lx,ly])=>{ ctx.beginPath(); ctx.arc(lx,ly,1.5,0,Math.PI*2); ctx.fill(); });
+
+  // Desk surface
+  ctx.fillStyle=active?'rgba(18,32,78,.85)':'rgba(11,19,44,.82)';
+  rr(ctx, x-dw/2, y-dh/2, dw, dh, 3); ctx.fill();
+  ctx.strokeStyle=active?`${color}44`:'rgba(38,68,155,.25)';
+  ctx.lineWidth=active?1.5:1;
+  rr(ctx, x-dw/2, y-dh/2, dw, dh, 3); ctx.stroke();
+  // Desk surface highlight
+  if(active){ ctx.fillStyle=`${color}08`; rr(ctx,x-dw/2+2,y-dh/2+2,dw-4,dh*.4,2); ctx.fill(); }
+
+  // Monitor
+  const monX=x-5, monY=dir===0?y-dh/2-11:y+dh/2+2;
+  ctx.fillStyle='rgba(7,13,38,.92)'; ctx.strokeStyle=active?`${color}66`:'rgba(45,78,175,.28)'; ctx.lineWidth=1;
+  rr(ctx, monX-9, monY, 18, 11, 2); ctx.fill(); ctx.stroke();
+  // Monitor stand
+  ctx.strokeStyle=active?`${color}33`:'rgba(35,60,140,.18)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(monX,monY+11); ctx.lineTo(monX,dir===0?y-dh/2:y+dh/2); ctx.stroke();
+
+  if(active){
+    const sg=ctx.createRadialGradient(monX,monY+5,0,monX,monY+5,13);
+    sg.addColorStop(0,`${color}2a`); sg.addColorStop(1,'transparent');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(monX,monY+5,13,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=`${color}55`;
+    ctx.fillRect(monX-6,monY+2,11,1.5); ctx.fillRect(monX-6,monY+5,8,1); ctx.fillRect(monX-6,monY+8,9,1);
+  }
+
+  // Keyboard hint on desk
+  ctx.fillStyle='rgba(30,55,140,.2)';
+  rr(ctx, x-6, dir===0?y+1:y-4, 14, 5, 1); ctx.fill();
+}
+
+function drawCaptainsArea(cx, cy) {
+  // Round conference table
+  ctx.beginPath(); ctx.arc(cx,cy,26,0,Math.PI*2);
+  ctx.fillStyle='rgba(18,30,70,.7)'; ctx.fill();
+  ctx.strokeStyle='rgba(60,110,240,.3)'; ctx.lineWidth=1.5; ctx.stroke();
+  // Table reflection
+  const rg=ctx.createRadialGradient(cx-8,cy-8,0,cx,cy,26);
+  rg.addColorStop(0,'rgba(59,130,246,.08)'); rg.addColorStop(1,'transparent');
+  ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(cx,cy,26,0,Math.PI*2); ctx.fill();
+  // Center emblem
+  ctx.fillStyle='rgba(251,191,36,.15)';
+  ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(251,191,36,.3)'; ctx.font='700 8px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('⚡',cx,cy);
+}
+
+// ── Roblox-style character ──
+function drawChar(x, y, node, t) {
+  const {m, status} = node;
+  const sc = 1.15;
+  const u = 11 * sc; // base unit
+  const atDesk = node.behavior==='at_desk' && Math.sqrt((node.x-node.deskX)**2+(node.y-node.deskY)**2)<8;
+  const walkLeg = (status==='working'||status==='reviewing')&&!atDesk ? Math.sin(node.walkPhase+t*3)*1.5 : 0;
+  const bob = status==='idle' ? Math.sin(node.bobPhase+t*1.2)*1.2 : (status==='working'?Math.sin(node.bobPhase+t*2)*.6:0);
+  const oy = bob; // offset y
+
+  ctx.save();
+  ctx.translate(x, y+oy);
+
+  // Pulsing glow halo when working / reviewing
+  if (status==='working'||status==='reviewing') {
+    const pulse = .38+Math.sin(t*3.5+node.bobPhase)*.22;
+    const gHalo=ctx.createRadialGradient(0,-u*.3,u*.2,0,-u*.3,u*2.6);
+    gHalo.addColorStop(0,m.color+'99'); gHalo.addColorStop(0.45,m.color+'30'); gHalo.addColorStop(1,'transparent');
+    ctx.globalAlpha=pulse; ctx.fillStyle=gHalo;
+    ctx.beginPath(); ctx.ellipse(0,-u*.3,u*2.6,u*2.6,0,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+
+  // Shadow
+  ctx.globalAlpha=.25;
+  ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(0,u*.95,u*.6,u*.18,0,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+
+  const baseOpacity = status==='done'?.6:(status==='idle'?.55:1);
+  ctx.globalAlpha=baseOpacity;
+
+  // Legs
+  const legW=u*.28, legH=u*.7;
+  ctx.fillStyle=lighten(m.uni,-25);
+  // Left leg
+  ctx.save(); ctx.translate(-u*.22,u*.25); ctx.rotate(walkLeg*0.25);
+  rr(ctx,-legW/2,0,legW,legH,2); ctx.fill(); ctx.restore();
+  // Right leg
+  ctx.save(); ctx.translate(u*.22,u*.25); ctx.rotate(-walkLeg*0.25);
+  rr(ctx,-legW/2,0,legW,legH,2); ctx.fill(); ctx.restore();
+  // Shoes
+  ctx.fillStyle=lighten(m.uni,-40);
+  ctx.save(); ctx.translate(-u*.22,u*.88); rr(ctx,-legW/2-1,0,legW+2,legH*.25,1.5); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(u*.22,u*.88); rr(ctx,-legW/2-1,0,legW+2,legH*.25,1.5); ctx.fill(); ctx.restore();
+
+  // Body (uniform)
+  ctx.fillStyle=m.uni;
+  rr(ctx,-u*.48,-u*.42,u*.96,u*.7,u*.12); ctx.fill();
+  // Body highlight
+  ctx.fillStyle='rgba(255,255,255,.08)';
+  rr(ctx,-u*.4,-u*.38,u*.45,u*.28,u*.1); ctx.fill();
+  // Collar
+  ctx.fillStyle=lighten(m.uni,20);
+  ctx.beginPath(); ctx.moveTo(0,-u*.42); ctx.lineTo(-u*.12,-u*.12); ctx.lineTo(u*.12,-u*.12); ctx.closePath(); ctx.fill();
+
+  // Arms
+  const armW=u*.26, armH=u*.62;
+  const armLean = status==='working'?-.15:0;
+  ctx.fillStyle=m.uni;
+  ctx.save(); ctx.translate(-u*.62,-u*.3); ctx.rotate(walkLeg*0.2+armLean);
+  rr(ctx,-armW/2,0,armW,armH,2); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(u*.62,-u*.3); ctx.rotate(-walkLeg*0.2+armLean);
+  rr(ctx,-armW/2,0,armW,armH,2); ctx.fill(); ctx.restore();
+  // Hands
+  ctx.fillStyle=m.skin;
+  ctx.save(); ctx.translate(-u*.62,-u*.3+armH*1.04); rr(ctx,-armW/2,0,armW,armW,2); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(u*.62,-u*.3+armH*1.04); rr(ctx,-armW/2,0,armW,armW,2); ctx.fill(); ctx.restore();
+
+  // Neck
+  ctx.fillStyle=m.skin;
+  rr(ctx,-u*.15,-u*.56,u*.3,u*.18,2); ctx.fill();
+
+  // Head
+  ctx.fillStyle=m.skin;
+  rr(ctx,-u*.52,-u*1.38,u*1.04,u*.95,u*.22); ctx.fill();
+
+  // Hair
+  ctx.fillStyle=m.hair;
+  if (m.gender==='f') {
+    // Female: styled hair with side strands
+    rr(ctx,-u*.55,-u*1.44,u*1.1,u*.35,u*.12); ctx.fill();
+    // Side hair strands
+    rr(ctx,-u*.62,-u*1.2,u*.16,u*.45,3); ctx.fill();
+    rr(ctx,u*.46,-u*1.2,u*.16,u*.45,3); ctx.fill();
+  } else {
+    // Male: block hair on top
+    rr(ctx,-u*.52,-u*1.48,u*1.04,u*.3,u*.1); ctx.fill();
+    // Side burns (subtle)
+    ctx.fillRect(-u*.52,-u*1.18,u*.12,u*.15);
+    ctx.fillRect(u*.4,-u*1.18,u*.12,u*.15);
+  }
+
+  // Face — eyes
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(-u*.2,-u*.96,u*.12,u*.13,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(u*.2,-u*.96,u*.12,u*.13,0,0,Math.PI*2); ctx.fill();
+  // Pupils
+  const eyeColor=status==='blocked'?'#ef4444':'#1a1a3e';
+  ctx.fillStyle=eyeColor;
+  ctx.beginPath(); ctx.ellipse(-u*.2,-u*.95,u*.07,u*.08,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(u*.2,-u*.95,u*.07,u*.08,0,0,Math.PI*2); ctx.fill();
+  // Eye shine
+  ctx.fillStyle='rgba(255,255,255,.8)';
+  ctx.beginPath(); ctx.arc(-u*.17,-u*.98,u*.03,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(u*.23,-u*.98,u*.03,0,Math.PI*2); ctx.fill();
+
+  // Expression
+  ctx.lineWidth=u*.07; ctx.lineCap='round';
+  if (status==='blocked') {
+    ctx.strokeStyle='#ef4444';
+    ctx.beginPath(); ctx.arc(0,-u*.78,u*.16,0,Math.PI,true); ctx.stroke();
+  } else if (status==='done') {
+    ctx.strokeStyle='#22c55e';
+    ctx.beginPath(); ctx.arc(0,-u*.8,u*.16,0,Math.PI); ctx.stroke();
+  } else if (status==='working') {
+    // Focused expression
+    ctx.strokeStyle=m.color;
+    ctx.beginPath(); ctx.moveTo(-u*.16,-u*.78); ctx.lineTo(u*.16,-u*.78); ctx.stroke();
+  } else {
+    ctx.strokeStyle='rgba(255,255,255,.3)';
+    ctx.beginPath(); ctx.moveTo(-u*.14,-u*.78); ctx.lineTo(u*.14,-u*.78); ctx.stroke();
+  }
+
+  // Status indicator ring above head
+  const statusColor={working:m.color,reviewing:'#a78bfa',done:'#22c55e',blocked:'#ef4444',idle:'#374151',failed:'#ef4444'}[status]||'#374151';
+  const ringR = u*.22;
+  if (status!=='idle') {
+    // Glow
+    ctx.globalAlpha=baseOpacity*.3;
+    ctx.fillStyle=statusColor;
+    ctx.beginPath(); ctx.arc(u*.56,-u*1.4,ringR+4,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=baseOpacity;
+  }
+  ctx.fillStyle=statusColor; ctx.strokeStyle='#050912'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(u*.56,-u*1.4,ringR,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+  // Working icon inside status dot
+  if (status==='working') { ctx.fillStyle='#fff'; ctx.font=`700 ${ringR*1.1}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('⚙',u*.56,-u*1.4); }
+  else if (status==='reviewing') { ctx.fillStyle='#fff'; ctx.font=`${ringR*1.1}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('👁',u*.56,-u*1.4); }
+  else if (status==='blocked') { ctx.fillStyle='#fff'; ctx.font=`700 ${ringR*1.1}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('!',u*.56,-u*1.4); }
+  else if (status==='done') { ctx.fillStyle='#fff'; ctx.font=`${ringR*1.1}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('✓',u*.56,-u*1.4); }
+
+  ctx.globalAlpha=1;
+  ctx.restore();
+
+  // Name label (outside transform)
+  ctx.save();
+  ctx.font=`600 8.5px 'Segoe UI',system-ui`;
+  ctx.fillStyle=m.color; ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.globalAlpha=status==='idle'?.4:.85;
+  ctx.fillText(m.name.split(' ')[0], x, y+oy+u*1.15);
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function drawSpeech(x, y, text, color) {
+  if (!text) return;
+  const short = text.length>26?text.slice(0,26)+'…':text;
+  ctx.font='9px Segoe UI,system-ui';
+  const tw=ctx.measureText(short).width;
+  const bw=tw+10, bh=14, bx=x-bw/2, by=y-38;
+  ctx.fillStyle='rgba(6,14,36,.95)'; ctx.strokeStyle=color+'80'; ctx.lineWidth=1;
+  rr(ctx,bx,by,bw,bh,4); ctx.fill(); ctx.stroke();
+  // Tail
+  ctx.beginPath(); ctx.moveTo(x-4,by+bh); ctx.lineTo(x,by+bh+5); ctx.lineTo(x+4,by+bh);
+  ctx.fillStyle='rgba(6,14,36,.95)'; ctx.fill();
+  ctx.fillStyle=color; ctx.font='9px Segoe UI,system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(short,x,by+bh/2);
+}
+
+function lighten(hex, amount) {
+  // Simple hex lighten/darken
+  let c = hex.replace('#','');
+  if (c.length===3) c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+  let r=parseInt(c.slice(0,2),16)+amount;
+  let g=parseInt(c.slice(2,4),16)+amount;
+  let b=parseInt(c.slice(4,6),16)+amount;
+  r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+// ── Draw connection lines ──
+function drawConnLine(ax, ay, bx, by, color, alpha, t) {
+  const dash = (t*50)%18;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.strokeStyle=color; ctx.lineWidth=1; ctx.setLineDash([5,7]); ctx.lineDashOffset=-dash;
+  ctx.beginPath(); ctx.moveTo(ax,ay);
+  ctx.quadraticCurveTo((ax+bx)/2,(ay+by)/2-16,bx,by);
+  ctx.stroke(); ctx.restore();
+}
+
+// ── Main draw loop ──
+let lastFrame=0;
+function drawLoop(ts) {
+  const dt=Math.min((ts-lastFrame)/1000,.05); lastFrame=ts;
+  animT=ts/1000;
+  ctx.clearRect(0,0,W(),H());
+  drawOfficeScene();
+
+  if (!nodes.length) {
+    ctx.fillStyle='rgba(50,70,120,.3)'; ctx.font='13px Segoe UI,system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Waiting for mission...',W()/2,H()/2);
+    requestAnimationFrame(drawLoop); return;
+  }
+
+  // Draw captain's area
+  const fury = nodes.find(n=>n.id==='fury-captain');
+  if (fury) drawCaptainsArea(fury.deskX, fury.deskY);
+
+  // Draw desks for non-fury agents
+  nodes.filter(n=>n.id!=='fury-captain').forEach(n=>{
+    const active=n.status==='working'||n.status==='reviewing';
+    drawDesk(n.deskX, n.deskY, 0, n.m.color, active);
+  });
+
+  // Draw connection lines (fury → working agents)
+  if (fury) {
+    nodes.forEach(n=>{
+      if (n.id==='fury-captain') return;
+      if (n.status==='working'||n.status==='reviewing'||n.status==='blocked') {
+        const alpha=.12+Math.sin(animT*1.5+n.bobPhase)*.06;
+        drawConnLine(fury.x, fury.y, n.x, n.y, n.m.color, alpha, animT);
+      }
+    });
+  }
+
+  // Update and draw message bullets
+  msgBullets = msgBullets.filter(b=>b.prog<1);
+  msgBullets.forEach(b=>{
+    b.prog=Math.min(1,b.prog+dt*0.9);
+    const from=nodes.find(n=>n.id===b.from), to=nodes.find(n=>n.id===b.to);
+    if(from&&to){
+      const px=from.x+(to.x-from.x)*b.prog;
+      const py=from.y+(to.y-from.y)*b.prog-Math.sin(b.prog*Math.PI)*22;
+      ctx.save(); ctx.globalAlpha=1-b.prog*.4;
+      ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill();
+      // Trail
+      ctx.globalAlpha*=.3; ctx.beginPath(); ctx.arc(px-2*(to.x-from.x)*dt,py,2,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+  });
+
+  // ── Behavior state machine ──
+  nodes.forEach(n=>{
+    if (n.id==='fury-captain') {
+      // Fury stays at their table always
+      n.targetX=n.deskX; n.targetY=n.deskY;
+    } else if (n.status==='blocked' && fury) {
+      // Walk to Fury's meeting table
+      n.behavior='at_meeting';
+      n.targetX=fury.deskX+(n.deskX>W()/2?32:-32);
+      n.targetY=fury.deskY+22;
+    } else if (n.status==='working'||n.status==='reviewing') {
+      // Stay at desk; reset wander timer
+      n.behavior='at_desk';
+      n.behaviorTimer=14;
+      n.targetX=n.deskX; n.targetY=n.deskY;
+    } else {
+      // idle / done: wander between desk, kitchen, break table
+      n.behaviorTimer-=dt;
+      if (n.behaviorTimer<=0) {
+        const roll=Math.random();
+        if (roll<0.45) {
+          n.behavior='at_desk';
+          n.behaviorTimer=8+Math.random()*8;
+          n.behaviorTargetX=n.deskX; n.behaviorTargetY=n.deskY;
+        } else if (roll<0.72) {
+          n.behavior='at_kitchen';
+          n.behaviorTimer=5+Math.random()*8;
+          n.behaviorTargetX=W()*(ZONE.kitchen.fx+0.03+Math.random()*0.14);
+          n.behaviorTargetY=H()*(ZONE.kitchen.fy+0.10+Math.random()*0.12);
+        } else {
+          n.behavior='at_break';
+          n.behaviorTimer=4+Math.random()*7;
+          n.behaviorTargetX=W()*(ZONE.breakTable.fx+0.04+Math.random()*0.18);
+          n.behaviorTargetY=H()*(ZONE.breakTable.fy+0.03+Math.random()*0.10);
+        }
+      }
+      n.targetX=(n.behavior==='at_desk')?n.deskX:n.behaviorTargetX;
+      n.targetY=(n.behavior==='at_desk')?n.deskY:n.behaviorTargetY;
+    }
+    const dx=n.targetX-n.x, dy=n.targetY-n.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>2){ const spd=Math.min(dist,(n.status==='working'||n.status==='reviewing'?220:80)*dt); n.x+=dx/dist*spd; n.y+=dy/dist*spd; }
+    else { n.x=n.targetX; n.y=n.targetY; }
+    n.walkPhase+=dt*2.5;
+    n.bobPhase+=dt*1.2;
+  });
+
+  // Draw agents (fury on top)
+  const sorted=[...nodes].sort((a,b)=>(a.id==='fury-captain'?1:0)-(b.id==='fury-captain'?1:0));
+  sorted.forEach(n=>{
+    drawChar(n.x, n.y, n, animT);
+    // Speech bubble
+    const sp=speeches[n.id];
+    if(sp&&sp.timer>0){ drawSpeech(n.x,n.y,sp.text,n.m.color); sp.timer-=dt; }
+  });
+
+  requestAnimationFrame(drawLoop);
+}
+
+// ── Canvas hover tooltip ──
+const ctip = document.getElementById('ctip');
+canvas.addEventListener('mousemove', e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=nodes.find(n=>{
+    const dx=n.x-mx, dy=n.y-my;
+    return Math.sqrt(dx*dx+dy*dy)<22;
+  });
+  if(hit){
+    const m=hit.m, task=hit.task||findTask(hit.id,gState?.tasks)||'—';
+    const sc=speeches[hit.id];
+    ctip.innerHTML=`
+      <div class="ct-head">
+        <div class="ct-av" style="background:${m.color}22;color:${m.color};border:1px solid ${m.color}44">${m.init}</div>
+        <div><div class="ct-name" style="color:${m.color}">${m.name}</div><div class="ct-role">${m.role}</div></div>
+      </div>
+      <div class="ct-field"><span class="ct-lbl">Status</span><span class="ct-val" style="color:${m.color}">${hit.status||'idle'}</span></div>
+      <div class="ct-field"><span class="ct-lbl">Task</span></div>
+      <div class="ct-task">${task}</div>
+      ${sc&&sc.timer>0?`<div class="ct-field" style="margin-top:4px"><span class="ct-lbl">Saying</span><span class="ct-val">"${sc.text}"</span></div>`:''}
+      <div style="margin-top:5px;font-size:8px;color:var(--text4)">Click agent card for details</div>
+    `;
+    ctip.style.left=(e.clientX+14)+'px';
+    ctip.style.top=(e.clientY-10)+'px';
+    // Keep inside viewport
+    const r=ctip.getBoundingClientRect();
+    if(r.right>window.innerWidth-10) ctip.style.left=(e.clientX-r.width-14)+'px';
+    if(r.bottom>window.innerHeight-10) ctip.style.top=(e.clientY-r.height+10)+'px';
+    ctip.classList.add('show');
+    canvas.style.cursor='pointer';
+  } else {
+    ctip.classList.remove('show');
+    canvas.style.cursor='crosshair';
+  }
+});
+canvas.addEventListener('mouseleave',()=>ctip.classList.remove('show'));
+canvas.addEventListener('click',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=nodes.find(n=>{
+    const dx=n.x-mx, dy=n.y-my;
+    return Math.sqrt(dx*dx+dy*dy)<22;
+  });
+  if(hit) openModal(hit.id,e);
+});
+
+// ══════════════════════════════════════════════════════════════════
+// CMD
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('cmd-btn').addEventListener('click',async()=>{
+  const inp=document.getElementById('cmd-in');
+  const out=document.getElementById('cmd-out');
+  const cmd=inp.value.trim(); if(!cmd) return;
+  out.textContent='…'; out.style.display='block';
+  try{
+    const r=await fetch('/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd})});
+    const d=await r.json(); out.textContent=d.output||d.error||'(no output)';
+  }catch(e){ out.textContent=`Error: ${e.message}`; }
+});
+document.getElementById('cmd-in').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('cmd-btn').click(); });
+
+// ══════════════════════════════════════════════════════════════════
+// POLL
+// ══════════════════════════════════════════════════════════════════
+async function poll() {
+  try {
+    const r=await fetch('/avengers-state');
+    if(!r.ok) throw new Error(r.status);
+    const s=await r.json();
+    document.getElementById('ldot').classList.add('on');
+    document.getElementById('conn-lbl').textContent='Live';
+    if(s.updated_at===lastUpd) return;
+    const prevAct=actCount;
+    lastUpd=s.updated_at; gState=s;
+    document.getElementById('mission-text').textContent=s.mission||'Waiting for mission...';
+    const pb=document.getElementById('phase-badge');
+    pb.textContent=s.phase||'idle'; pb.className=`phase ph-${s.phase||'idle'}`;
+    renderAgents(s.agents,s.tasks);
+    layoutNodes();
+    // Sync node statuses
+    if(nodes.length&&s.agents) s.agents.forEach(a=>{
+      const n=nodes.find(x=>x.id===a.id);
+      if(n){ n.status=a.status||'idle'; n.task=a.task||findTask(a.id,s.tasks); }
+    });
+    renderStats(s.agents,s.tasks,s.activity);
+    renderKanban(s.agents,s.tasks);
+    renderBlocked(s.blocked);
+    renderActivity(s.activity);
+    // Trigger speech bubbles and bullets for new activity
+    const newActs=(s.activity||[]).slice(prevAct);
+    newActs.forEach(e=>{
+      const n=nodes.find(x=>x.id===e.who);
+      if(n&&e.msg){ speeches[e.who]={text:e.msg.slice(0,30),timer:4.5}; }
+      // Message bullet between agents
+      const mMatch=e.msg?.match(/(?:message|sent|→)\s+([a-z][a-z-]+)/i);
+      if(mMatch&&e.who) {
+        const toId=mMatch[1].toLowerCase();
+        const toN=nodes.find(x=>x.id===toId||x.id.startsWith(toId));
+        if(toN&&e.who!==toN.id) msgBullets.push({from:e.who,to:toN.id,prog:0,color:meta(e.who).color});
+      }
+    });
+  } catch(e) {
+    document.getElementById('ldot').classList.remove('on');
+    document.getElementById('conn-lbl').textContent='Offline';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+resizeCanvas();
+requestAnimationFrame(drawLoop);
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>

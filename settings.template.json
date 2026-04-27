@@ -1,0 +1,120 @@
+{
+  "model": "claude-sonnet-4-6",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/refresh-mcp-tokens.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/self-heal-stop.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/hooks/statusline.sh"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(grep*)",
+      "Bash(ls*)",
+      "Bash(cat*)",
+      "Bash(find*)",
+      "Bash(echo*)",
+      "Bash(wc*)",
+      "Bash(head*)",
+      "Bash(tail*)",
+      "Bash(awk*)",
+      "Bash(sed*)",
+      "Bash(sort*)",
+      "Bash(uniq*)",
+      "Bash(cut*)",
+      "Bash(date*)",
+      "Bash(pwd*)",
+      "Bash(which*)",
+      "Bash(cd*)",
+      "Bash(mkdir*)",
+      "Bash(cp*)",
+      "Bash(mv*)",
+      "Bash(touch*)",
+      "Bash(chmod*)",
+      "Bash(lsof*)",
+      "Bash(ps*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git branch*)",
+      "Bash(git show*)",
+      "Bash(python3*)",
+      "Bash(uv*)",
+      "Bash(pip*)",
+      "Bash(pytest*)",
+      "Bash(ruff*)",
+      "Bash(terraform validate*)",
+      "Bash(terraform init*)",
+      "Bash(terraform fmt*)",
+      "Bash(terraform plan*)",
+      "Bash(terraform output*)",
+      "Bash(jq*)",
+      "Bash(curl*)",
+      "Bash(bash*)",
+      "Bash(nohup*)",
+      "Bash(open*)",
+      "Bash(rtk*)",
+      "Write(/tmp/*)",
+      "Read(/tmp/*)"
+    ]
+  },
+  "enabledPlugins": {
+    "nr@claude-plugin-marketplace": true,
+    "nr-kafka@claude-plugin-marketplace": true,
+    "superpowers@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": false,
+    "coderabbit@claude-plugins-official": true,
+    "data-engineering@claude-plugins-official": true,
+    "terraform@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugin-marketplace": {
+      "source": {
+        "source": "git",
+        "url": "git@source.datanerd.us:commune/claude-plugin-marketplace.git"
+      }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    }
+  }
+}
