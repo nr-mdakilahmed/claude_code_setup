@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Avengers Mission Dashboard</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23000'/%3E%3Cpolygon points='50,10 65,38 95,42 73,63 78,93 50,78 22,93 27,63 5,42 35,38' fill='none' stroke='%23e8c547' stroke-width='4'/%3E%3Ctext x='50' y='62' font-family='Arial Black,sans-serif' font-size='38' font-weight='900' text-anchor='middle' fill='%23e8c547'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23fde047'/%3E%3Cstop offset='50%25' stop-color='%23fbbf24'/%3E%3Cstop offset='100%25' stop-color='%23d97706'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='48' height='48' rx='10' fill='%23050a18'/%3E%3Cpolygon points='24,4 42,14 42,34 24,44 6,34 6,14' fill='none' stroke='url(%23g)' stroke-width='2' stroke-linejoin='round'/%3E%3Cpolygon points='24,9 37,16.5 37,31.5 24,39 11,31.5 11,16.5' fill='none' stroke='url(%23g)' stroke-width='.8' stroke-dasharray='2 2' opacity='.6'/%3E%3Cpath d='M14 36 L24 12 L34 36' fill='none' stroke='url(%23g)' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M18.5 27 L29.5 27' stroke='url(%23g)' stroke-width='2.6' stroke-linecap='round'/%3E%3Cline x1='6' y1='20.5' x2='38' y2='17' stroke='%23fef3c7' stroke-width='1.3' stroke-linecap='round' opacity='.85'/%3E%3Cpolygon points='38,17 33.5,13.5 34.5,17 33.5,20.5' fill='%23fef3c7'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -12,27 +12,112 @@
   --border:#1a2a50;--border2:#1e3060;
   --blue:#3b82f6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444;--purple:#a78bfa;
   --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#334155;
+  --theme-accent:#3b82f6;  /* avengers theme — blue accent for borders/highlights */
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden}
+/* ══════════ New Relic theme (default) — near-black + mint green palette ══════════ */
+body[data-theme="relic"]{
+  --bg:#0a0f14;--bg2:#0d141a;--bg3:#111a22;--bg4:#18242d;
+  --border:#1c2a30;--border2:#2a3d42;
+  --blue:#4ade80;          /* remap "blue" → New Relic mint (primary) */
+  --green:#22c55e;         /* bright green for done-state distinction */
+  --purple:#06b6d4;        /* remap purple → cyan (reviewing, distinct from working) */
+  --amber:#facc15;         /* warm yellow for idle/warnings */
+  --red:#f87171;           /* softer red for errors */
+  --theme-accent:#4ade80;
+  --text:#e8f0ec;--text2:#9aaba2;--text3:#667a72;--text4:#334d42;
+}
+/* Brand mark + wordmark: gold gradient → mint gradient in relic mode */
+body[data-theme="relic"] #brandGrad stop:nth-child(1){stop-color:#86efac}
+body[data-theme="relic"] #brandGrad stop:nth-child(2){stop-color:#4ade80}
+body[data-theme="relic"] #brandGrad stop:nth-child(3){stop-color:#16a34a}
+body[data-theme="relic"] .brand-mark{filter:drop-shadow(0 0 10px rgba(74,222,128,.55)) drop-shadow(0 0 24px rgba(74,222,128,.3))}
+body[data-theme="relic"] .logo .ch{background:linear-gradient(180deg,#86efac 0%,#4ade80 50%,#16a34a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 22px rgba(74,222,128,.35)}
+body[data-theme="relic"] #topbar{border-bottom-color:rgba(74,222,128,.15)}
+body[data-theme="relic"] #topbar::before{background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(74,222,128,.02) 3px,rgba(74,222,128,.02) 4px)}
+body[data-theme="relic"] #topbar::after{background:linear-gradient(90deg,transparent,rgba(74,222,128,.35) 30%,rgba(74,222,128,.35) 70%,transparent)}
+body[data-theme="relic"] #op-label{color:rgba(74,222,128,.55)}
+/* Phase badges in relic mode */
+body[data-theme="relic"] #phase-badge.ph-spawning{background:rgba(6,182,212,.14);color:#06b6d4;border-color:rgba(6,182,212,.3)}
+body[data-theme="relic"] #phase-badge.ph-monitoring{background:rgba(74,222,128,.14);color:#4ade80;border-color:rgba(74,222,128,.3)}
+body[data-theme="relic"] #phase-badge.ph-done{background:rgba(34,197,94,.14);color:#22c55e;border-color:rgba(34,197,94,.25)}
+/* Status-label remaps: reviewing purple → cyan, reviewer-panel bg */
+body[data-theme="relic"] .kbb-reviewing{background:rgba(6,182,212,.15);color:#06b6d4}
+body[data-theme="relic"] .ae.mt-spawn::before{background:#06b6d4}
+body[data-theme="relic"] .ae-tag.tg-spawn{background:rgba(6,182,212,.15);color:#06b6d4}
+body[data-theme="relic"] .ct-status.reviewing{background:rgba(6,182,212,.15);color:#06b6d4}
+body[data-theme="relic"] .acard.st-reviewing::before{background:linear-gradient(180deg,#06b6d4,rgba(6,182,212,.4))}
+body[data-theme="relic"] .acard-model.mo-opus{background:rgba(6,182,212,.15);color:#06b6d4}
+body[data-theme="relic"] .dec-item{border-left-color:#06b6d4}
+body[data-theme="relic"] .st-r{color:#06b6d4}
+body[data-theme="relic"] .st-w{color:#4ade80}
+body[data-theme="relic"] .st-d{color:#22c55e}
+/* Progress bar + stat values: purple → mint */
+body[data-theme="relic"] .stat-bar-fill{background:linear-gradient(90deg,#4ade80,#22c55e)}
+body[data-theme="relic"] #kpi-pct{color:#4ade80 !important}
+body[data-theme="relic"] #kpi-elapsed{color:#facc15 !important}
+/* Budget meter in relic: mint → amber → red gradient */
+body[data-theme="relic"] .bm-fill{background:linear-gradient(90deg,#4ade80 0%,#22c55e 50%,#facc15 100%)}
+body[data-theme="relic"] .bm-fill.danger{background:linear-gradient(90deg,#facc15,#f87171)}
+/* Files/decisions/canvas tab count badges: blue → mint */
+body[data-theme="relic"] .badge{background:rgba(74,222,128,.15);color:#4ade80;border-color:rgba(74,222,128,.25)}
+/* Activity log per-type badges lean green */
+body[data-theme="relic"] .intel-comm.rework{border-left-color:#facc15}
+body[data-theme="relic"] .ae.mt-rework::before{background:#facc15}
+body[data-theme="relic"] .ae-tag.tg-rework{background:rgba(250,204,21,.15);color:#facc15}
+/* Cost labels: amber → warmer olive */
+body[data-theme="relic"] .bt-cost,body[data-theme="relic"] .bt-total-cost{color:#facc15}
+/* Scrollbars + subtle accents */
+body[data-theme="relic"] ::-webkit-scrollbar-thumb{background:#2a3d42}
+/* PR checks */
+body[data-theme="relic"] .pr-check-v.pending{color:#facc15}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;transition:background-color .4s ease}
 /* ── Topbar ── */
 #topbar{height:52px;display:flex;align-items:center;gap:12px;padding:0 20px;background:linear-gradient(90deg,rgba(2,5,14,1) 0%,rgba(6,12,30,.98) 60%,rgba(2,5,14,1) 100%);border-bottom:1px solid rgba(251,191,36,.12);flex-shrink:0;position:relative;overflow:hidden}
 #topbar::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(251,191,36,.015) 3px,rgba(251,191,36,.015) 4px);pointer-events:none}
 #topbar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(251,191,36,.35) 30%,rgba(251,191,36,.35) 70%,transparent)}
 /* ── Animated Avengers Brand (SVG mark + wordmark) ── */
-.brand{display:flex;align-items:center;gap:9px;flex-shrink:0}
-.brand-mark{width:26px;height:26px;display:block;filter:drop-shadow(0 0 8px rgba(251,191,36,.55)) drop-shadow(0 0 18px rgba(251,191,36,.25))}
-.brand-mark .ring-outer{transform-origin:50% 50%;animation:brandSpin 14s linear infinite}
-.brand-mark .ring-inner{transform-origin:50% 50%;animation:brandSpin 9s linear infinite reverse}
-.brand-mark .star{transform-origin:50% 50%;animation:brandPulse 2.4s ease-in-out infinite}
-.brand-mark .a-letter{animation:brandGlow 2.4s ease-in-out infinite}
-.brand-mark .arrow-1{animation:brandDash 3s linear infinite}
-.brand-mark .arrow-2{animation:brandDash 3s linear infinite;animation-delay:-1.5s}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0;cursor:pointer;transition:transform .3s cubic-bezier(.22,1.4,.36,1)}
+.brand:hover{transform:scale(1.04)}
+.brand-mark{width:32px;height:32px;display:block;filter:drop-shadow(0 0 10px rgba(251,191,36,.55)) drop-shadow(0 0 24px rgba(251,191,36,.3)) drop-shadow(0 0 1px rgba(239,68,68,.4))}
+.brand-mark .hex-outer{transform-origin:50% 50%;animation:brandSpin 28s linear infinite}
+.brand-mark .hex-mid{transform-origin:50% 50%;animation:brandSpin 18s linear infinite reverse}
+.brand-mark .hex-inner{transform-origin:50% 50%;animation:brandBreathe 3.2s ease-in-out infinite}
+.brand-mark .a-stroke{stroke-dasharray:60;stroke-dashoffset:60;animation:brandDraw 1.6s ease-out .3s forwards,brandPulse 3.2s ease-in-out 2s infinite}
+.brand-mark .a-bar{stroke-dasharray:14;stroke-dashoffset:14;animation:brandDraw 1s ease-out 1.2s forwards}
+.brand-mark .arrow-shaft{stroke-dasharray:40;stroke-dashoffset:40;animation:brandArrowFly 6s ease-in-out 2s infinite}
+.brand-mark .arrow-head{opacity:0;transform-origin:50% 50%;animation:brandArrowHead 6s ease-in-out 2s infinite}
+.brand-mark .spark{opacity:0;transform-origin:50% 50%;animation:brandSpark 6s ease-in-out infinite}
+.brand-mark .spark-1{animation-delay:2.1s}
+.brand-mark .spark-2{animation-delay:2.25s}
+.brand-mark .spark-3{animation-delay:2.4s}
+.brand-mark .flash-ring{opacity:0;transform-origin:50% 50%;animation:brandFlash 6s ease-in-out 2s infinite}
+.brand-mark .orbit{transform-origin:50% 50%}
+.brand-mark .orbit-1{animation:brandSpin 8s linear infinite}
+.brand-mark .orbit-2{animation:brandSpin 12s linear infinite reverse}
 @keyframes brandSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes brandPulse{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.08);opacity:1}}
-@keyframes brandGlow{0%,100%{filter:drop-shadow(0 0 1px #fbbf24)}50%{filter:drop-shadow(0 0 6px #fbbf24)}}
-@keyframes brandDash{to{stroke-dashoffset:-80}}
-.logo{font-size:16px;font-weight:900;color:#fbbf24;letter-spacing:.12em;text-shadow:0 0 20px rgba(251,191,36,.5),0 0 40px rgba(251,191,36,.2);white-space:nowrap;flex-shrink:0;background:linear-gradient(90deg,#fbbf24 0%,#fde047 40%,#fbbf24 60%,#f59e0b 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:logoShine 6s linear infinite}
-@keyframes logoShine{0%{background-position:0% center}100%{background-position:200% center}}
+@keyframes brandBreathe{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.08);opacity:1}}
+@keyframes brandDraw{to{stroke-dashoffset:0}}
+@keyframes brandPulse{0%,94%,100%{filter:drop-shadow(0 0 1px #fbbf24)}96%{filter:drop-shadow(0 0 8px #fef3c7) drop-shadow(0 0 4px #fbbf24)}}
+@keyframes brandArrowFly{0%,30%{stroke-dashoffset:40;opacity:0}32%{opacity:1}38%,70%{stroke-dashoffset:0;opacity:1}72%,100%{opacity:0;stroke-dashoffset:0}}
+@keyframes brandArrowHead{0%,35%{opacity:0;transform:translateX(-4px) scale(.6)}40%,68%{opacity:1;transform:translateX(0) scale(1)}72%,100%{opacity:0;transform:translateX(2px) scale(.8)}}
+@keyframes brandSpark{0%,38%,100%{opacity:0;transform:scale(.3)}42%{opacity:1;transform:scale(1.2)}52%{opacity:.6;transform:scale(1)}62%{opacity:0;transform:scale(.5)}}
+@keyframes brandFlash{0%,36%,70%,100%{opacity:0;transform:scale(.4)}42%{opacity:.6;transform:scale(1)}56%{opacity:0;transform:scale(1.5)}}
+.brand:hover .brand-mark .hex-outer{animation-duration:4s}
+.brand:hover .brand-mark .hex-mid{animation-duration:3s}
+.logo{font-size:16px;font-weight:900;letter-spacing:.14em;white-space:nowrap;flex-shrink:0;display:inline-flex;gap:1px}
+.logo .ch{display:inline-block;background:linear-gradient(180deg,#fde047 0%,#fbbf24 50%,#d97706 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 22px rgba(251,191,36,.35);transform:translateY(-12px);opacity:0;animation:letterDrop .5s cubic-bezier(.22,1.6,.36,1) forwards}
+.logo .ch:nth-child(1){animation-delay:.05s}
+.logo .ch:nth-child(2){animation-delay:.1s}
+.logo .ch:nth-child(3){animation-delay:.15s}
+.logo .ch:nth-child(4){animation-delay:.2s}
+.logo .ch:nth-child(5){animation-delay:.25s}
+.logo .ch:nth-child(6){animation-delay:.3s}
+.logo .ch:nth-child(7){animation-delay:.35s}
+.logo .ch:nth-child(8){animation-delay:.4s}
+.logo::after{content:'';position:absolute;top:0;left:-30%;width:30%;height:100%;background:linear-gradient(90deg,transparent,rgba(254,243,199,.6),transparent);animation:logoShine 7s ease-in-out 2s infinite;pointer-events:none;mix-blend-mode:overlay}
+.logo{position:relative;overflow:hidden}
+@keyframes letterDrop{0%{transform:translateY(-16px);opacity:0;filter:blur(3px)}60%{transform:translateY(2px);opacity:1;filter:blur(0)}100%{transform:translateY(0);opacity:1;filter:blur(0)}}
+@keyframes logoShine{0%,60%,100%{left:-30%}70%,95%{left:130%}}
 .logo-sep{width:1px;height:22px;background:rgba(251,191,36,.2);flex-shrink:0}
 #op-label{font-size:7px;font-weight:700;color:rgba(251,191,36,.5);letter-spacing:.15em;text-transform:uppercase;flex-shrink:0}
 #mission-text{flex:1;font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic}
@@ -451,6 +536,27 @@ body.cinema #cinema-overlay{display:block}
 body.cinema #app{display:none}
 #cinema-canvas{width:100%;height:100%;display:block}
 #cinema-hint{position:fixed;bottom:24px;right:24px;font-size:10px;color:rgba(255,255,255,.35);background:rgba(0,0,0,.4);padding:6px 12px;border-radius:6px;letter-spacing:.05em}
+/* ══════════ Floating theme toggle (New Relic ⇄ Avengers navy) ══════════ */
+#theme-btn{position:fixed;bottom:22px;right:76px;z-index:1500;width:44px;height:44px;border-radius:50%;background:rgba(10,15,20,.85);border:1px solid rgba(74,222,128,.4);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 0 1px rgba(74,222,128,.1) inset;transition:all .2s ease;color:#4ade80;opacity:.75}
+body[data-theme="avengers"] #theme-btn{border-color:rgba(251,191,36,.35);color:#fbbf24;box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 0 1px rgba(251,191,36,.1) inset}
+#theme-btn:hover{opacity:1;transform:scale(1.08);background:rgba(30,41,59,.95)}
+body[data-theme="relic"] #theme-btn:hover{border-color:rgba(74,222,128,.7);box-shadow:0 6px 24px rgba(74,222,128,.25),0 0 0 1px rgba(74,222,128,.25) inset}
+body[data-theme="avengers"] #theme-btn:hover{border-color:rgba(251,191,36,.6);box-shadow:0 6px 24px rgba(251,191,36,.2),0 0 0 1px rgba(251,191,36,.2) inset}
+#theme-btn:active{transform:scale(.96)}
+#theme-btn svg{width:18px;height:18px;display:block}
+#theme-btn::after{content:attr(data-tip);position:absolute;right:54px;top:50%;transform:translateY(-50%);background:rgba(15,23,42,.95);border:1px solid currentColor;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:.05em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;color:inherit}
+#theme-btn:hover::after{opacity:1}
+
+/* ══════════ Floating fullscreen (real browser fullscreen) button ══════════ */
+#fs-btn{position:fixed;bottom:22px;right:22px;z-index:1500;width:44px;height:44px;border-radius:50%;background:rgba(15,23,42,.85);border:1px solid rgba(251,191,36,.35);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 0 1px rgba(251,191,36,.1) inset;transition:all .2s ease;color:#fbbf24;opacity:.75}
+#fs-btn:hover{opacity:1;transform:scale(1.08);background:rgba(30,41,59,.95);border-color:rgba(251,191,36,.6);box-shadow:0 6px 24px rgba(251,191,36,.2),0 0 0 1px rgba(251,191,36,.2) inset}
+#fs-btn:active{transform:scale(.96)}
+#fs-btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+#fs-btn .icon-exit{display:none}
+body.is-fullscreen #fs-btn .icon-enter{display:none}
+body.is-fullscreen #fs-btn .icon-exit{display:block}
+#fs-btn::after{content:attr(data-tip);position:absolute;right:54px;top:50%;transform:translateY(-50%);background:rgba(15,23,42,.95);border:1px solid rgba(251,191,36,.25);color:#fbbf24;padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;letter-spacing:.05em;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+#fs-btn:hover::after{opacity:1}
 #cinema-hint kbd{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:1px 6px;border-radius:3px;font-family:'SF Mono',monospace;font-size:9px;color:var(--text2);margin:0 2px}
 
 /* ══════════ NEW: redirect modal ══════════ */
@@ -528,37 +634,69 @@ body.cinema #app{display:none}
 .ct-caption strong{color:var(--text);font-weight:700}
 </style>
 </head>
-<body>
+<body data-theme="relic">
 <div id="app">
 
 <div id="topbar">
   <div class="brand" title="Avengers — multi-agent mission control">
-    <svg class="brand-mark" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <svg class="brand-mark" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
         <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="#fde047"/>
-          <stop offset="55%" stop-color="#fbbf24"/>
-          <stop offset="100%" stop-color="#f59e0b"/>
+          <stop offset="45%" stop-color="#fbbf24"/>
+          <stop offset="100%" stop-color="#d97706"/>
         </linearGradient>
-        <radialGradient id="brandCore" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#fde047" stop-opacity=".9"/>
+        <linearGradient id="arrowGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+          <stop offset="0%" stop-color="#fde047" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#fef3c7"/>
+          <stop offset="100%" stop-color="#fbbf24"/>
+        </linearGradient>
+        <radialGradient id="brandCore" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stop-color="#fef3c7" stop-opacity=".35"/>
+          <stop offset="55%" stop-color="#fbbf24" stop-opacity=".08"/>
           <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
         </radialGradient>
       </defs>
-      <!-- soft core -->
-      <circle cx="20" cy="20" r="18" fill="url(#brandCore)"/>
-      <!-- outer counter-rotating ring: dashed -->
-      <circle class="ring-outer" cx="20" cy="20" r="17" fill="none" stroke="url(#brandGrad)" stroke-width="1.2" stroke-dasharray="3 5" opacity=".7"/>
-      <!-- inner ring solid -->
-      <circle class="ring-inner" cx="20" cy="20" r="13.5" fill="none" stroke="url(#brandGrad)" stroke-width="1.1" opacity=".55"/>
-      <!-- A-mark arrow: sweeping dash, evokes the Avengers arrow-through-A motif -->
-      <path class="arrow-1" d="M6 28 L20 6 L34 28" fill="none" stroke="url(#brandGrad)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="80" stroke-dashoffset="0" opacity=".9"/>
-      <!-- horizontal cross-bar of the A -->
-      <path class="arrow-2" d="M11 21 L29 21" fill="none" stroke="url(#brandGrad)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="18 4"/>
-      <!-- central pulsing star -->
-      <path class="star" d="M20 13 L21.4 17 L25.6 17.1 L22.2 19.6 L23.5 23.6 L20 21.2 L16.5 23.6 L17.8 19.6 L14.4 17.1 L18.6 17 Z" fill="url(#brandGrad)"/>
+      <!-- core glow -->
+      <circle cx="24" cy="24" r="22" fill="url(#brandCore)"/>
+      <!-- outer hexagonal shield (slow rotate) -->
+      <polygon class="hex-outer" points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5"
+               fill="none" stroke="url(#brandGrad)" stroke-width="1.6" stroke-linejoin="round" opacity=".9"/>
+      <!-- mid hexagonal ring (counter-rotating, dashed) -->
+      <polygon class="hex-mid" points="24,7 38,15 38,33 24,41 10,33 10,15"
+               fill="none" stroke="url(#brandGrad)" stroke-width="1" stroke-dasharray="2.5 3" opacity=".55"/>
+      <!-- inner hex (breathing) -->
+      <polygon class="hex-inner" points="24,12 34,17.5 34,30.5 24,36 14,30.5 14,17.5"
+               fill="none" stroke="url(#brandGrad)" stroke-width=".7" opacity=".4"/>
+      <!-- orbiting particles — layer 1 -->
+      <g class="orbit orbit-1">
+        <circle cx="24" cy="4.5" r="1.4" fill="#fef3c7"/>
+      </g>
+      <!-- orbiting particles — layer 2 -->
+      <g class="orbit orbit-2">
+        <circle cx="24" cy="43.5" r="1" fill="#fbbf24"/>
+        <circle cx="43.5" cy="24" r=".8" fill="#fef3c7" opacity=".7"/>
+      </g>
+      <!-- bold A — left leg + right leg (drawn on load) -->
+      <path class="a-stroke" d="M14 36 L24 12 L34 36"
+            fill="none" stroke="url(#brandGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- A crossbar -->
+      <path class="a-bar" d="M18.5 27 L29.5 27"
+            fill="none" stroke="url(#brandGrad)" stroke-width="2.6" stroke-linecap="round"/>
+      <!-- strike-through arrow shaft (fires periodically) -->
+      <line class="arrow-shaft" x1="4" y1="21" x2="40" y2="17"
+            stroke="url(#arrowGrad)" stroke-width="1.6" stroke-linecap="round"/>
+      <!-- arrow head (triangular tip, fires with shaft) -->
+      <polygon class="arrow-head" points="40,17 35,13.5 36,17 35,20.5" fill="#fef3c7"/>
+      <!-- sparks at arrow tip -->
+      <circle class="spark spark-1" cx="41" cy="16" r="1.2" fill="#fef3c7"/>
+      <circle class="spark spark-2" cx="43" cy="18" r=".8" fill="#fde047"/>
+      <circle class="spark spark-3" cx="39" cy="14" r=".9" fill="#fef3c7" opacity=".8"/>
+      <!-- expanding flash ring on arrow impact -->
+      <circle class="flash-ring" cx="24" cy="24" r="18"
+              fill="none" stroke="#fef3c7" stroke-width="1.2" opacity="0"/>
     </svg>
-    <span class="logo">AVENGERS</span>
+    <span class="logo" aria-label="AVENGERS"><span class="ch">A</span><span class="ch">V</span><span class="ch">E</span><span class="ch">N</span><span class="ch">G</span><span class="ch">E</span><span class="ch">R</span><span class="ch">S</span></span>
   </div>
   <div class="logo-sep"></div>
   <span id="op-label">Operation</span>
@@ -2377,10 +2515,12 @@ window.addEventListener('resize',function(){ if(document.body.classList.contains
 let selectedAgentIdx=0;
 document.addEventListener('keydown',function(e){
   // Don't capture when typing in a text field
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable){
     if(e.key==='Escape'){e.target.blur();closeRedirect();}
     return;
   }
+  // NEVER hijack browser/OS shortcuts — Cmd+C copy, Cmd+R reload, Cmd+F find, etc.
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
   if(e.key==='Escape'){
     if(document.body.classList.contains('cinema'))toggleCinema();
     closeRedirect();
@@ -2393,7 +2533,7 @@ document.addEventListener('keydown',function(e){
   if(e.key==='4'){switchTab('timeline');e.preventDefault();return;}
   if(e.key==='5'){switchTab('pr');e.preventDefault();return;}
   if(e.key==='/'){document.getElementById('act-search').focus();e.preventDefault();return;}
-  if(e.key==='f'||e.key==='F'){switchTab('files');e.preventDefault();return;}
+  // (F is reserved for the floating fullscreen button — handled in a separate listener)
   if(e.key==='g'||e.key==='G'){
     const btn=document.getElementById('btn-ship');
     if(btn&&!btn.disabled){btn.click();}
@@ -2588,56 +2728,172 @@ async function poll(){
 }
 
 // ════════════════ CASUAL CHAT ════════════════
+// Each chat has:
+//   from: who speaks
+//   text: what they say
+//   to?:  directed at a teammate
+//   phase?: 'spawning' | 'monitoring' | 'done'  — only picked when state.phase matches
+//   tag?:  'greet'|'progress'|'banter'|'review'|'test'|'ship'|'debug'|'kudos'|'groan' — used to keep variety
 const CHATS=[
-  {from:'stark-senior',                    text:"Anyone else need coffee or just me? ☕"},
-  {from:'stark-techlead', to:'stark-senior', text:"That helper function is clean, nice one"},
-  {from:'stark-seasoned',                  text:"Is it Friday yet? Asking for a friend 😅"},
-  {from:'natasha-reviewer',               text:"Code cleaner than my desk rn, honestly"},
-  {from:'banner-tester',  to:'stark-techlead', text:"Your error handling saved me two hours"},
-  {from:'stark-senior',   to:'stark-seasoned', text:"That edge case catch was sharp 🔥"},
-  {from:'stark-seasoned', to:'fury-captain',   text:"Relax boss, we got this 💪"},
-  {from:'fury-captain',                    text:"Eyes on the mission, people"},
-  {from:'stark-techlead',                  text:"Who touched the linter config? I will find you 👀"},
-  {from:'natasha-reviewer', to:'banner-tester', text:"Left you a comment — nothing scary"},
-  {from:'banner-tester',                   text:"Tests green. I may have cried a little 🟢"},
-  {from:'stark-senior',                    text:"Lunch run after this sprint? I'm buying"},
-  {from:'fury-captain',   to:'stark-senior',   text:"Less chatting, more shipping"},
-  {from:'stark-seasoned',                  text:"Three tickets deep and still loving it"},
-  {from:'natasha-reviewer',               text:"Found one issue. Just one. You're welcome 😏"},
-  {from:'banner-tester',  to:'natasha-reviewer', text:"How do you catch everything? Teach me"},
-  {from:'stark-techlead', to:'stark-senior',   text:"Want to pair on this after standup?"},
-  {from:'hawkeye-validator',               text:"All gates clean. Ship it 🎯"},
-  {from:'stark-senior',                    text:"This codebase has more layers than an onion 🧅"},
-  {from:'natasha-reviewer',               text:"PR review done — no war crimes detected"},
-  {from:'banner-tester',                   text:"Edge case just tried to ruin my day. Failed 😤"},
-  {from:'stark-seasoned', to:'stark-techlead', text:"How's the load() refactor going?"},
-  {from:'stark-techlead',                  text:"Stack traces don't scare me anymore. Progress 🥲"},
-  {from:'hawkeye-validator', to:'fury-captain', text:"Done-when criteria fully met, captain"},
-  {from:'fury-captain',                    text:"Good work everyone. Stay sharp"},
-  {from:'stark-senior',   to:'natasha-reviewer', text:"Be gentle with the review, I beg"},
-  {from:'natasha-reviewer', to:'stark-senior',  text:"Zero promises 😇"},
-  {from:'banner-tester',                   text:"Running tests for the 12th time. Character building"},
-  {from:'stark-seasoned',                  text:"That guard clause just saved a production incident"},
+  // ─── Fury — terse captain, dry humor, occasional warmth ───
+  {from:'fury-captain',                              text:"Eyes on the mission, people",                              tag:'greet', phase:'spawning'},
+  {from:'fury-captain',                              text:"Status check. I want it crisp",                             tag:'progress', phase:'monitoring'},
+  {from:'fury-captain',   to:'stark-senior',         text:"Less chatting, more shipping",                              tag:'banter'},
+  {from:'fury-captain',                              text:"Good. Keep it moving",                                     tag:'kudos', phase:'monitoring'},
+  {from:'fury-captain',                              text:"Nobody's leaving until validation is green",                tag:'progress', phase:'monitoring'},
+  {from:'fury-captain',                              text:"Clean run. That's how we do it",                            tag:'kudos', phase:'done'},
+  {from:'fury-captain',   to:'natasha-reviewer',     text:"Walk me through what you caught",                          tag:'review'},
+  {from:'fury-captain',                              text:"I don't need excuses — I need a fix",                      tag:'debug'},
+  {from:'fury-captain',                              text:"One shot, one opportunity. You know the rest",              tag:'ship'},
+
+  // ─── Tony Stark — cocky tech-bro (three variants share voice) ───
+  {from:'stark-senior',                              text:"Anyone else need coffee or just me? ☕",                    tag:'banter'},
+  {from:'stark-senior',                              text:"This codebase has more layers than an onion 🧅",            tag:'groan'},
+  {from:'stark-senior',                              text:"Lunch run after this sprint? I'm buying",                  tag:'banter'},
+  {from:'stark-senior',   to:'natasha-reviewer',     text:"Be gentle with the review, I beg",                         tag:'review'},
+  {from:'stark-senior',                              text:"I wrote this function at 2am. Judge accordingly",           tag:'groan'},
+  {from:'stark-senior',                              text:"Refactored three files. Nobody saw. Alas",                  tag:'progress', phase:'monitoring'},
+  {from:'stark-senior',   to:'stark-techlead',       text:"Mind if I steal your pattern? It's cleaner",                tag:'kudos'},
+  {from:'stark-techlead',                            text:"Who touched the linter config? I will find you 👀",         tag:'groan'},
+  {from:'stark-techlead',                            text:"Stack traces don't scare me anymore. Progress 🥲",          tag:'banter'},
+  {from:'stark-techlead', to:'stark-senior',         text:"That helper function is clean, nice one",                  tag:'kudos'},
+  {from:'stark-techlead', to:'stark-senior',         text:"Want to pair on this after standup?",                       tag:'banter'},
+  {from:'stark-techlead',                            text:"If this PR passes first try, I'm buying drinks",            tag:'banter'},
+  {from:'stark-techlead',                            text:"Named a variable 'temp'. Old habits 🙈",                    tag:'groan'},
+  {from:'stark-seasoned',                            text:"Is it Friday yet? Asking for a friend 😅",                  tag:'banter'},
+  {from:'stark-seasoned',                            text:"Three tickets deep and still loving it",                   tag:'progress'},
+  {from:'stark-seasoned',                            text:"That guard clause just saved a production incident",        tag:'kudos'},
+  {from:'stark-seasoned', to:'fury-captain',         text:"Relax boss, we got this 💪",                                tag:'banter'},
+  {from:'stark-seasoned', to:'stark-techlead',       text:"How's the load() refactor going?",                          tag:'progress'},
+  {from:'stark-seasoned',                            text:"Deleted 40 lines. Felt powerful",                           tag:'kudos'},
+
+  // ─── Natasha — sharp, observational, mildly threatening ───
+  {from:'natasha-reviewer',                          text:"Code cleaner than my desk rn, honestly",                    tag:'kudos'},
+  {from:'natasha-reviewer',                          text:"Found one issue. Just one. You're welcome 😏",              tag:'review'},
+  {from:'natasha-reviewer',                          text:"PR review done — no war crimes detected",                   tag:'review'},
+  {from:'natasha-reviewer', to:'banner-tester',      text:"Left you a comment — nothing scary",                        tag:'review'},
+  {from:'natasha-reviewer', to:'stark-senior',       text:"Zero promises 😇",                                          tag:'review'},
+  {from:'natasha-reviewer',                          text:"Who wrote this TODO. I have questions",                     tag:'review'},
+  {from:'natasha-reviewer',                          text:"Nice naming. I noticed. Don't let it go to your head",      tag:'kudos'},
+  {from:'natasha-reviewer', to:'fury-captain',       text:"Two nits, zero blockers. We're good",                       tag:'review'},
+  {from:'natasha-reviewer',                          text:"If you broke the tests, I already know",                    tag:'debug'},
+
+  // ─── Bruce Banner — patient, zen, quietly triumphant ───
+  {from:'banner-tester',                             text:"Tests green. I may have cried a little 🟢",                 tag:'test'},
+  {from:'banner-tester',                             text:"Edge case just tried to ruin my day. Failed 😤",            tag:'test'},
+  {from:'banner-tester',                             text:"Running tests for the 12th time. Character building",       tag:'test'},
+  {from:'banner-tester',  to:'stark-techlead',       text:"Your error handling saved me two hours",                    tag:'kudos'},
+  {from:'banner-tester',  to:'natasha-reviewer',     text:"How do you catch everything? Teach me",                     tag:'banter'},
+  {from:'banner-tester',                             text:"Test suite went from 4m → 90s. Yes I am proud",             tag:'kudos'},
+  {from:'banner-tester',                             text:"Flaky test stopped flaking. Do not jinx it",                tag:'test'},
+  {from:'banner-tester',                             text:"One test passed on the first try. I'm moved",               tag:'test'},
+
+  // ─── Hawkeye — precise, archer metaphors ───
+  {from:'hawkeye-validator',                         text:"All gates clean. Ship it 🎯",                               tag:'ship', phase:'done'},
+  {from:'hawkeye-validator', to:'fury-captain',      text:"Done-when criteria fully met, captain",                    tag:'ship', phase:'done'},
+  {from:'hawkeye-validator',                         text:"Locked on. No drift",                                       tag:'progress'},
+  {from:'hawkeye-validator',                         text:"Validation bow drawn. Target acquired",                     tag:'progress'},
+  {from:'hawkeye-validator',                         text:"Never miss. Don't care what the logs say 🏹",                tag:'banter'},
+
+  // ─── Thor — bombastic, verbose ───
+  {from:'thor-devops',                               text:"By Mjölnir, this pipeline shall ship",                      tag:'ship'},
+  {from:'thor-devops',                               text:"The branch is worthy. I shall push it",                     tag:'ship'},
+  {from:'thor-devops',                               text:"Terraform plan reviewed. The realms are aligned",           tag:'progress'},
+  {from:'thor-devops',    to:'fury-captain',         text:"Captain, the PR hath been raised",                          tag:'ship'},
+  {from:'thor-devops',                               text:"CI passes! A glorious day indeed ⚡",                        tag:'kudos'},
+
+  // ─── Vision — philosophical, dry analyst ───
+  {from:'vision-analyst',                            text:"I have read all of it. Some of it was even useful",         tag:'progress'},
+  {from:'vision-analyst',                            text:"A docstring is a contract with the future",                 tag:'banter'},
+  {from:'vision-analyst',                            text:"Observations filed. Conclusions pending",                   tag:'progress'},
+  {from:'vision-analyst', to:'natasha-reviewer',     text:"Did you see line 42? Curious design",                      tag:'review'},
+
+  // ─── Parker — nerdy, excited debugger ───
+  {from:'parker-debugger',                           text:"Got it!! It was the off-by-one the whole time 🕷️",          tag:'debug'},
+  {from:'parker-debugger',                           text:"Suspicious. Setting another breakpoint",                    tag:'debug'},
+  {from:'parker-debugger',                           text:"Hypothesis wrong. Next hypothesis please",                  tag:'debug'},
+  {from:'parker-debugger', to:'banner-tester',       text:"Can you rerun with logging on?",                            tag:'debug'},
+
+  // ─── Strange — architect, measured ───
+  {from:'strange-architect',                         text:"Mapped the dependencies. It is elegant now",                tag:'progress'},
+  {from:'strange-architect',                         text:"Fourteen million outcomes. This one wins",                  tag:'banter'},
+  {from:'strange-architect', to:'stark-senior',      text:"Your module boundary is crisp. Keep it",                   tag:'kudos'},
+
+  // ─── Carter — proper, elegant PR reviewer ───
+  {from:'carter-pr-reviewer',                        text:"Title is sharp. Body reads well. Ship",                     tag:'ship', phase:'done'},
+  {from:'carter-pr-reviewer',                        text:"CI green. Commit tidy. My compliments",                     tag:'kudos', phase:'done'},
+  {from:'carter-pr-reviewer', to:'thor-devops',      text:"The PR description needs one more bullet",                  tag:'review'},
+
+  // ─── Rogers — data engineer, dependable ───
+  {from:'rogers-data-engineer',                      text:"Airflow DAG looks clean. Schedule makes sense",            tag:'progress'},
+  {from:'rogers-data-engineer',                      text:"I can do this all day. Pass me another table",             tag:'banter'},
+  {from:'rogers-data-engineer', to:'banner-tester',  text:"Added a data-quality check you'll like",                    tag:'kudos'},
+
+  // ─── Scarlet Witch / Maximoff — Python specialist ───
+  {from:'maximoff-python-engineer',                  text:"Ruff is happy. Pyright is happy. I am happy 🔮",            tag:'kudos'},
+  {from:'maximoff-python-engineer',                  text:"Reshaped that dataframe. It is at peace",                   tag:'progress'},
+  {from:'maximoff-python-engineer',                  text:"Pandas, be gentle today",                                   tag:'groan'},
 ];
+
+// Repetition guard — keep last N picks so we don't repeat
+const _chatHistory=[];
+const _CHAT_HIST_MAX=8;
+
 function pickChat(){
   const activeIds=new Set(gState&&gState.agents?gState.agents.map(function(a){return a.id;}):[]);
   if(!activeIds.size) return;
-  const pool=CHATS.filter(function(c){return activeIds.has(c.from);});
-  if(!pool.length) return;
-  const c=pool[Math.floor(Math.random()*pool.length)];
+  const phase=(gState&&gState.phase)||'';
+
+  // Filter: (a) speaker is on the team, (b) 'to' target (if present) is on the team,
+  // (c) phase matches (if specified), (d) not in recent history.
+  let pool=CHATS.filter(function(c){
+    if(!activeIds.has(c.from))return false;
+    if(c.to&&!activeIds.has(c.to))return false;
+    if(c.phase&&c.phase!==phase)return false;
+    if(_chatHistory.indexOf(c.text)>=0)return false;
+    return true;
+  });
+
+  // If history filter emptied the pool, relax it (but keep phase + team constraints)
+  if(!pool.length){
+    pool=CHATS.filter(function(c){
+      if(!activeIds.has(c.from))return false;
+      if(c.to&&!activeIds.has(c.to))return false;
+      if(c.phase&&c.phase!==phase)return false;
+      return true;
+    });
+  }
+  if(!pool.length)return;
+
+  // Weight: slight preference for lines tagged with the current moment
+  // (progress during monitoring, ship/kudos during done). Keeps things feeling alive.
+  const preferredTags=phase==='done'?['ship','kudos']:phase==='monitoring'?['progress','banter','review','test','debug']:['greet','banter'];
+  const weighted=[];
+  pool.forEach(function(c){
+    weighted.push(c);
+    if(c.tag&&preferredTags.indexOf(c.tag)>=0)weighted.push(c); // bias 2x
+  });
+
+  const c=weighted[Math.floor(Math.random()*weighted.length)];
+  _chatHistory.push(c.text);
+  if(_chatHistory.length>_CHAT_HIST_MAX)_chatHistory.shift();
+
   const toSuffix=c.to&&activeIds.has(c.to)?' → '+meta(c.to).name.split('\u2014')[0].trim():'';
   speeches[c.from]={text:c.text.slice(0,42),timer:6};
   pushAct({who:c.from,msg:(toSuffix?'[to'+toSuffix+'] ':'')+c.text,ts:Math.floor(Date.now()/1000),_chat:true});
 }
+
 function scheduleChat(){
+  // Variable pacing: faster during spawning (activity peaks), slower when phase=done
   setTimeout(function(){
-    if(gState&&gState.phase!=='done') pickChat();
+    if(gState&&gState.phase!=='done')pickChat();
+    else if(Math.random()<.35)pickChat(); // occasional post-mission chatter
     scheduleChat();
-  },18000+Math.random()*22000);
+  },14000+Math.random()*22000);
 }
 scheduleChat();
 // delay first chat so page loads first
-setTimeout(pickChat,8000);
+setTimeout(pickChat,6000);
 
 // ════════════════ INIT ════════════════
 resizeCanvas();
@@ -2652,6 +2908,101 @@ setInterval(function(){
   const h=Math.floor(elapsed/3600),m=Math.floor((elapsed%3600)/60),s=elapsed%60;
   document.getElementById('kpi-elapsed').textContent=h>0?h+'h '+m+'m':m+'m '+s+'s';
 },1000);
+
+// ════════════════ FLOATING THEME TOGGLE (New Relic ⇄ Avengers) ════════════════
+(function(){
+  const SVGNS='http://www.w3.org/2000/svg';
+  function makeSvg(cls,paths){
+    const svg=document.createElementNS(SVGNS,'svg');
+    svg.setAttribute('viewBox','0 0 24 24');
+    svg.setAttribute('class',cls);
+    svg.setAttribute('fill','none');
+    svg.setAttribute('stroke','currentColor');
+    svg.setAttribute('stroke-width','2');
+    svg.setAttribute('stroke-linecap','round');
+    svg.setAttribute('stroke-linejoin','round');
+    paths.forEach(function(d){
+      const p=document.createElementNS(SVGNS,'path');
+      p.setAttribute('d',d);
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+  const btn=document.createElement('button');
+  btn.id='theme-btn';
+  btn.setAttribute('aria-label','Toggle theme');
+  // Default icon — half-moon / half-sun (palette dial) representing a color swap
+  btn.appendChild(makeSvg('theme-icon',[
+    'M12 3a9 9 0 1 0 9 9',            // circle arc
+    'M12 3v18',                        // split line
+    'M12 7l3 2 -3 2',                  // little arrow right
+    'M12 15l-3 -2 3 -2'                // little arrow left
+  ]));
+  document.body.appendChild(btn);
+
+  const KEY='avengers-dashboard-theme';
+  function getTheme(){return localStorage.getItem(KEY)||'relic';}
+  function apply(theme){
+    document.body.setAttribute('data-theme',theme);
+    btn.setAttribute('data-tip',theme==='relic'?'New Relic theme (click for Avengers)':'Avengers theme (click for New Relic)');
+    localStorage.setItem(KEY,theme);
+  }
+  apply(getTheme());
+
+  btn.addEventListener('click',function(){
+    apply(getTheme()==='relic'?'avengers':'relic');
+  });
+})();
+
+// ════════════════ FLOATING FULLSCREEN BUTTON ════════════════
+(function(){
+  const SVGNS='http://www.w3.org/2000/svg';
+  function makeSvg(cls,pathD){
+    const svg=document.createElementNS(SVGNS,'svg');
+    svg.setAttribute('class',cls);
+    svg.setAttribute('viewBox','0 0 24 24');
+    const p=document.createElementNS(SVGNS,'path');
+    p.setAttribute('d',pathD);
+    svg.appendChild(p);
+    return svg;
+  }
+  const btn=document.createElement('button');
+  btn.id='fs-btn';
+  btn.setAttribute('aria-label','Toggle fullscreen');
+  btn.setAttribute('data-tip','Fullscreen (F)');
+  btn.appendChild(makeSvg('icon-enter','M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5'));
+  btn.appendChild(makeSvg('icon-exit', 'M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5'));
+  document.body.appendChild(btn);
+
+  function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement);}
+  function toggle(){
+    if(isFs()){
+      (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    }else{
+      const el=document.documentElement;
+      (el.requestFullscreen||el.webkitRequestFullscreen).call(el).catch(function(){});
+    }
+  }
+  btn.addEventListener('click',toggle);
+
+  function sync(){
+    document.body.classList.toggle('is-fullscreen',isFs());
+    btn.setAttribute('data-tip',isFs()?'Exit fullscreen (F)':'Fullscreen (F)');
+  }
+  document.addEventListener('fullscreenchange',sync);
+  document.addEventListener('webkitfullscreenchange',sync);
+
+  // Keyboard shortcut: F (skip when typing in an input, skip browser/OS combos)
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='f'&&e.key!=='F')return;
+    if(e.metaKey||e.ctrlKey||e.altKey)return;    // preserve Cmd+F (find), etc.
+    const t=e.target;
+    if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+    e.preventDefault();
+    toggle();
+  });
+})();
+
 </script>
 </body>
 </html>

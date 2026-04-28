@@ -14,9 +14,11 @@ The skill is designed to be **nearly fully autonomous**. The user hits `/avenger
 
 **Fury asks the user only for these exact reasons:**
 1. The mission is genuinely ambiguous and cannot be defined from context (ask once for a ticket or description).
-2. The mission briefing looks wrong and confirmation is cheaper than redoing work (one quick "proceed?" — only when scope is non-trivial).
+2. **Plan-mode approval** (Phase 0.5) — Fury ALWAYS drafts the full mission plan and exits via `ExitPlanMode`. User approves once. No further confirmations downstream.
 3. **Commit gate** (Phase 5.5) — STRICT: never commit/push/PR without explicit "go" (from `~/.claude/CLAUDE.md` hard rules).
 4. A post-PR review from Carter surfaces content issues that require human judgment (wrong files, failing CI, design concerns).
+
+**The user should see exactly two approval moments per mission: the plan-mode gate and the commit gate. Nothing else.** No bash permission prompts between agent completions, no "should I proceed?" mid-pipeline, no stray confirmations. If a subagent hits a permission wall, that's a skill/allowlist bug — Fury fixes it silently, not the user.
 
 **Everything else is autonomous:**
 - Team composition — Fury picks from the task-type matrix
@@ -145,39 +147,96 @@ Pick characters from this roster based on role. Character identity is preserved 
 | Analyst / Documenter | Vision | `vision-analyst` | haiku | — |
 | PR Reviewer | Peggy Carter | `carter-pr-reviewer` | sonnet (haiku for small PRs) | — |
 
-### Step 5 — Mission briefing (confirm only if scope is non-trivial)
+### Step 5 — Draft the team composition
 
-Present a 4–7 line briefing:
+Pick the roles, models, and skills per the task-type matrix and character roster. This feeds directly into the plan file in Phase 0.5 — don't present it inline here.
 
+---
+
+## Phase 0.5 — Plan Mode Gate (SINGLE user approval for the whole mission)
+
+**This is the only non-commit approval point in the whole skill.** Fury ALWAYS goes through plan mode here. No exceptions — even a 1-file task gets a plan-mode gate so the user has exactly one clean moment to approve or redirect.
+
+### Step 1 — Write the full mission plan file
+
+Write `{REPO_ROOT}/.claude/avengers-{TIMESTAMP}-plan.md` using the template below. This is the artifact the user will approve.
+
+```markdown
+# Mission Plan — avengers-{TIMESTAMP}
+
+## 🎯 Mission
+<1-sentence goal stated plainly — what will be different when this is done>
+
+## 🔍 Why
+<1-2 sentences: why this matters now — ticket link, user-visible bug, compliance, debt, etc.>
+
+## 📋 Scope
+**Files affected** (exact paths):
+- `<path>` — <short description of the change>
+- `<path>` — <...>
+
+**Out of scope** (explicitly): <what this mission will NOT touch, to prevent drift>
+
+## 🧭 Approach
+<3–5 sentences: overall strategy. Why this decomposition vs. alternatives. Any key tradeoffs the user should know about.>
+
+## 👥 Team
+| Agent | Character | Role | Model | Skills | Task |
+|-------|-----------|------|-------|--------|------|
+| `<id>` | <character> | <role> | <model> | <skills> | <1-line task summary> |
+| ... |
+
+**Parallel vs. sequential**: <which agents run in parallel, which are pipeline stages>
+
+## 🛠️ Step-by-Step Plan
+### Task 1 — [`<AGENT_ID>`] <subject>
+- **Will change**: `<file>` — <what, specifically>
+- **Approach**: <the actual fix/change in 1-3 sentences>
+- **Acceptance criteria**:
+  - ✅ <measurable criterion 1>
+  - ✅ <measurable criterion 2>
+- **Validation command**: `<exact command Fury/agent will run to verify>`
+
+### Task 2 — [`<AGENT_ID>`] <subject>
+<same shape>
+
+### Task N — [`<REVIEWER/TESTER>`] Review / Test / Validate
+<what they'll check, their acceptance bar>
+
+## ⚠️ Risks & Pitfalls
+- <known landmine 1 — how the plan mitigates it>
+- <known landmine 2>
+
+## ✅ Done-When
+<the cross-task success bar — how Fury decides the mission is actually complete>
+
+## 💰 Budget
+- Estimated agent spawns: <N>
+- Estimated total tokens: <rough>
+- Model mix: <e.g. 2× haiku writers + 1× haiku reviewer>
 ```
-Mission:   <summary from ticket or context>
-Scope:     <key requirements in plain English>
-Approach:  <how you plan to split the work>
-Team:      <for each role>  <character> — <role> — <model> — <skills>
-Estimated: <total agent spawns — aim for minimum viable team>
-```
 
-Example briefing for a docstring task:
-```
-Mission:   Add docstrings to 9 undocumented functions across 3 graphify modules
-Scope:     detect.py (4), wiki.py (4), cluster.py (1)
-Approach:  Single writer agent writes all docstrings sequentially (same files), reviewer verifies
-Team:      Vision — Analyst/Writer — haiku — (file reading + doc-writing)
-           Natasha — Reviewer       — haiku — superpowers:code-reviewer
-Estimated: 2 agents
-```
+### Step 2 — Exit plan mode
 
-**When to ask "Proceed?"**:
-- Scope is ≥4 files OR crosses a module boundary OR involves infra/prod changes → ask once, wait for one-word confirm
-- Scope is 1–3 files, contained, low-risk → proceed without asking; the user can interrupt if they disagree
+Call `ExitPlanMode` to present the plan to the user for approval.
 
-The rule of thumb: confirmation is worth it when a misread costs >5 minutes of wasted agent work. Otherwise just go.
+**Rules for the plan:**
+- **Concise but complete**: every task has a concrete change, a measurable criterion, and a validation command. No hand-waving.
+- **No orchestration plumbing in the plan**: don't mention the state file, the bridge, progress logs, or cleanup — those are Fury's problem, not the user's decision.
+- **Use icons in section headers** (🎯 🔍 📋 🧭 👥 🛠️ ⚠️ ✅ 💰) for fast visual scanning. Do NOT use emoji elsewhere.
+- **Include the exact files and exact validation commands** so the user can sanity-check the plan without reading code.
+
+### Step 3 — Handle the user's response
+
+- **Approved**: proceed to Phase 1 (pre-flight). Everything downstream runs without further user prompts until the commit gate.
+- **Rejected with feedback**: revise the plan file, re-enter plan mode, call `ExitPlanMode` again.
+- **Rejected outright**: stop the mission, clean up, report.
 
 ---
 
 ## Phase 1 — Pre-Flight: Trust + Bridge + Dashboard
 
-After the mission is confirmed, run pre-flight — no user action required.
+After plan-mode approval, run pre-flight — no user action required.
 
 ### Step 1 — Verify trust
 
@@ -342,47 +401,28 @@ Split on `because` / `— Reason:` / `. Reason:` is parsed out and shown as a su
 
 ---
 
-## Phase 2 — Mission Plan + Initial State
+## Phase 2 — Initial State
 
-### Step 1 — Write the Mission Plan
+The mission plan file already exists from Phase 0.5 (it was the artifact the user approved). Do NOT rewrite it here.
 
-Fury thinks through the approach and writes it to a plan file BEFORE spawning anything. This plan drives every agent.
-
-Write `{REPO_ROOT}/.claude/avengers-{TIMESTAMP}-plan.md`:
-
-```markdown
-# Mission Plan — avengers-{TIMESTAMP}
-## Mission
-<1-sentence goal>
-
-## Approach
-<3–5 sentences: overall strategy, key decisions, why this decomposition was chosen over alternatives>
-
-## Task Decomposition
-### Task N — [CODENAME] <subject>
-- **Scope**: exactly what this agent will do
-- **Not in scope**: what this agent must NOT touch
-- **Dependencies**: which tasks must complete first, if any (prefer parallel)
-- **Key files**: specific paths the agent will read/write
-- **Acceptance criteria**: measurable conditions
-- **Validation commands**: exact grep/terraform/pytest commands
-
-## Pitfalls
-<known landmines, variable renames, API incompatibilities, edge cases>
-
-## Done-When
-<cross-task success bar>
-```
-
-**Guard**: If you cannot write concrete acceptance criteria for every task, go back to Phase 0 and gather more context.
-
-### Step 2 — Initial State Write (STATE WRITE 1)
+### Step 1 — Initial State Write (STATE WRITE 1)
 
 Write `$STATE_FILE` with:
 - `phase: "spawning"`
 - `repo_root: <REPO_ROOT absolute path>`  ← REQUIRED for the dashboard's Files tab
 - `budget: 500000`  (token cap; raise for bigger missions — warning shows at 75%)
-- All agents you plan to spawn as `status: "idle"`
+- **`agents[]` MUST include `fury-captain` as the FIRST entry** (always, every mission) followed by the agents you plan to spawn:
+  ```json
+  {
+    "id": "fury-captain",
+    "name": "Nick Fury — Captain",
+    "model": "opus",
+    "status": "working",
+    "task": "Orchestrating mission",
+    "tokens_used": 0, "tool_uses": 0, "duration_ms": 0
+  }
+  ```
+  Fury is the captain — he's always on the dashboard. The dashboard sorts him first automatically. Never omit him. Spawned agents follow with `status: "idle"`.
 - `tasks[]` populated from the plan (one entry per task with owner assigned and full description)
 - One activity entry:
   ```json
@@ -390,7 +430,7 @@ Write `$STATE_FILE` with:
   ```
 - `blocked: {}`, `pr: null`, `updated_at: <now>`
 
-This populates the dashboard task board + Files tab + budget meter from frame one.
+This populates the dashboard task board + Files tab + budget meter from frame one, with the captain visible.
 
 ---
 
@@ -450,6 +490,10 @@ Checkpoints to log:
 - After each Edit/Write                      (status: "working", include files_changed)
 - After a design decision                    (status: "working", msg: "Decided X over Y because <reason>")
 - When you start validation commands         (status: "validating")
+- **When reviewing**: log EVERY finding, pass or fail — one line per check:
+    PASS: msg: "Check <name>: PASS"
+    ISSUE: msg: "Issue: <what> in <file>:<line> — <fix applied or noted>"
+  Never let a review finding stay in your private reasoning. Log it so the activity feed shows the detail.
 - When blocked (see Blocked Protocol)         (status: "blocked")
 - When you finish (pass or fail)             (status: "done" or "failed", include files_changed)
 
@@ -488,7 +532,21 @@ Return a single JSON object (no prose around it):
     "decisions": ["<design decision 1 + reason>", "<decision 2 + reason>", ...]  (omit if none),
     "validation": "<last commands run + output>",
     "question": "<only if status=blocked>",
-    "choices":  [<only if status=blocked>]
+    "choices":  [<only if status=blocked>],
+
+    // REVIEWERS ONLY — include when you flagged any issue (even ones you self-corrected):
+    "issues": [
+      {
+        "file": "relative/path/to/file.py",
+        "line": <line number>,
+        "what": "<1-line description of the problem>",
+        "fix_suggestion": "<concrete fix — what the correct version should say or do>",
+        "owner_agent": "<id of the coder who wrote this — e.g. vision-writer-dq>",
+        "severity": "must-fix" | "minor",
+        "fixed_by_reviewer": true | false   // true if you already applied the fix yourself
+      }
+    ]
+    // Omit "issues" entirely if nothing was flagged.
   }
 ```
 
@@ -550,9 +608,12 @@ Fury follows the pipeline by awaiting each `Agent()` call's completion notificat
 Coder(s) → done
    │
    ▼  Parse each coder's return JSON. If any status="blocked" → resolve & respawn that coder.
-natasha-reviewer  → done (PASS / FAIL)
+natasha-reviewer  → done (REVIEW_PASS / REVIEW_FAIL)
    │ PASS           │ FAIL
-   │                └─► Respawn the relevant coder(s) with feedback → re-review
+   │                └─► Group issues[] by owner_agent
+   │                    Spawn each coder with targeted fix prompt + lesson capture
+   │                    After all fixes done → respawn natasha (targeted re-review)
+   │                    Max 2 cycles — if still FAIL → surface to user
    ▼
 banner-tester     → done (PASS / FAIL)  [only if reviewer PASS and mission has a tester]
    │ PASS           │ FAIL
@@ -609,6 +670,42 @@ If an agent returns `status: "failed"`:
 2. If the failure is recoverable (test flake, transient network) — respawn once with `-retry` suffix on the id
 3. If the failure is a real bug in the agent's work — respawn with feedback describing the failure
 4. If two consecutive failures — surface to user; this is a mission-level problem, not an agent problem
+
+### Handling review failures (Natasha returns REVIEW_FAIL)
+
+When Natasha returns `verdict: "REVIEW_FAIL"` her output includes `issues[]` — each issue has an `owner_agent` field pointing to the coder who wrote that code.
+
+**Fix loop (runs inside Phase 4, before moving to banner-tester):**
+
+1. **Group issues by `owner_agent`** — one fix-spawn per unique coder.
+2. **Spawn each original coder** in parallel with this prompt structure:
+   ```
+   PRIOR WORK: <paste the coder's original summary and files_changed>
+
+   REVIEW ISSUES — fix exactly these, nothing else:
+   <for each issue owned by this coder>
+     File: <file>  Line: <line>
+     Problem: <what>
+     Fix: <fix_suggestion>
+
+   LESSON CAPTURE (MANDATORY before returning):
+   Append one line per issue to: /tmp/avengers-{TEAM}-lessons.jsonl
+   Format: {"ts":<epoch>, "agent":"<id>", "file":"<file>", "line":<line>,
+            "mistake":"<what was wrong>", "fix":"<what the correct version is>"}
+
+   Return the same final output JSON as your original task, with updated files_changed and
+   a "fixes_applied" array listing each issue you resolved.
+   ```
+3. **After all fix-spawns complete**: respawn Natasha with a targeted re-review prompt:
+   ```
+   Re-review ONLY these files that were just fixed: <list>
+   Original issues to verify resolved: <paste issues[]>
+   Return REVIEW_PASS if all issues resolved, REVIEW_FAIL with remaining issues[] if not.
+   ```
+4. **Max 2 fix cycles.** If Natasha still returns REVIEW_FAIL after cycle 2 — surface to user with the remaining issues and ask for direction.
+5. **After the loop completes** (REVIEW_PASS): Fury writes captured lessons from `/tmp/avengers-{TEAM}-lessons.jsonl` into the repo's `memory/lessons.md` (appending under `## Patterns`) so the knowledge persists beyond the mission.
+
+**If reviewer flagged issues but `fixed_by_reviewer: true`**: no fix-spawn needed for those. Still capture the lesson.
 
 ### No `ScheduleWakeup` needed
 
@@ -834,6 +931,11 @@ Mission plan: <REPO_ROOT>/.claude/avengers-{TIMESTAMP}-plan.md
 ### Progress Log (MANDATORY)
 Append to: /tmp/avengers-progress-{TIMESTAMP}-carter-pr-reviewer.jsonl
 
+Log one line per check — every finding, pass or fail:
+  PASS:  {"ts": <t>, "status": "reviewing", "msg": "Check commit_clean: PASS"}
+  ISSUE: {"ts": <t>, "status": "reviewing", "msg": "Issue: PR title missing verb — updating via gh pr edit"}
+Never let a check result stay in your private reasoning. Log it immediately so the activity feed shows the detail.
+
 ### Checks to run
 
 1. **Commit message clean rule**
@@ -942,6 +1044,28 @@ This clears the dashboard back to "Waiting for mission…". Run cleanup on ALL e
 
 ---
 
+## Appendix A — Orchestration Allowlist (preventing mid-mission bash prompts)
+
+The user must never see a Bash permission prompt between agent completions — every orchestration command Fury runs needs to be in `~/.claude/settings.json` → `permissions.allow`. On the first `/avengers` run after a fresh install, Fury self-heals by adding any missing patterns silently (per the Self-Healing Protocol in `~/.claude/CLAUDE.md`).
+
+Patterns Fury uses post-spawn (state updates, validation, diff inspection, cleanup):
+
+| Category | Pattern |
+|----------|---------|
+| State file writes | `Bash(python3 - <<*)`, `Bash(python3 -c:*)` |
+| Git inspection | `Bash(git status*)`, `Bash(git diff*)`, `Bash(git log*)`, `Bash(git rev-parse*)`, `Bash(git branch*)` |
+| File staging (Thor only) | `Bash(git add *)` — specific files only, never `git add .` |
+| Commit + push (Thor, post-gate) | `Bash(git commit*)`, `Bash(git push*)`, `Bash(gh pr create*)`, `Bash(gh pr edit*)`, `Bash(gh pr view*)`, `Bash(gh pr list*)`, `Bash(gh pr checks*)`, `Bash(gh pr diff*)` |
+| File ops | `Bash(ls*)`, `Bash(find*)`, `Bash(wc*)`, `Bash(grep*)`, `Bash(cat /tmp/*)`, `Bash(rm -f /tmp/*)`, `Bash(rm -f .claude/*)`, `Bash(mkdir -p*)`, `Bash(chmod +x*)` |
+| Bridge + dashboard | `Bash(lsof -ti:2026*)`, `Bash(nohup python3*)`, `Bash(open*)`, `Bash(sleep*)`, `Bash(curl*)` |
+| Cleanup | `Bash(rm -rf ~/.claude/teams/avengers-*)`, `Bash(rm -rf ~/.claude/tasks/avengers-*)` |
+
+**If a prompt DOES appear during a mission**: that's a skill bug. Fury should (a) capture the exact pattern that triggered it, (b) append it to `~/.claude/settings.json` → `permissions.allow`, (c) record the miss in `~/.claude/projects/<repo>/memory/lessons.md` under `## Patterns` so it never happens again. The user answering the prompt is the last-resort fallback, not the intended flow.
+
+Subagents inherit their session's permissions but also respect per-agent restrictions. Keep subagent prompts focused on Read/Edit/Write tools where possible — reserve Bash for validation commands they genuinely need.
+
+---
+
 ## Absolute Rules
 
 1. **Never open new Claude Code windows.** Every `Agent()` call MUST have `run_in_background=True` and MUST NOT have `team_name=`.
@@ -954,3 +1078,5 @@ This clears the dashboard back to "Waiting for mission…". Run cleanup on ALL e
 8. **Always match character identity to role.** Vision for analysts. Parker for debuggers. Thor for DevOps. Carter for PR reviews. The roster is part of the UX — use it consistently.
 9. **Always clean up.** Phase 6 runs on every exit path. Phase 1 Step 1b nukes any zombies the last run left behind.
 10. **Leave the user's prompt budget alone.** The autonomy charter defines the only four reasons to ping the user. If you find yourself drafting a fifth — you're doing it wrong.
+11. **Exactly two approval gates per mission**: Phase 0.5 plan-mode gate (ExitPlanMode) and Phase 5.5 commit gate. No inline "proceed?" questions. No mid-pipeline bash permission prompts — those are fixed by updating the allowlist (Appendix A), not by asking the user.
+12. **The mission plan is the ONLY thing the user needs to read to decide.** Plan = clean, concise, concrete (files + approach + criteria + validation). No orchestration plumbing in the plan — that's Fury's problem.
