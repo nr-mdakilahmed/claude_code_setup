@@ -10,6 +10,37 @@ echo "║     CC Team Setup — Installing       ║"
 echo "╚══════════════════════════════════════╝"
 echo ""
 
+# ── Pre-flight — fail fast with a clear message if prerequisites are missing ──
+missing=0
+check_cmd() {
+  local cmd="$1" hint="$2"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "  ✗ $cmd not found — $hint"
+    missing=1
+  else
+    echo "  ✓ $cmd ($(command -v "$cmd"))"
+  fi
+}
+echo "→ Checking prerequisites..."
+check_cmd claude  "install Claude Code first: https://docs.claude.com/claude-code"
+check_cmd python3 "install with: brew install python3  (or system Python 3.8+)"
+check_cmd git     "install with: brew install git"
+if [ "$missing" -eq 1 ]; then
+  echo ""
+  echo "  Install the missing prerequisites above, then re-run ./install.sh"
+  exit 1
+fi
+# Non-fatal warnings
+if ! command -v rtk >/dev/null 2>&1; then
+  echo "  ⚠ rtk not found — token-saving hook will run but skip filtering"
+  echo "    (ask your team lead for the RTK install link)"
+fi
+if ! ssh -T -o BatchMode=yes -o ConnectTimeout=3 git@source.datanerd.us 2>&1 | grep -q "successfully authenticated"; then
+  echo "  ⚠ SSH access to source.datanerd.us not verified — NR-internal plugins may fail to install"
+  echo "    (run: ssh -T git@source.datanerd.us  to test)"
+fi
+echo ""
+
 # Ensure ~/.claude dirs exist
 mkdir -p "$CLAUDE/skills" "$CLAUDE/hooks"
 

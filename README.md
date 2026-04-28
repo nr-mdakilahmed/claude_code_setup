@@ -5,6 +5,34 @@ the same skills, hooks, model routing, and multi-agent capabilities — consiste
 
 ---
 
+## ⚡ Quickstart — 3 minutes to a fully-wired CC
+
+```bash
+# 1 — Prereqs (install anything you're missing)
+claude --version        # Claude Code — https://docs.claude.com/claude-code
+python3 --version       # brew install python3  (if missing)
+git --version           # brew install git       (if missing)
+ssh -T git@source.datanerd.us   # must say "successfully authenticated" for NR plugins
+
+# 2 — Clone & install
+git clone git@github.com:nr-mdakilahmed/claude_code_setup.git ~/claude_code_setup
+cd ~/claude_code_setup
+./install.sh            # checks prereqs → copies skills/hooks → merges settings.json
+
+# 3 — Verify
+./verify.sh             # confirms skills, hooks, settings.json keys, SSH, plugin list
+
+# 4 — Restart Claude Code
+#     (plugins auto-install on first start — takes ~30s)
+#     Inside CC, confirm:  /plugin list   → should show 11 active plugins
+```
+
+> **First session on a new repo?** Run `/bootstrap` once — seeds memory files + knowledge graph.
+> **End of every session?** Run `/wrap-up` — persists history, todo, lessons.
+> **Complex multi-file task?** Run `/avengers` — Opus orchestrates parallel specialist agents.
+
+---
+
 ## Architecture
 
 ![Claude Code System Architecture](architecture.png)
@@ -99,39 +127,17 @@ Pipeline: Mission → Plan → Spawn → Code → Review → Test → Validate �
 
 ---
 
-## Prerequisites
-
-- Claude Code installed (`claude --version`)
-- Python 3 (`python3 --version`)
-- SSH access to `source.datanerd.us` (for NR-internal plugins)
-  ```bash
-  ssh -T git@source.datanerd.us   # should say: Hi <user>! You've authenticated...
-  ```
-- RTK installed (`rtk --version`) — ask your team lead for the install link
-
----
-
-## Install
-
-```bash
-git clone git@github.com:nr-mdakilahmed/claude_code_setup.git ~/claude_code_setup
-cd ~/claude_code_setup
-chmod +x install.sh
-./install.sh
-```
-
-Then **restart Claude Code**. Plugins auto-install on first start.
-
----
-
 ## What `install.sh` Does
 
-1. Copies all 18 skills into `~/.claude/skills/`
-2. Copies hooks into `~/.claude/hooks/` (backs up any existing ones)
-3. Copies `CLAUDE.md` + `RTK.md` into `~/.claude/` (backs up existing)
-4. Merges `settings.template.json` into `~/.claude/settings.json` non-destructively:
+1. **Pre-flight checks** — confirms `claude`, `python3`, `git` are installed; warns about missing `rtk` or SSH access
+2. Copies all 18 skills into `~/.claude/skills/`
+3. Copies hooks into `~/.claude/hooks/` (backs up any existing ones)
+4. Copies `CLAUDE.md` + `RTK.md` into `~/.claude/` (backs up existing)
+5. Merges `settings.template.json` into `~/.claude/settings.json` non-destructively:
    - Adds missing hooks, allowlist entries, plugins, marketplaces
    - Preserves your existing personal settings (apiKeyHelper, additionalDirectories, etc.)
+
+**Run `./verify.sh` after `./install.sh`** to confirm everything landed correctly before restarting CC.
 
 ---
 
@@ -235,18 +241,26 @@ Personal skills in `~/.claude/skills/` are never touched by `install.sh`.
 
 ## Troubleshooting
 
+**First stop: run `./verify.sh`** — it pinpoints exactly which piece is missing (prereqs, skills, hooks, settings keys, SSH, plugin count) and how to fix each.
+
 **Plugins not installing on restart**
-→ Check SSH access to `source.datanerd.us` for NR plugins.
-→ See `plugins.md` for manual `/plugin install` commands.
+→ Run `./verify.sh` — if `enabledPlugins` shows `< 10`, re-run `./install.sh`.
+→ If SSH to `source.datanerd.us` fails, NR plugins (`nr`, `nr-kafka`) silently skip.
+→ See `plugins.md` for manual `/plugin install` fallback commands.
+→ Inside CC, run `/plugin list` to see what's actually loaded.
 
 **Hook not firing**
 → `chmod +x ~/.claude/hooks/*.sh ~/.claude/hooks/*.py`
-→ Check `~/.claude/settings.json` has the hook entries.
+→ `./verify.sh` shows `⚠` for non-executable hooks.
 
 **Skills not showing up**
 → Restart Claude Code after install.
-→ Check `ls ~/.claude/skills/` — all 18 dirs should be present.
+→ `./verify.sh` lists missing skills by name.
 
 **RTK not found**
 → Ask your team lead for the RTK install link.
 → Without RTK, hooks still work but token savings are disabled.
+
+**"I want to uninstall / roll back"**
+→ `install.sh` backs up any file it replaces as `<name>.bak` in `~/.claude/`.
+→ To undo: restore each `.bak` (`mv ~/.claude/CLAUDE.md.bak ~/.claude/CLAUDE.md`) and remove the skills dirs from `~/.claude/skills/` that came from this repo.
