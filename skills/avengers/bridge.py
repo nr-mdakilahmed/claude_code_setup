@@ -24,6 +24,7 @@ import re
 import glob
 import time
 import ssl
+import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 PORT = 2026
@@ -153,6 +154,267 @@ def send_to_pane(session_id, message):
     return ok, None if ok else 'Failed to send to iTerm2 session'
 
 
+# ── Progress watcher — aggregates agent progress logs into state file ────
+#
+# When Fury spawns agents in-session (no team_name), each agent writes a
+# progress log at /tmp/avengers-progress-{TEAM}-{AGENT}.jsonl. Each line is a
+# JSON record:
+#   {"ts": <epoch>, "status": "reading"|"working"|"validating"|
+#                               "blocked"|"done"|"failed",
+#    "msg": "<1-line>", "files_changed": ["..."] (optional),
+#    "question": "...", "choices": [...], "task_id": "..."  (when blocked)}
+#
+# The watcher thread reads new lines since last offset, merges them into the
+# active state file so the dashboard shows live activity without agents needing
+# TaskUpdate/SendMessage (which require team_name and spawn new Claude windows).
+_PROGRESS_GLOB = '/tmp/avengers-progress-*-*.jsonl'
+_PROGRESS_OFFSETS = {}           # path -> last read byte offset
+_PROGRESS_LOCK = threading.Lock()
+_STOP_EVENT = threading.Event()
+_OFFSETS_FILE = '/tmp/avengers-progress-offsets.json'
+
+
+def _load_offsets():
+    """Restore offsets from disk so a bridge restart doesn't re-merge the
+    entire history of each progress log (which would produce duplicates)."""
+    global _PROGRESS_OFFSETS
+    try:
+        with open(_OFFSETS_FILE, 'r') as f:
+            _PROGRESS_OFFSETS = json.load(f) or {}
+    except Exception:
+        _PROGRESS_OFFSETS = {}
+
+
+def _persist_offsets():
+    """Best-effort snapshot of current offsets; swallowed errors are fine
+    because the next tick will re-persist."""
+    try:
+        tmp = _OFFSETS_FILE + '.tmp'
+        with open(tmp, 'w') as f:
+            json.dump(_PROGRESS_OFFSETS, f)
+        os.replace(tmp, _OFFSETS_FILE)
+    except Exception:
+        pass
+
+
+def _extract_team_and_agent(progress_path):
+    """Parse '/tmp/avengers-progress-{team}-{agent}.jsonl' into (team, agent).
+
+    Team is always 'avengers-<digits>'. Agent is the remainder after the
+    numeric team suffix — agent IDs may contain hyphens (e.g. stark-senior).
+    """
+    name = os.path.basename(progress_path)
+    prefix = 'avengers-progress-avengers-'
+    suffix = '.jsonl'
+    if not (name.startswith(prefix) and name.endswith(suffix)):
+        return None, None
+    core = name[len(prefix):-len(suffix)]   # e.g. "1777391974-stark-senior"
+    parts = core.split('-', 1)              # ["1777391974", "stark-senior"]
+    if len(parts) != 2 or not parts[0].isdigit():
+        return None, None
+    return f'avengers-{parts[0]}', parts[1]
+
+
+def _atomic_state_update(state_file, updater_fn):
+    """Read state, run updater_fn(state_dict) in-place, write atomically.
+
+    Write uses tmp + os.replace so readers (dashboard poll) never see
+    half-written JSON. Collisions with Fury's Write-tool writes are rare at 1s
+    tick and harmless — the next Fury write authoritatively replaces state.
+    """
+    try:
+        with open(state_file, 'r') as f:
+            state = json.load(f)
+    except Exception:
+        return False
+    try:
+        updater_fn(state)
+        state['updated_at'] = int(time.time())
+    except Exception as e:
+        print(f'[bridge/progress] updater failed: {e}', flush=True)
+        return False
+    tmp = state_file + '.tmp'
+    try:
+        with open(tmp, 'w') as f:
+            json.dump(state, f)
+        os.replace(tmp, state_file)
+        return True
+    except Exception as e:
+        print(f'[bridge/progress] write failed: {e}', flush=True)
+        try:
+            os.unlink(tmp)
+        except Exception:
+            pass
+        return False
+
+
+def _apply_progress_entry(state, agent, entry):
+    """Mutate state dict in place from a single progress log entry."""
+    status = entry.get('status')
+    msg = entry.get('msg', '')
+    ts = entry.get('ts', int(time.time()))
+
+    # Update the agent's row (status + short task summary)
+    for a in state.get('agents', []):
+        if a.get('id') == agent:
+            if status:
+                a['status'] = status
+            if msg:
+                # Keep the avatar-strip label short and readable
+                a['task'] = msg[:80]
+            break
+
+    # Append to activity feed (the dashboard renders this live)
+    # Dedup against Fury's own STATE WRITEs and against bridge-restart replays:
+    # skip if an entry with the same (who, ts, msg) already exists.
+    if msg:
+        activity = state.setdefault('activity', [])
+        key = (agent, ts, msg)
+        dup = any(
+            (a.get('who'), a.get('ts'), a.get('msg')) == key
+            for a in activity[-40:]                 # last 40 is plenty; avoids O(N²)
+        )
+        if not dup:
+            entry_activity = {'who': agent, 'msg': msg, 'ts': ts}
+            files_changed = entry.get('files_changed')
+            if files_changed:
+                entry_activity['files_changed'] = files_changed
+            activity.append(entry_activity)
+
+    # Handle blocked transitions
+    blocked = state.setdefault('blocked', {})
+    if status == 'blocked':
+        blocked[agent] = {
+            'question': entry.get('question', msg or 'Needs input'),
+            'context': entry.get('context', ''),
+            'choices': entry.get('choices', []) or [],
+            'task_id': entry.get('task_id', ''),
+            'blocked_since': ts,
+        }
+    elif agent in blocked and status in ('working', 'reviewing', 'done'):
+        # Agent resumed after being unblocked — clear the blocked entry
+        del blocked[agent]
+
+
+def _parse_unified_diff(diff_text: str, numstat: dict) -> list:
+    """Parse `git diff` unified output into structured file/hunk/line records.
+
+    Returns: [{"path": str, "additions": int, "deletions": int,
+               "hunks": [{"header": str,
+                          "lines": [{"kind": "add"|"del"|"ctx", "text": str}]}]}]
+    """
+    files = []
+    current_file = None
+    current_hunk = None
+    for line in diff_text.splitlines():
+        if line.startswith('diff --git'):
+            # New file — push previous
+            if current_file is not None:
+                if current_hunk is not None:
+                    current_file['hunks'].append(current_hunk)
+                    current_hunk = None
+                files.append(current_file)
+            # Extract path from "diff --git a/<path> b/<path>"
+            parts = line.split(' ')
+            path = parts[-1][2:] if parts[-1].startswith('b/') else parts[-1]
+            stats = numstat.get(path, {'additions': 0, 'deletions': 0})
+            current_file = {
+                'path': path,
+                'additions': stats['additions'],
+                'deletions': stats['deletions'],
+                'hunks': [],
+            }
+        elif line.startswith('@@') and current_file is not None:
+            if current_hunk is not None:
+                current_file['hunks'].append(current_hunk)
+            current_hunk = {'header': line, 'lines': []}
+        elif current_hunk is not None:
+            if line.startswith('+') and not line.startswith('+++'):
+                current_hunk['lines'].append({'kind': 'add', 'text': line[1:]})
+            elif line.startswith('-') and not line.startswith('---'):
+                current_hunk['lines'].append({'kind': 'del', 'text': line[1:]})
+            elif line.startswith(' '):
+                current_hunk['lines'].append({'kind': 'ctx', 'text': line[1:]})
+            # Skip "+++ b/..." / "--- a/..." / "index ..." lines
+    # Flush trailing
+    if current_file is not None:
+        if current_hunk is not None:
+            current_file['hunks'].append(current_hunk)
+        files.append(current_file)
+    return files
+
+
+def _progress_watcher_tick():
+    """One polling tick: read new progress lines, merge into state."""
+    for path in glob.glob(_PROGRESS_GLOB):
+        team, agent = _extract_team_and_agent(path)
+        if not team or not agent:
+            continue
+        state_file = f'/tmp/avengers-{team}.json'
+        if not os.path.exists(state_file):
+            continue
+
+        with _PROGRESS_LOCK:
+            last_offset = _PROGRESS_OFFSETS.get(path, 0)
+
+        try:
+            size = os.path.getsize(path)
+        except OSError:
+            continue
+        # File was truncated (e.g. Phase 6 cleanup reset it) — start over
+        if size < last_offset:
+            last_offset = 0
+
+        if size == last_offset:
+            continue
+
+        try:
+            with open(path, 'r') as f:
+                f.seek(last_offset)
+                new_data = f.read()
+                new_offset = f.tell()
+        except Exception:
+            continue
+
+        with _PROGRESS_LOCK:
+            _PROGRESS_OFFSETS[path] = new_offset
+        _persist_offsets()
+
+        entries = []
+        for line in new_data.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entries.append(json.loads(line))
+            except Exception:
+                continue
+        if not entries:
+            continue
+
+        def updater(state, _entries=entries, _agent=agent):
+            for entry in _entries:
+                _apply_progress_entry(state, _agent, entry)
+
+        _atomic_state_update(state_file, updater)
+
+
+def _progress_watcher_loop():
+    while not _STOP_EVENT.wait(1.0):
+        try:
+            _progress_watcher_tick()
+        except Exception as e:
+            print(f'[bridge/progress] tick error: {e}', flush=True)
+
+
+def start_progress_watcher():
+    t = threading.Thread(
+        target=_progress_watcher_loop, daemon=True, name='progress-watcher'
+    )
+    t.start()
+    return t
+
+
 # ── HTTP handler ─────────────────────────────────────────────────────────
 class Bridge(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
@@ -224,25 +486,33 @@ class Bridge(BaseHTTPRequestHandler):
                 self._respond(200, {'sessions': []})
 
         elif self.path == '/avengers-state':
-            files = glob.glob('/tmp/avengers-*.json')
+            # Bridge serves the most-recently-updated state file whose
+            # updated_at is within STALE_SECS. Avengers no longer uses
+            # TeamCreate (agents run in-session), so there's no team-directory
+            # to check against — mission liveness is tracked via updated_at
+            # and explicit Phase 6 cleanup.
+            STALE_SECS = 30 * 60  # 30 minutes
+            now = int(time.time())
+            files = [
+                f for f in glob.glob('/tmp/avengers-*.json')
+                if '-progress-' not in f and '-answer' not in f
+                and os.path.basename(f) != 'avengers-answer.json'
+            ]
             if not files:
                 self._respond(200, {'active': False})
                 return
-            # Only serve state for a team that still exists — stale files from
-            # completed/cleaned missions show a dead dashboard otherwise.
-            teams_dir = os.path.expanduser('~/.claude/teams')
             active_state = None
             for f in sorted(files, key=os.path.getmtime, reverse=True):
                 try:
                     with open(f) as fh:
                         s = json.load(fh)
-                    team_name = s.get('team', '')
-                    team_dir = os.path.join(teams_dir, team_name)
-                    if os.path.isdir(team_dir):
-                        active_state = s
-                        break
-                    # Team gone — delete the orphaned state file
-                    os.remove(f)
+                    updated_at = s.get('updated_at', 0)
+                    if now - updated_at > STALE_SECS:
+                        # Abandoned — skip (don't delete; user may still be
+                        # debugging the mission)
+                        continue
+                    active_state = s
+                    break
                 except Exception:
                     pass
             if active_state:
@@ -250,6 +520,58 @@ class Bridge(BaseHTTPRequestHandler):
                 self._respond(200, active_state)
             else:
                 self._respond(200, {'active': False})
+
+        elif self.path == '/mission-diff':
+            # Live git diff for the active mission's repo_root.
+            # Returns structured diff: {files: [{path, additions, deletions,
+            # hunks: [{header, lines: [{kind: "add"|"del"|"ctx", text}]}]}]}
+            repo_root = None
+            try:
+                # Find the active state file to read its repo_root
+                files = [
+                    f for f in glob.glob('/tmp/avengers-*.json')
+                    if '-progress-' not in f and '-answer' not in f
+                    and os.path.basename(f) != 'avengers-answer.json'
+                ]
+                for f in sorted(files, key=os.path.getmtime, reverse=True):
+                    with open(f) as fh:
+                        s = json.load(fh)
+                    if int(time.time()) - s.get('updated_at', 0) < 30 * 60:
+                        repo_root = s.get('repo_root')
+                        break
+            except Exception:
+                pass
+            if not repo_root or not os.path.isdir(repo_root):
+                self._respond(200, {'files': [], 'error': 'no active mission'})
+                return
+            try:
+                r = subprocess.run(
+                    ['git', '-C', repo_root, 'diff', 'HEAD'],
+                    capture_output=True, text=True, timeout=10,
+                )
+                diff_text = r.stdout or ''
+            except Exception as e:
+                self._respond(200, {'files': [], 'error': str(e)})
+                return
+            # Also get numstat for fast +/- counts
+            try:
+                r2 = subprocess.run(
+                    ['git', '-C', repo_root, 'diff', '--numstat', 'HEAD'],
+                    capture_output=True, text=True, timeout=10,
+                )
+                numstat = {}
+                for line in (r2.stdout or '').splitlines():
+                    parts = line.split('\t')
+                    if len(parts) == 3:
+                        adds, dels, path = parts
+                        numstat[path] = {
+                            'additions': int(adds) if adds.isdigit() else 0,
+                            'deletions': int(dels) if dels.isdigit() else 0,
+                        }
+            except Exception:
+                numstat = {}
+            files_out = _parse_unified_diff(diff_text, numstat)
+            self._respond(200, {'repo_root': repo_root, 'files': files_out})
 
         else:
             self.send_response(404)
@@ -323,7 +645,18 @@ class Bridge(BaseHTTPRequestHandler):
                 print(f'[bridge/iterm2] close {sid} → {"ok" if ok else "not found"}', flush=True)
             self._respond(200, {'results': results})
 
-        # ── /avengers-answer — write answer file for Fury to pick up ─────
+        # ── /avengers-answer — write answer files for Fury/agent to pick up
+        # Writes two files:
+        #   /tmp/avengers-answer.json              — legacy single-answer drop
+        #                                            (Fury polls this when it
+        #                                            writes blocked state itself)
+        #   /tmp/avengers-answer-{agent}.json      — per-agent drop that a
+        #                                            background agent polls
+        #                                            while it's blocked, so
+        #                                            multiple concurrent
+        #                                            blocks don't collide.
+        # Dashboard POSTs the same payload for both flows — the caller decides
+        # which file channel they're listening on.
         elif self.path == '/avengers-answer':
             agent = data.get('agent', '').strip()
             answer = data.get('answer', '').strip()
@@ -337,10 +670,135 @@ class Bridge(BaseHTTPRequestHandler):
                 'answer': answer,
                 'timestamp': int(time.time())
             }
+            safe_agent = re.sub(r'[^A-Za-z0-9_\-]', '_', agent)
+            per_agent_path = f'/tmp/avengers-answer-{safe_agent}.json'
             with open('/tmp/avengers-answer.json', 'w') as f:
                 json.dump(payload, f)
-            print(f'[bridge/avengers] answer written → agent={agent} task={task_id}', flush=True)
-            self._respond(200, {'ok': True})
+            with open(per_agent_path, 'w') as f:
+                json.dump(payload, f)
+            print(
+                f'[bridge/avengers] answer written → agent={agent} '
+                f'task={task_id} path={per_agent_path}',
+                flush=True,
+            )
+            # Also clear the blocked entry in state immediately so the
+            # dashboard stops showing the blocked card without waiting for
+            # the agent's next progress log line.
+            files = glob.glob('/tmp/avengers-*.json')
+            files = [f for f in files if '-progress-' not in f
+                     and '-answer' not in f and f != '/tmp/avengers-answer.json']
+            for sf in files:
+                def clear_blocked(state, _agent=agent):
+                    b = state.get('blocked') or {}
+                    if _agent in b:
+                        del b[_agent]
+                        state.setdefault('activity', []).append({
+                            'who': 'fury-captain',
+                            'msg': f'Answer forwarded to {_agent}: {answer[:80]}',
+                            'ts': int(time.time()),
+                        })
+                _atomic_state_update(sf, clear_blocked)
+            self._respond(200, {'ok': True, 'path': per_agent_path})
+
+        # ── /agent-redirect — send a mid-task redirect to a background agent ─
+        # Dashboard posts {agent, hint}; bridge writes a redirect file the
+        # agent picks up on its next progress-log checkpoint. The agent
+        # adapts its work based on the hint and logs a "Redirected: <hint>"
+        # progress line so the dashboard confirms receipt.
+        elif self.path == '/agent-redirect':
+            agent = data.get('agent', '').strip()
+            hint = data.get('hint', '').strip()
+            if not agent or not hint:
+                self._respond(400, {'error': 'agent and hint required'})
+                return
+            safe_agent = re.sub(r'[^A-Za-z0-9_\-]', '_', agent)
+            path = f'/tmp/avengers-redirect-{safe_agent}.json'
+            with open(path, 'w') as f:
+                json.dump({'agent': agent, 'hint': hint,
+                           'timestamp': int(time.time())}, f)
+            print(f'[bridge/redirect] {agent} → {hint[:80]}', flush=True)
+            self._respond(200, {'ok': True, 'path': path})
+
+        # ── /agent-pause — ask a background agent to pause at its next
+        # progress-log checkpoint. Agent checks for the marker file and
+        # blocks in a poll loop until it's removed.
+        elif self.path == '/agent-pause':
+            agent = data.get('agent', '').strip()
+            resume = bool(data.get('resume', False))
+            if not agent:
+                self._respond(400, {'error': 'agent required'})
+                return
+            safe_agent = re.sub(r'[^A-Za-z0-9_\-]', '_', agent)
+            path = f'/tmp/avengers-pause-{safe_agent}.marker'
+            if resume:
+                try:
+                    os.unlink(path)
+                    print(f'[bridge/pause] resumed {agent}', flush=True)
+                except FileNotFoundError:
+                    pass
+                self._respond(200, {'ok': True, 'state': 'resumed'})
+            else:
+                with open(path, 'w') as f:
+                    f.write(str(int(time.time())))
+                print(f'[bridge/pause] paused {agent}', flush=True)
+                self._respond(200, {'ok': True, 'state': 'paused', 'path': path})
+
+        # ── /ship-it — dashboard button asks Fury to commit + PR ───────────
+        # Writes a marker file Fury checks and pipes a clear instruction into
+        # the CC iTerm2 session so the user sees it arrive in Claude.
+        elif self.path == '/ship-it':
+            mode = (data.get('mode') or 'auto').strip()  # auto | commit-only
+            note = (data.get('note') or '').strip()
+            marker = {
+                'timestamp': int(time.time()),
+                'mode': mode,
+                'note': note,
+            }
+            with open('/tmp/avengers-ship-it.json', 'w') as f:
+                json.dump(marker, f)
+            instruction = (
+                'SHIP IT — user clicked Ship-it on the dashboard. '
+                'Stage all mission changes, re-run the test suite once, '
+                'write a concise conventional-commit message (no Co-Authored-By), '
+                'commit, push, then open a PR (or push onto the existing PR '
+                'branch if this work is already tracked). Announce the PR URL '
+                'when done. Marker: /tmp/avengers-ship-it.json'
+            )
+            if note:
+                instruction += f'\nUser note: {note}'
+            target = CC_TARGET or find_cc_pane()
+            sent, err = False, None
+            if target:
+                print(f'[bridge/ship-it → {target}] {instruction[:120]}...', flush=True)
+                _CC_SNAPSHOT = get_pane_lines(target)  # noqa: F841
+                sent, err = send_to_pane(target, instruction)
+            else:
+                err = 'no CC session; marker file written — Fury can still act on it'
+            # Always log to the active state file so the dashboard shows it
+            state_files = glob.glob('/tmp/avengers-*.json')
+            state_files = [
+                f for f in state_files
+                if '-progress-' not in f
+                and '-answer' not in f
+                and 'ship-it' not in f
+                and 'offsets' not in f
+                and f != '/tmp/avengers-answer.json'
+            ]
+            for sf in state_files:
+                def log_ship(state, _note=note):
+                    state.setdefault('activity', []).append({
+                        'who': 'you',
+                        'msg': 'Ship-it requested — Fury to commit/push/PR'
+                               + (f' — {_note}' if _note else ''),
+                        'ts': int(time.time()),
+                    })
+                _atomic_state_update(sf, log_ship)
+            self._respond(200, {
+                'ok': True,
+                'cc_delivered': sent,
+                'error': err,
+                'marker': '/tmp/avengers-ship-it.json',
+            })
 
         else:
             self.send_response(404)
@@ -352,6 +810,12 @@ if __name__ == '__main__':
     pane = find_cc_pane()
     if pane:
         CC_TARGET = pane
+
+    # Start the progress watcher — aggregates /tmp/avengers-progress-*.jsonl
+    # into the active state file every 1 second so the dashboard shows live
+    # agent activity for background agents (no team_name, no new windows).
+    _load_offsets()
+    start_progress_watcher()
 
     server = HTTPServer(('localhost', PORT), Bridge)
 
@@ -369,6 +833,7 @@ if __name__ == '__main__':
     print(f'Working dir:     {CWD}')
     print(f'Claude session:  {CC_TARGET or "not detected (run claude in an iTerm2 window)"}')
     print(f'Dashboard file:  {DASHBOARD_HTML or "NOT FOUND"}')
+    print(f'Progress watch:  {_PROGRESS_GLOB} (1s tick)')
     print()
     if not CC_TARGET:
         print('  To enable CC mode, open an iTerm2 window and run: claude')
@@ -378,5 +843,7 @@ if __name__ == '__main__':
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print('\n[bridge] Stopped.')
+        print('\n[bridge] Stopping progress watcher...')
+        _STOP_EVENT.set()
+        print('[bridge] Stopped.')
         sys.exit(0)

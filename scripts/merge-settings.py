@@ -8,11 +8,17 @@ from datetime import datetime
 
 def load(path):
     if os.path.exists(path):
-        with open(path) as f:
-            return json.load(f)
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Error: invalid JSON in {path}: {e}")
+            sys.exit(1)
     return {}
 
 def merge_hooks(target, template):
+    # NOTE: kept inline (not extracted into a shared helper) because the nested
+    # event → entries → hooks[] structure is unique to this section.
     added = []
     for event, hook_list in template.get("hooks", {}).items():
         target.setdefault("hooks", {}).setdefault(event, [])
@@ -27,34 +33,33 @@ def merge_hooks(target, template):
                 added.append(f"  + hook [{event}]: {cmds[0][:60]}")
     return added
 
-def merge_allow(target, template):
-    added = []
-    target.setdefault("permissions", {}).setdefault("allow", [])
-    existing = set(target["permissions"]["allow"])
-    for entry in template.get("permissions", {}).get("allow", []):
-        if entry not in existing:
-            target["permissions"]["allow"].append(entry)
-            existing.add(entry)
-            added.append(f"  + allow: {entry}")
+def _merge_list_section(tl, pl):
+    added, existing = [], set(tl)
+    for e in pl:
+        if e not in existing: tl.append(e); existing.add(e); added.append(e)
     return added
+
+def _merge_dict_section(td, pd):
+    added = []
+    for k, v in pd.items():
+        if k not in td: td[k] = v; added.append((k, v))
+    return added
+
+def merge_allow(target, template):
+    target.setdefault("permissions", {}).setdefault("allow", [])
+    return [f"  + allow: {e}" for e in _merge_list_section(
+        target["permissions"]["allow"], template.get("permissions", {}).get("allow", []))]
 
 def merge_plugins(target, template):
-    added = []
     target.setdefault("enabledPlugins", {})
-    for plugin_id, enabled in template.get("enabledPlugins", {}).items():
-        if plugin_id not in target["enabledPlugins"]:
-            target["enabledPlugins"][plugin_id] = enabled
-            added.append(f"  + plugin: {plugin_id} = {enabled}")
-    return added
+    return [f"  + plugin: {k} = {v}" for k, v in _merge_dict_section(
+        target["enabledPlugins"], {k: bool(v) for k, v in template.get("enabledPlugins", {}).items()})]
 
 def merge_marketplaces(target, template):
-    added = []
     target.setdefault("extraKnownMarketplaces", {})
-    for name, config in template.get("extraKnownMarketplaces", {}).items():
-        if name not in target["extraKnownMarketplaces"]:
-            target["extraKnownMarketplaces"][name] = config
-            added.append(f"  + marketplace: {name}")
-    return added
+    return [f"  + marketplace: {k}" for k, _ in _merge_dict_section(
+        target["extraKnownMarketplaces"],
+        {k: v for k, v in template.get("extraKnownMarketplaces", {}).items() if isinstance(v, dict)})]
 
 def main():
     if len(sys.argv) < 3:
@@ -63,6 +68,10 @@ def main():
 
     template_path = sys.argv[1]
     target_path = sys.argv[2]
+
+    if not os.path.exists(template_path):
+        print(f"Error: template file not found: {template_path}")
+        sys.exit(1)
 
     template = load(template_path)
     target = load(target_path)
