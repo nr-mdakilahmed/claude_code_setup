@@ -515,6 +515,18 @@ Then call (two tool calls, both pre-approved, atomic swap):
 1. `Write(file_path=STATE_FILE + ".tmp", content=json.dumps(initial_state, indent=2))`
 2. `Bash(mv <STATE_FILE>.tmp <STATE_FILE>)`
 
+**After the mv, run this verification immediately — it catches the fury-captain omission before the dashboard renders wrong:**
+```bash
+python3 -c "
+import json, sys
+s = json.load(open('$STATE_FILE'))
+ids = [a['id'] for a in s.get('agents', [])]
+assert ids and ids[0] == 'fury-captain', f'FURY-CAPTAIN MISSING from agents[]! Got: {ids}'
+print(f'State OK — agents: {ids}')
+"
+```
+If this assertion fails, do NOT proceed — fix the state dict and re-write before spawning agents.
+
 This populates the dashboard task board + Files tab + budget meter from frame one, with the captain visible.
 
 ---
