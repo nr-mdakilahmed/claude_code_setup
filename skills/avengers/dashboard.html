@@ -784,7 +784,8 @@ body.is-fullscreen #fs-btn .icon-exit{display:block}
         <option value="REWORK">Rework</option>
         <option value="ROUTE">Route</option>
         <option value="SPAWN">Spawn</option>
-              </select>
+        <option value="CHAT">Chat</option>
+      </select>
     </div>
     <div id="act-feed"></div>
   </div>
@@ -1139,9 +1140,9 @@ function renderActivity(activity){
   });
 }
 function pushAct(e){
-  if(e._chat) return; // chat lines live only on the canvas speech bubbles, not the work log
   const m=meta(e.who), feed=document.getElementById('act-feed');
   let {cls,tag,tagCls}=msgType(e.msg||'');
+  if(e._chat){tag='CHAT';tagCls='tg-chat';cls='mt-plain';}
   const div=document.createElement('div'); div.className='ae '+cls; div.dataset.who=e.who||'';
 
   // Header row: avatar + name + role + tag + timestamp
@@ -1162,9 +1163,24 @@ function pushAct(e){
   hdr.appendChild(ts);
   div.appendChild(hdr);
 
-  // Message body — cleaned text
+  // Message body — cleaned text; for chat entries with a recipient, prepend "→ Name"
   const msgEl=document.createElement('div'); msgEl.className='ae-msg';
-  msgEl.textContent=cleanMsg(e.msg||'');
+  let displayMsg=cleanMsg(e.msg||'');
+  if(e._chat&&e.to){
+    const toMeta=meta(e.to);
+    const toName=toMeta.name.split('\u2014')[0].trim();
+    // Defensive: if msg already starts with recipient's first name followed by
+    // a dash/colon (agent forgot the no-prefix rule), strip it to avoid
+    // rendering "→ Natasha: Natasha — foo".
+    const firstName=toName.split(/[\s,]+/)[0];
+    if(firstName){
+      const re=new RegExp('^'+firstName.replace(/[-/\\^$*+?.()|[\]{}]/g,'\\$&')+
+                          '\\s*[\u2014\u2013\\-:,]\\s*','i');
+      displayMsg=displayMsg.replace(re,'');
+    }
+    displayMsg='\u2192 '+toName+': '+displayMsg;
+  }
+  msgEl.textContent=displayMsg;
   div.appendChild(msgEl);
 
   // File chips if FILES_CHANGED present
@@ -2662,6 +2678,24 @@ async function poll(){
       actCount=0;
       document.getElementById('act-feed').innerHTML='';
     }
+    // Guard against Fury partial writes: preserve previous task data per-id.
+    // Catches (a) tasks[] length drop to 0 and (b) per-task subject blanking
+    // where the id survives but the subject field got lost in a bad write.
+    if(gState&&gState.tasks&&gState.tasks.length){
+      if(!s.tasks||!s.tasks.length){
+        s.tasks=gState.tasks;
+      } else {
+        const prevById={}; gState.tasks.forEach(function(t){if(t&&t.id)prevById[t.id]=t;});
+        s.tasks=s.tasks.map(function(t){
+          if(!t||!t.id) return t;
+          const prev=prevById[t.id]; if(!prev) return t;
+          if(!t.subject&&prev.subject) t.subject=prev.subject;
+          if(!t.owner&&prev.owner)     t.owner=prev.owner;
+          if(!t.description&&prev.description) t.description=prev.description;
+          return t;
+        });
+      }
+    }
     var prevAct=actCount;lastUpd=s.updated_at;gState=s;
     document.getElementById('mission-text').textContent=s.mission||'Waiting for mission...';
     var pb=document.getElementById('phase-badge');pb.textContent=s.phase||'idle';pb.className='phase ph-'+(s.phase||'idle');
@@ -2709,8 +2743,10 @@ async function poll(){
     var newActs=(s.activity||[]).slice(prevAct);
     newActs.forEach(function(e){
       var n=nodes.find(function(x){return x.id===e.who;});
-      // Canvas speech bubble only for social/casual messages — not task protocol
-      if(n&&e.msg&&isCasualMsg(e.msg)){
+      // Canvas speech bubble: for agent-generated chat entries (_chat:true) or casual messages
+      if(n&&e.msg&&e._chat){
+        speeches[e.who]={text:cleanMsg(e.msg).slice(0,42),timer:7};
+      } else if(n&&e.msg&&isCasualMsg(e.msg)){
         speeches[e.who]={text:cleanMsg(e.msg).slice(0,32),timer:4};
       }
       var mMatch=e.msg&&e.msg.match(/(?:message|sent|\u2192)\s+([a-z][a-z-]+)/i);
@@ -2726,173 +2762,11 @@ async function poll(){
   }
 }
 
-// ════════════════ CASUAL CHAT ════════════════
-// Each chat has:
-//   from: who speaks
-//   text: what they say
-//   to?:  directed at a teammate
-//   phase?: 'spawning' | 'monitoring' | 'done'  — only picked when state.phase matches
-//   tag?:  'greet'|'progress'|'banter'|'review'|'test'|'ship'|'debug'|'kudos'|'groan' — used to keep variety
-const CHATS=[
-  // ─── Fury — terse captain, dry humor, occasional warmth ───
-  {from:'fury-captain',                              text:"Eyes on the mission, people",                              tag:'greet', phase:'spawning'},
-  {from:'fury-captain',                              text:"Status check. I want it crisp",                             tag:'progress', phase:'monitoring'},
-  {from:'fury-captain',   to:'stark-senior',         text:"Less chatting, more shipping",                              tag:'banter'},
-  {from:'fury-captain',                              text:"Good. Keep it moving",                                     tag:'kudos', phase:'monitoring'},
-  {from:'fury-captain',                              text:"Nobody's leaving until validation is green",                tag:'progress', phase:'monitoring'},
-  {from:'fury-captain',                              text:"Clean run. That's how we do it",                            tag:'kudos', phase:'done'},
-  {from:'fury-captain',   to:'natasha-reviewer',     text:"Walk me through what you caught",                          tag:'review'},
-  {from:'fury-captain',                              text:"I don't need excuses — I need a fix",                      tag:'debug'},
-  {from:'fury-captain',                              text:"One shot, one opportunity. You know the rest",              tag:'ship'},
-
-  // ─── Tony Stark — cocky tech-bro (three variants share voice) ───
-  {from:'stark-senior',                              text:"Anyone else need coffee or just me? ☕",                    tag:'banter'},
-  {from:'stark-senior',                              text:"This codebase has more layers than an onion 🧅",            tag:'groan'},
-  {from:'stark-senior',                              text:"Lunch run after this sprint? I'm buying",                  tag:'banter'},
-  {from:'stark-senior',   to:'natasha-reviewer',     text:"Be gentle with the review, I beg",                         tag:'review'},
-  {from:'stark-senior',                              text:"I wrote this function at 2am. Judge accordingly",           tag:'groan'},
-  {from:'stark-senior',                              text:"Refactored three files. Nobody saw. Alas",                  tag:'progress', phase:'monitoring'},
-  {from:'stark-senior',   to:'stark-techlead',       text:"Mind if I steal your pattern? It's cleaner",                tag:'kudos'},
-  {from:'stark-techlead',                            text:"Who touched the linter config? I will find you 👀",         tag:'groan'},
-  {from:'stark-techlead',                            text:"Stack traces don't scare me anymore. Progress 🥲",          tag:'banter'},
-  {from:'stark-techlead', to:'stark-senior',         text:"That helper function is clean, nice one",                  tag:'kudos'},
-  {from:'stark-techlead', to:'stark-senior',         text:"Want to pair on this after standup?",                       tag:'banter'},
-  {from:'stark-techlead',                            text:"If this PR passes first try, I'm buying drinks",            tag:'banter'},
-  {from:'stark-techlead',                            text:"Named a variable 'temp'. Old habits 🙈",                    tag:'groan'},
-  {from:'stark-seasoned',                            text:"Is it Friday yet? Asking for a friend 😅",                  tag:'banter'},
-  {from:'stark-seasoned',                            text:"Three tickets deep and still loving it",                   tag:'progress'},
-  {from:'stark-seasoned',                            text:"That guard clause just saved a production incident",        tag:'kudos'},
-  {from:'stark-seasoned', to:'fury-captain',         text:"Relax boss, we got this 💪",                                tag:'banter'},
-  {from:'stark-seasoned', to:'stark-techlead',       text:"How's the load() refactor going?",                          tag:'progress'},
-  {from:'stark-seasoned',                            text:"Deleted 40 lines. Felt powerful",                           tag:'kudos'},
-
-  // ─── Natasha — sharp, observational, mildly threatening ───
-  {from:'natasha-reviewer',                          text:"Code cleaner than my desk rn, honestly",                    tag:'kudos'},
-  {from:'natasha-reviewer',                          text:"Found one issue. Just one. You're welcome 😏",              tag:'review'},
-  {from:'natasha-reviewer',                          text:"PR review done — no war crimes detected",                   tag:'review'},
-  {from:'natasha-reviewer', to:'banner-tester',      text:"Left you a comment — nothing scary",                        tag:'review'},
-  {from:'natasha-reviewer', to:'stark-senior',       text:"Zero promises 😇",                                          tag:'review'},
-  {from:'natasha-reviewer',                          text:"Who wrote this TODO. I have questions",                     tag:'review'},
-  {from:'natasha-reviewer',                          text:"Nice naming. I noticed. Don't let it go to your head",      tag:'kudos'},
-  {from:'natasha-reviewer', to:'fury-captain',       text:"Two nits, zero blockers. We're good",                       tag:'review'},
-  {from:'natasha-reviewer',                          text:"If you broke the tests, I already know",                    tag:'debug'},
-
-  // ─── Bruce Banner — patient, zen, quietly triumphant ───
-  {from:'banner-tester',                             text:"Tests green. I may have cried a little 🟢",                 tag:'test'},
-  {from:'banner-tester',                             text:"Edge case just tried to ruin my day. Failed 😤",            tag:'test'},
-  {from:'banner-tester',                             text:"Running tests for the 12th time. Character building",       tag:'test'},
-  {from:'banner-tester',  to:'stark-techlead',       text:"Your error handling saved me two hours",                    tag:'kudos'},
-  {from:'banner-tester',  to:'natasha-reviewer',     text:"How do you catch everything? Teach me",                     tag:'banter'},
-  {from:'banner-tester',                             text:"Test suite went from 4m → 90s. Yes I am proud",             tag:'kudos'},
-  {from:'banner-tester',                             text:"Flaky test stopped flaking. Do not jinx it",                tag:'test'},
-  {from:'banner-tester',                             text:"One test passed on the first try. I'm moved",               tag:'test'},
-
-  // ─── Hawkeye — precise, archer metaphors ───
-  {from:'hawkeye-validator',                         text:"All gates clean. Ship it 🎯",                               tag:'ship', phase:'done'},
-  {from:'hawkeye-validator', to:'fury-captain',      text:"Done-when criteria fully met, captain",                    tag:'ship', phase:'done'},
-  {from:'hawkeye-validator',                         text:"Locked on. No drift",                                       tag:'progress'},
-  {from:'hawkeye-validator',                         text:"Validation bow drawn. Target acquired",                     tag:'progress'},
-  {from:'hawkeye-validator',                         text:"Never miss. Don't care what the logs say 🏹",                tag:'banter'},
-
-  // ─── Thor — bombastic, verbose ───
-  {from:'thor-devops',                               text:"By Mjölnir, this pipeline shall ship",                      tag:'ship'},
-  {from:'thor-devops',                               text:"The branch is worthy. I shall push it",                     tag:'ship'},
-  {from:'thor-devops',                               text:"Terraform plan reviewed. The realms are aligned",           tag:'progress'},
-  {from:'thor-devops',    to:'fury-captain',         text:"Captain, the PR hath been raised",                          tag:'ship'},
-  {from:'thor-devops',                               text:"CI passes! A glorious day indeed ⚡",                        tag:'kudos'},
-
-  // ─── Vision — philosophical, dry analyst ───
-  {from:'vision-analyst',                            text:"I have read all of it. Some of it was even useful",         tag:'progress'},
-  {from:'vision-analyst',                            text:"A docstring is a contract with the future",                 tag:'banter'},
-  {from:'vision-analyst',                            text:"Observations filed. Conclusions pending",                   tag:'progress'},
-  {from:'vision-analyst', to:'natasha-reviewer',     text:"Did you see line 42? Curious design",                      tag:'review'},
-
-  // ─── Parker — nerdy, excited debugger ───
-  {from:'parker-debugger',                           text:"Got it!! It was the off-by-one the whole time 🕷️",          tag:'debug'},
-  {from:'parker-debugger',                           text:"Suspicious. Setting another breakpoint",                    tag:'debug'},
-  {from:'parker-debugger',                           text:"Hypothesis wrong. Next hypothesis please",                  tag:'debug'},
-  {from:'parker-debugger', to:'banner-tester',       text:"Can you rerun with logging on?",                            tag:'debug'},
-
-  // ─── Strange — architect, measured ───
-  {from:'strange-architect',                         text:"Mapped the dependencies. It is elegant now",                tag:'progress'},
-  {from:'strange-architect',                         text:"Fourteen million outcomes. This one wins",                  tag:'banter'},
-  {from:'strange-architect', to:'stark-senior',      text:"Your module boundary is crisp. Keep it",                   tag:'kudos'},
-
-  // ─── Carter — proper, elegant PR reviewer ───
-  {from:'carter-pr-reviewer',                        text:"Title is sharp. Body reads well. Ship",                     tag:'ship', phase:'done'},
-  {from:'carter-pr-reviewer',                        text:"CI green. Commit tidy. My compliments",                     tag:'kudos', phase:'done'},
-  {from:'carter-pr-reviewer', to:'thor-devops',      text:"The PR description needs one more bullet",                  tag:'review'},
-
-  // ─── Rogers — data engineer, dependable ───
-  {from:'rogers-data-engineer',                      text:"Airflow DAG looks clean. Schedule makes sense",            tag:'progress'},
-  {from:'rogers-data-engineer',                      text:"I can do this all day. Pass me another table",             tag:'banter'},
-  {from:'rogers-data-engineer', to:'banner-tester',  text:"Added a data-quality check you'll like",                    tag:'kudos'},
-
-  // ─── Scarlet Witch / Maximoff — Python specialist ───
-  {from:'maximoff-python-engineer',                  text:"Ruff is happy. Pyright is happy. I am happy 🔮",            tag:'kudos'},
-  {from:'maximoff-python-engineer',                  text:"Reshaped that dataframe. It is at peace",                   tag:'progress'},
-  {from:'maximoff-python-engineer',                  text:"Pandas, be gentle today",                                   tag:'groan'},
-];
-
-// Repetition guard — keep last N picks so we don't repeat
-const _chatHistory=[];
-const _CHAT_HIST_MAX=8;
-
-function pickChat(){
-  const activeIds=new Set(gState&&gState.agents?gState.agents.map(function(a){return a.id;}):[]);
-  if(!activeIds.size) return;
-  const phase=(gState&&gState.phase)||'';
-
-  // Filter: (a) speaker is on the team, (b) 'to' target (if present) is on the team,
-  // (c) phase matches (if specified), (d) not in recent history.
-  let pool=CHATS.filter(function(c){
-    if(!activeIds.has(c.from))return false;
-    if(c.to&&!activeIds.has(c.to))return false;
-    if(c.phase&&c.phase!==phase)return false;
-    if(_chatHistory.indexOf(c.text)>=0)return false;
-    return true;
-  });
-
-  // If history filter emptied the pool, relax it (but keep phase + team constraints)
-  if(!pool.length){
-    pool=CHATS.filter(function(c){
-      if(!activeIds.has(c.from))return false;
-      if(c.to&&!activeIds.has(c.to))return false;
-      if(c.phase&&c.phase!==phase)return false;
-      return true;
-    });
-  }
-  if(!pool.length)return;
-
-  // Weight: slight preference for lines tagged with the current moment
-  // (progress during monitoring, ship/kudos during done). Keeps things feeling alive.
-  const preferredTags=phase==='done'?['ship','kudos']:phase==='monitoring'?['progress','banter','review','test','debug']:['greet','banter'];
-  const weighted=[];
-  pool.forEach(function(c){
-    weighted.push(c);
-    if(c.tag&&preferredTags.indexOf(c.tag)>=0)weighted.push(c); // bias 2x
-  });
-
-  const c=weighted[Math.floor(Math.random()*weighted.length)];
-  _chatHistory.push(c.text);
-  if(_chatHistory.length>_CHAT_HIST_MAX)_chatHistory.shift();
-
-  const toSuffix=c.to&&activeIds.has(c.to)?' → '+meta(c.to).name.split('\u2014')[0].trim():'';
-  speeches[c.from]={text:c.text.slice(0,42),timer:6};
-  pushAct({who:c.from,msg:(toSuffix?'[to'+toSuffix+'] ':'')+c.text,ts:Math.floor(Date.now()/1000),_chat:true});
-}
-
-function scheduleChat(){
-  // Variable pacing: faster during spawning (activity peaks), slower when phase=done
-  setTimeout(function(){
-    if(gState&&gState.phase!=='done')pickChat();
-    else if(Math.random()<.35)pickChat(); // occasional post-mission chatter
-    scheduleChat();
-  },14000+Math.random()*22000);
-}
-scheduleChat();
-// delay first chat so page loads first
-setTimeout(pickChat,6000);
+// ════════════════ CHAT ════════════════
+// All chat is agent-generated: progress log entries with _chat:true flag
+// flow through the bridge → state.activity[] → pushAct() which renders them
+// with the CHAT tag, speech-bubble trigger, and "→ Name" directed-to prefix.
+// No predefined banter, no timer firing — every line has real work context.
 
 // ════════════════ INIT ════════════════
 resizeCanvas();

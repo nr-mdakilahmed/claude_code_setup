@@ -254,12 +254,15 @@ def _apply_progress_entry(state, agent, entry):
     msg = entry.get('msg', '')
     ts = entry.get('ts', int(time.time()))
 
-    # Update the agent's row (status + short task summary)
+    # Update the agent's row (status + short task summary).
+    # Chat entries (_chat:true) carry context-for-humans, not a task summary —
+    # never overwrite the avatar-strip task label with chat content.
+    is_chat = bool(entry.get('_chat'))
     for a in state.get('agents', []):
         if a.get('id') == agent:
-            if status:
+            if status and not is_chat:
                 a['status'] = status
-            if msg:
+            if msg and not is_chat:
                 # Keep the avatar-strip label short and readable
                 a['task'] = msg[:80]
             break
@@ -279,21 +282,29 @@ def _apply_progress_entry(state, agent, entry):
             files_changed = entry.get('files_changed')
             if files_changed:
                 entry_activity['files_changed'] = files_changed
+            if entry.get('_chat'):
+                entry_activity['_chat'] = True
+            if entry.get('to'):
+                entry_activity['to'] = entry['to']
             activity.append(entry_activity)
 
-    # Handle blocked transitions
-    blocked = state.setdefault('blocked', {})
-    if status == 'blocked':
-        blocked[agent] = {
-            'question': entry.get('question', msg or 'Needs input'),
-            'context': entry.get('context', ''),
-            'choices': entry.get('choices', []) or [],
-            'task_id': entry.get('task_id', ''),
-            'blocked_since': ts,
-        }
-    elif agent in blocked and status in ('working', 'reviewing', 'done'):
-        # Agent resumed after being unblocked — clear the blocked entry
-        del blocked[agent]
+    # Handle blocked transitions — only from real status progress lines.
+    # Chat entries use helper-default status='working' even while the agent is
+    # mid-block (e.g. surfacing the blocker via chat first); treating them as
+    # "resumed" would prematurely clear blocked[] and hide the block in the UI.
+    if not is_chat:
+        blocked = state.setdefault('blocked', {})
+        if status == 'blocked':
+            blocked[agent] = {
+                'question': entry.get('question', msg or 'Needs input'),
+                'context': entry.get('context', ''),
+                'choices': entry.get('choices', []) or [],
+                'task_id': entry.get('task_id', ''),
+                'blocked_since': ts,
+            }
+        elif agent in blocked and status in ('working', 'reviewing', 'done'):
+            # Agent resumed after being unblocked — clear the blocked entry
+            del blocked[agent]
 
 
 def _parse_unified_diff(diff_text: str, numstat: dict) -> list:

@@ -378,6 +378,34 @@ Fury writes `$STATE_FILE` (JSON) at phase transitions. The bridge updates `activ
 
 Conflicts are rare at 1s tick and harmless (next Fury write authoritatively replaces). The bridge uses atomic `.tmp` + `os.replace` so readers never see partial JSON.
 
+**GOLDEN RULE for every state write (including STATE WRITE 1):**
+> **Atomic swap via tmp + `os.replace`. Read-modify-write for every update after WRITE 1. No exceptions.**
+
+The dashboard polls the state file every 1 second. If Fury does `open(STATE_FILE, 'w')` directly, `open('w')` truncates immediately and `json.dump` streams — a poll landing in that gap sees a torn file, the dashboard's `json.loads` throws, and the UI flips to "Offline". Always write to `{STATE_FILE}.tmp` first and `os.replace(tmp, STATE_FILE)` so readers only ever see complete JSON.
+
+Every write AFTER STATE WRITE 1 must also be read-modify-write: read the current state into a dict, mutate only the fields you own, and let every other key — `tasks[]`, `repo_root`, `budget`, `pr`, `blocked`, untouched agent fields — round-trip unchanged.
+
+Paste-ready helpers (put at top of every Fury Python snippet that writes state):
+```python
+import json, os, time
+
+def write_state(state_file, state):
+    """Atomic full write — use for STATE WRITE 1 only (initial mission state)."""
+    state['updated_at'] = int(time.time())
+    tmp = state_file + '.tmp'
+    with open(tmp, 'w') as f: json.dump(state, f)
+    os.replace(tmp, state_file)
+
+def patch_state(state_file, mutate_fn):
+    """Atomic read-modify-write — use for every write after STATE WRITE 1."""
+    with open(state_file) as f: state = json.load(f)
+    mutate_fn(state)
+    state['updated_at'] = int(time.time())
+    tmp = state_file + '.tmp'
+    with open(tmp, 'w') as f: json.dump(state, f)
+    os.replace(tmp, state_file)
+```
+
 ### Agent decisions in `activity[]`
 
 Any activity entry whose `msg` begins with `Decided ` or `Decision:` is auto-surfaced in the dashboard's **Decisions** tab. Agents are instructed to use this format per the Design Rubric. Example:
@@ -407,7 +435,9 @@ The mission plan file already exists from Phase 0.5 (it was the artifact the use
 
 ### Step 1 — Initial State Write (STATE WRITE 1)
 
-Write `$STATE_FILE` with:
+Use `write_state()` from the Golden Rule block (atomic swap — the dashboard must never see a torn file).
+
+Required fields:
 - `phase: "spawning"`
 - `repo_root: <REPO_ROOT absolute path>`  ← REQUIRED for the dashboard's Files tab
 - `budget: 500000`  (token cap; raise for bigger missions — warning shows at 75%)
@@ -423,12 +453,29 @@ Write `$STATE_FILE` with:
   }
   ```
   Fury is the captain — he's always on the dashboard. The dashboard sorts him first automatically. Never omit him. Spawned agents follow with `status: "idle"`.
-- `tasks[]` populated from the plan (one entry per task with owner assigned and full description)
-- One activity entry:
-  ```json
-  {"who": "fury-captain", "msg": "Mission started: <summary>", "ts": <now>}
-  ```
-- `blocked: {}`, `pr: null`, `updated_at: <now>`
+- `tasks[]` populated from the plan (one entry per task with `id`, `subject`, `status: "pending"`, `owner`, `description`)
+- One activity entry: `{"who": "fury-captain", "msg": "Mission started: <summary>", "ts": <now>}`
+- `blocked: {}`, `pr: null`
+
+Example:
+```python
+initial_state = {
+    'team':     TEAM_NAME,
+    'phase':    'spawning',
+    'mission':  '<1-sentence summary>',
+    'repo_root': REPO_ROOT,
+    'budget':   500000,
+    'agents':   [FURY_CAPTAIN_ENTRY, *spawned_agent_entries],
+    'tasks':    [{'id': '1', 'subject': '[STARK] ...', 'status': 'pending',
+                  'owner': 'stark-senior', 'description': '...'}, ...],
+    'activity': [{'who': 'fury-captain',
+                  'msg': f'Mission started: {MISSION_SUMMARY}',
+                  'ts':  int(time.time())}],
+    'blocked':  {},
+    'pr':       None,
+}
+write_state(STATE_FILE, initial_state)
+```
 
 This populates the dashboard task board + Files tab + budget meter from frame one, with the captain visible.
 
@@ -501,6 +548,38 @@ Helper (paste-ready):
   python3 -c "import json,time; open('/tmp/avengers-progress-{TIMESTAMP}-<YOUR_ID>.jsonl','a').write(json.dumps({'ts':int(time.time()),'status':'<s>','msg':'<m>'})+'\n')"
 
 Do NOT block on log writes — if an append fails, keep working.
+
+### Agent Chat (MANDATORY — real messages, real context)
+The dashboard shows a live chat stream between agents. This is NOT banter — it is real communication
+visible to the user and the team. Write a chat line whenever you have something genuinely useful to say.
+
+Chat line format (add `_chat: true`):
+  {"ts": <epoch>, "status": "working", "_chat": true, "to": "<agent_id or null>", "msg": "<message>"}
+
+**When to write a chat line:**
+
+1. **Handoff to the next agent** — when you finish, direct one line at whoever is reviewing/testing your work.
+   Example: `{"_chat":true,"to":"natasha-reviewer","msg":"Inlined source/dest args in legacy branch (line 26). Condition order preserved."}`
+
+2. **Question to Fury or a teammate** — when you want input but it's not a full BLOCK.
+   Example: `{"_chat":true,"to":"fury-captain","msg":"logger.warning or .error for the missing-schema case? Staying on warning."}`
+
+3. **Notable finding worth surfacing** — risk, gotcha, or surprise. Not a blocker.
+   Example: `{"_chat":true,"to":null,"msg":"Config key is case-sensitive — GLUE_SNOWFLAKE vs glue_snowflake. Handled."}`
+
+4. **Blocker surfaced through chat** — surface before writing full blocked status.
+   Example: `{"_chat":true,"to":"fury-captain","msg":"Schema validation skips if service type unknown. Fallback or fail fast?"}`
+
+Helper (paste-ready):
+  python3 -c "import json,time; open('/tmp/avengers-progress-{TIMESTAMP}-<YOUR_ID>.jsonl','a').write(json.dumps({'ts':int(time.time()),'status':'working','_chat':True,'to':'<recipient_id or None>','msg':'<message>'})+'\n')"
+
+**Rules:**
+- Every message must have actual work context — no generic "on it" or "looking good" lines
+- `to` is the agent_id of the recipient (e.g. `"natasha-reviewer"`), or `null` for a broadcast
+- **Do NOT prefix the message with the recipient's name** — the UI adds a `→ Natasha:` arrow automatically. Writing "Natasha — foo" produces ugly "→ Natasha: Natasha — foo" in the feed.
+- Keep messages under 120 characters — they show in speech bubbles
+- Write at most 3–4 chat lines per task; don't flood the feed
+- Fury reads the chat feed and may respond via Fury's own activity entries
 
 ### Skills to invoke
 <list from the character roster or mission context — e.g. "superpowers:code-reviewer", "/python">
@@ -591,10 +670,32 @@ Each `Agent()` call returns when that agent finishes. Fury parses the returned J
 
 ### STATE WRITE 2 (after all Agent() spawn calls in one phase)
 
-Update `$STATE_FILE`:
-- `phase: "monitoring"`
-- For each spawned agent: `status: "working"` and a `task` summary
-- Append an activity entry: `{"who": "fury-captain", "msg": "Spawned <N> agents: <ids>", "ts": <now>}`
+Uses `patch_state()` from the Golden Rule block above. Substitute the literal values where marked with `<>`:
+
+```python
+# Fury fills in these four lines from the actual spawn batch:
+SPAWNED_IDS  = ["stark-senior", "natasha-reviewer"]        # ids of agents just spawned
+TASK_LABELS  = {"stark-senior": "Refactor create_lineages()",
+                "natasha-reviewer": "Awaiting coder output"}  # short labels
+N            = len(SPAWNED_IDS)
+IDS_STR      = ", ".join(SPAWNED_IDS)
+
+def _apply(state):
+    state['phase'] = 'monitoring'
+    for a in state['agents']:
+        if a['id'] in SPAWNED_IDS:
+            a['status'] = 'working'
+            a['task']   = TASK_LABELS.get(a['id'], a.get('task', ''))
+    state.setdefault('activity', []).append(
+        {'who': 'fury-captain',
+         'msg': f'Spawned {N} agents: {IDS_STR}',
+         'ts':  int(time.time())}
+    )
+
+patch_state(STATE_FILE, _apply)
+```
+
+`patch_state()` preserves `tasks[]`, `repo_root`, `budget`, `pr`, `blocked`, and any agent field not explicitly touched — guaranteed. It also writes atomically via tmp + `os.replace`.
 
 The bridge will update statuses continuously from here. Fury's next write is on pipeline transition.
 
@@ -626,7 +727,25 @@ Phase 5 — Mission Report
 
 **Important:** if the mission matrix didn't include a role, skip it. A docs-only mission has no tester or validator — after the reviewer returns PASS, go straight to Phase 5.
 
-**STATE WRITE 3 (after each pipeline transition):** append an activity entry describing the handoff, update the upstream agent's `status` to `done`, update the downstream agent's `status` to `working`.
+**STATE WRITE 3 (after each pipeline transition) — uses `patch_state()` from the Golden Rule block:**
+
+```python
+UPSTREAM    = "stark-senior"        # agent that just finished
+DOWNSTREAM  = "natasha-reviewer"    # agent taking over
+HANDOFF_MSG = f"{UPSTREAM} done → {DOWNSTREAM} starting review"
+
+def _apply(state):
+    for a in state['agents']:
+        if a['id'] == UPSTREAM:   a['status'] = 'done'
+        if a['id'] == DOWNSTREAM: a['status'] = 'working'
+    state.setdefault('activity', []).append(
+        {'who': 'fury-captain', 'msg': HANDOFF_MSG, 'ts': int(time.time())}
+    )
+
+patch_state(STATE_FILE, _apply)
+```
+
+Do NOT touch `tasks[]`, `repo_root`, `budget`, `blocked`, `pr`, or any other field — `patch_state()` preserves them automatically.
 
 ### Capturing real token + cost usage (MANDATORY for accurate budget meter)
 
