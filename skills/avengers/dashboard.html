@@ -226,7 +226,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
 .kbb-completed{background:rgba(34,197,94,.12);color:var(--green)}
 .kb-empty{color:var(--text4);font-size:9px;padding:6px 4px;text-align:center}
 
-#right{width:450px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+#right{width:450px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;min-height:0}
 #right-header{padding:10px 14px 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px}
 #right-header-live{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
@@ -784,8 +784,7 @@ body.is-fullscreen #fs-btn .icon-exit{display:block}
         <option value="REWORK">Rework</option>
         <option value="ROUTE">Route</option>
         <option value="SPAWN">Spawn</option>
-        <option value="CHAT">Chat</option>
-      </select>
+              </select>
     </div>
     <div id="act-feed"></div>
   </div>
@@ -1140,9 +1139,9 @@ function renderActivity(activity){
   });
 }
 function pushAct(e){
+  if(e._chat) return; // chat lines live only on the canvas speech bubbles, not the work log
   const m=meta(e.who), feed=document.getElementById('act-feed');
   let {cls,tag,tagCls}=msgType(e.msg||'');
-  if(e._chat){tag='CHAT';tagCls='tg-chat';cls='mt-plain';}
   const div=document.createElement('div'); div.className='ae '+cls; div.dataset.who=e.who||'';
 
   // Header row: avatar + name + role + tag + timestamp
