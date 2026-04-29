@@ -180,6 +180,26 @@ Write `{REPO_ROOT}/.claude/avengers-{TIMESTAMP}-plan.md` using the template belo
 ## 🧭 Approach
 <3–5 sentences: overall strategy. Why this decomposition vs. alternatives. Any key tradeoffs the user should know about.>
 
+## 🔧 Changes at a Glance
+Every file modification in this mission falls into exactly one of these three buckets. Be specific — name the function/class/symbol, not just the file.
+
+### ➕ Add
+| File | What's new | Why |
+|------|-----------|-----|
+| `<path>:<line>` | `<new function / class / block>` | <1-line reason> |
+
+### ➖ Remove
+| File | What's deleted | Why it's safe to delete |
+|------|---------------|-------------------------|
+| `<path>:<line range>` | `<function / import / block>` | <no callers / replaced by X / dead since Y> |
+
+### ✏️ Change
+| File | What's modified | Before → After |
+|------|-----------------|----------------|
+| `<path>:<line>` | `<signature / body / call site>` | `<one-line before>` → `<one-line after>` |
+
+(Any bucket may be empty — omit the sub-section rather than filling it with "N/A".)
+
 ## 👥 Team
 | Agent | Character | Role | Model | Skills | Task |
 |-------|-----------|------|-------|--------|------|
@@ -190,7 +210,7 @@ Write `{REPO_ROOT}/.claude/avengers-{TIMESTAMP}-plan.md` using the template belo
 
 ## 🛠️ Step-by-Step Plan
 ### Task 1 — [`<AGENT_ID>`] <subject>
-- **Will change**: `<file>` — <what, specifically>
+- **Will change**: `<file>` — <what, specifically — cross-reference the Changes at a Glance bucket>
 - **Approach**: <the actual fix/change in 1-3 sentences>
 - **Acceptance criteria**:
   - ✅ <measurable criterion 1>
@@ -216,21 +236,43 @@ Write `{REPO_ROOT}/.claude/avengers-{TIMESTAMP}-plan.md` using the template belo
 - Model mix: <e.g. 2× haiku writers + 1× haiku reviewer>
 ```
 
-### Step 2 — Exit plan mode
+### Step 2 — Present plan and WAIT FOR EXPLICIT APPROVAL
 
-Call `ExitPlanMode` to present the plan to the user for approval.
+After writing the plan file:
+
+1. Tell the user one line: *"Plan written to `.claude/avengers-{TIMESTAMP}-plan.md`. Review and reply **go / proceed / approve** to start, or tell me what to change."*
+2. Call `ExitPlanMode` — this surfaces the plan for review in the UI.
+3. **STOP. Do not run Phase 1. Do not write the state file. Do not spawn any agents.** Wait for the user's reply.
 
 **Rules for the plan:**
 - **Concise but complete**: every task has a concrete change, a measurable criterion, and a validation command. No hand-waving.
+- **Add/Remove/Change must be explicit**: the `🔧 Changes at a Glance` section is the artifact the user sight-reads first. If you can't name the exact function / class / line range being added, deleted, or modified, you haven't thought hard enough — go back to Phase 0 and read more code.
 - **No orchestration plumbing in the plan**: don't mention the state file, the bridge, progress logs, or cleanup — those are Fury's problem, not the user's decision.
-- **Use icons in section headers** (🎯 🔍 📋 🧭 👥 🛠️ ⚠️ ✅ 💰) for fast visual scanning. Do NOT use emoji elsewhere.
+- **Use icons in section headers** (🎯 🔍 📋 🧭 🔧 👥 🛠️ ⚠️ ✅ 💰) for fast visual scanning. Do NOT use emoji elsewhere.
 - **Include the exact files and exact validation commands** so the user can sanity-check the plan without reading code.
 
 ### Step 3 — Handle the user's response
 
-- **Approved**: proceed to Phase 1 (pre-flight). Everything downstream runs without further user prompts until the commit gate.
-- **Rejected with feedback**: revise the plan file, re-enter plan mode, call `ExitPlanMode` again.
-- **Rejected outright**: stop the mission, clean up, report.
+The user's reply decides what happens next. Match their intent exactly:
+
+| User says | Meaning | Fury does |
+|-----------|---------|-----------|
+| `go`, `proceed`, `approve`, `ship`, `yes`, `lgtm`, `👍` | Approved — start the mission | Proceed to Phase 1. No further approval prompts until the commit gate. |
+| `change X`, `also do Y`, `instead of A do B`, `what about Z?` | Wants iteration | Discuss → update the plan file → summarise what changed → present again → wait for approval again |
+| `no`, `cancel`, `stop`, `skip` | Outright reject | Delete the plan file, clean up, report "mission aborted" |
+| Silence / ambiguous | Not clear | Ask one direct yes/no: "Ready to proceed with this plan?" |
+
+**Plan iteration loop** (happens in chat, NOT in plan mode):
+1. User identifies concern (a file, an approach, a missing step)
+2. Fury discusses briefly: acknowledges, proposes a concrete revision
+3. Fury edits the plan file in place (`Edit` on the specific section)
+4. Fury summarises the delta in one line: *"Updated: removed utils.py from scope, added explicit test for legacy code path"*
+5. Fury re-asks for approval
+6. Repeat until user approves or cancels
+
+Iteration is free — plans are cheap to revise, missions are expensive to restart. When in doubt, iterate one more round rather than spawning agents against a plan the user has reservations about.
+
+**Why this gate is non-skippable**: the plan is the only upstream checkpoint where a misunderstood requirement costs seconds to fix. Once agents are spawned, a wrong assumption burns dollars of token cost and minutes of wall-clock time — and the commit gate is too late to change direction. If you find yourself tempted to skip Phase 0.5 because the task "feels obvious", you're exactly in the situation where a 30-second plan review would catch the thing you missed.
 
 ---
 
@@ -378,33 +420,26 @@ Fury writes `$STATE_FILE` (JSON) at phase transitions. The bridge updates `activ
 
 Conflicts are rare at 1s tick and harmless (next Fury write authoritatively replaces). The bridge uses atomic `.tmp` + `os.replace` so readers never see partial JSON.
 
-**GOLDEN RULE for every state write (including STATE WRITE 1):**
-> **Atomic swap via tmp + `os.replace`. Read-modify-write for every update after WRITE 1. No exceptions.**
+**GOLDEN RULE: Use Write tool for every state write — never Bash heredoc.**
 
-The dashboard polls the state file every 1 second. If Fury does `open(STATE_FILE, 'w')` directly, `open('w')` truncates immediately and `json.dump` streams — a poll landing in that gap sees a torn file, the dashboard's `json.loads` throws, and the UI flips to "Offline". Always write to `{STATE_FILE}.tmp` first and `os.replace(tmp, STATE_FILE)` so readers only ever see complete JSON.
+> `Bash(python3*)` allow-list patterns don't match newlines. A heredoc (`python3 - <<'EOF'\n...\nEOF`) always triggers a permission prompt regardless of the allow list. The `Write` and `Read` tools are pre-approved for paths inside trusted directories (`/tmp`, repo root, home) — which is always where state files live — so these never prompt.
 
-Every write AFTER STATE WRITE 1 must also be read-modify-write: read the current state into a dict, mutate only the fields you own, and let every other key — `tasks[]`, `repo_root`, `budget`, `pr`, `blocked`, untouched agent fields — round-trip unchanged.
+**STATE WRITE 1 (full initial write):**
+1. Build the complete state dict in your reasoning (all fields populated, `"updated_at": <epoch>`).
+2. Call `Write(file_path=STATE_FILE + ".tmp", content=json.dumps(state, indent=2))`.
+3. Call `Bash(mv <STATE_FILE>.tmp <STATE_FILE>)` — atomic rename, pre-approved via `Bash(mv*)`.
 
-Paste-ready helpers (put at top of every Fury Python snippet that writes state):
-```python
-import json, os, time
+The `.tmp + mv` two-step gives atomic-swap semantics (dashboard never sees torn JSON) while staying inside the allow list. If you skip the `.tmp` step and Write the state file directly, it works in practice (~2KB writes finish in microseconds) but there's a micro-window where a dashboard poll could see a truncated file — acceptable for most missions, not ideal for long ones.
 
-def write_state(state_file, state):
-    """Atomic full write — use for STATE WRITE 1 only (initial mission state)."""
-    state['updated_at'] = int(time.time())
-    tmp = state_file + '.tmp'
-    with open(tmp, 'w') as f: json.dump(state, f)
-    os.replace(tmp, state_file)
+**STATE WRITE 2/3 (read-modify-write — MANDATORY pattern after WRITE 1):**
+1. `Read(file_path=STATE_FILE)` — parse the JSON from the returned content (strip the `N\t` line-number prefixes — the Read tool output is line-numbered; the raw JSON is everything after each `\t`).
+2. Mutate only the fields you own: `phase`, relevant `agents[]` entries (including `tokens_used`/`tool_uses`/`duration_ms` from the completion `<usage>` block), `tasks[]` statuses, `activity[]` append.
+3. `state["updated_at"] = <current epoch>` (get it from `Bash(date +%s)` — single-line, always pre-approved).
+4. `Write(file_path=STATE_FILE + ".tmp", content=json.dumps(state, indent=2))` then `Bash(mv <STATE_FILE>.tmp <STATE_FILE>)`.
 
-def patch_state(state_file, mutate_fn):
-    """Atomic read-modify-write — use for every write after STATE WRITE 1."""
-    with open(state_file) as f: state = json.load(f)
-    mutate_fn(state)
-    state['updated_at'] = int(time.time())
-    tmp = state_file + '.tmp'
-    with open(tmp, 'w') as f: json.dump(state, f)
-    os.replace(tmp, state_file)
-```
+Every WRITE 2/3 must be read-modify-write: let every untouched key — `tasks[]`, `repo_root`, `budget`, `pr`, `blocked`, untouched agent fields — round-trip unchanged.
+
+**Race with the bridge:** the bridge writes the state file too (merging progress logs into `activity[]`, `agents[].status`, `blocked{}`). If Fury and bridge interleave Read→Modify→Write, the later writer wins and the earlier writer's changes are lost. This was a pre-existing design trade-off — bridge writes are small and continuous, Fury writes are at phase transitions. In practice clobbers are rare and the next bridge tick (≤1s) usually repaints the lost data. Don't try to fix with locks — accept the race.
 
 ### Agent decisions in `activity[]`
 
@@ -435,7 +470,7 @@ The mission plan file already exists from Phase 0.5 (it was the artifact the use
 
 ### Step 1 — Initial State Write (STATE WRITE 1)
 
-Use `write_state()` from the Golden Rule block (atomic swap — the dashboard must never see a torn file).
+Follow the Golden Rule: build the complete state dict, then do the two-step atomic swap (`Write` to `.tmp` + `Bash(mv …)`). Never use Bash heredoc. The exact tool calls are shown at the end of this step.
 
 Required fields:
 - `phase: "spawning"`
@@ -457,25 +492,28 @@ Required fields:
 - One activity entry: `{"who": "fury-captain", "msg": "Mission started: <summary>", "ts": <now>}`
 - `blocked: {}`, `pr: null`
 
-Example:
-```python
-initial_state = {
-    'team':     TEAM_NAME,
-    'phase':    'spawning',
-    'mission':  '<1-sentence summary>',
-    'repo_root': REPO_ROOT,
-    'budget':   500000,
-    'agents':   [FURY_CAPTAIN_ENTRY, *spawned_agent_entries],
-    'tasks':    [{'id': '1', 'subject': '[STARK] ...', 'status': 'pending',
-                  'owner': 'stark-senior', 'description': '...'}, ...],
-    'activity': [{'who': 'fury-captain',
-                  'msg': f'Mission started: {MISSION_SUMMARY}',
-                  'ts':  int(time.time())}],
-    'blocked':  {},
-    'pr':       None,
-}
-write_state(STATE_FILE, initial_state)
+The shape you build (this is reasoning, not code — Fury builds the dict in its head, then calls the Write tool):
+
 ```
+initial_state = {
+  'team':      TEAM_NAME,
+  'phase':     'spawning',
+  'mission':   '<1-sentence summary>',
+  'repo_root': REPO_ROOT,                  # absolute path — required for Files tab
+  'budget':    500000,                     # token cap; raise for bigger missions
+  'agents':    [FURY_CAPTAIN_ENTRY, ...spawned agents as idle],
+  'tasks':     [{'id':'1', 'subject':'[STARK] ...', 'status':'pending',
+                 'owner':'stark-senior', 'description':'...'}, ...],
+  'activity':  [{'who':'fury-captain', 'msg':'Mission started: <summary>', 'ts':<epoch>}],
+  'blocked':   {},
+  'pr':        None,
+  'updated_at':<epoch>
+}
+```
+
+Then call (two tool calls, both pre-approved, atomic swap):
+1. `Write(file_path=STATE_FILE + ".tmp", content=json.dumps(initial_state, indent=2))`
+2. `Bash(mv <STATE_FILE>.tmp <STATE_FILE>)`
 
 This populates the dashboard task board + Files tab + budget meter from frame one, with the captain visible.
 
@@ -629,6 +667,21 @@ Return a single JSON object (no prose around it):
   }
 ```
 
+### Pre-spawn checklist (verify BEFORE every Agent() call)
+
+Every agent prompt MUST contain every one of these sections, verbatim from the universal contract. If any is missing, the agent will produce incomplete work and the dashboard will go dark on that dimension. Scan your draft prompt against this list before calling `Agent()`:
+
+- [ ] **Autonomy** — decide, don't ask
+- [ ] **Quality Bar** — language-specific standards
+- [ ] **Design Rubric** — when a real choice shows up
+- [ ] **Progress Log (MANDATORY)** — with paste-ready helper + file path
+- [ ] **Agent Chat (MANDATORY)** — `_chat:true` contract with 4 scenarios (handoff / question / finding / blocker-surface) — without this, activity log has no agent-to-agent chat
+- [ ] **Skills to invoke** — specific skills the agent should load
+- [ ] **Blocked Protocol** — only if genuinely uncertain, 10-min poll, early-return
+- [ ] **Final output (JSON)** — status/summary/files_changed/criteria/decisions/validation
+
+If you catch yourself writing a prompt without the Agent Chat block, STOP and add it. A mission with no chat is a mission with a broken dashboard.
+
 ### Spawn pattern — coders in parallel, pipeline stages sequential
 
 **Coders (if 2+):** spawn all in one message (independent parallel work).
@@ -670,32 +723,20 @@ Each `Agent()` call returns when that agent finishes. Fury parses the returned J
 
 ### STATE WRITE 2 (after all Agent() spawn calls in one phase)
 
-Uses `patch_state()` from the Golden Rule block above. Substitute the literal values where marked with `<>`:
+Use the **Read → mutate → Write+mv** pattern from the Golden Rule:
 
-```python
-# Fury fills in these four lines from the actual spawn batch:
-SPAWNED_IDS  = ["stark-senior", "natasha-reviewer"]        # ids of agents just spawned
-TASK_LABELS  = {"stark-senior": "Refactor create_lineages()",
-                "natasha-reviewer": "Awaiting coder output"}  # short labels
-N            = len(SPAWNED_IDS)
-IDS_STR      = ", ".join(SPAWNED_IDS)
-
-def _apply(state):
-    state['phase'] = 'monitoring'
-    for a in state['agents']:
-        if a['id'] in SPAWNED_IDS:
-            a['status'] = 'working'
-            a['task']   = TASK_LABELS.get(a['id'], a.get('task', ''))
-    state.setdefault('activity', []).append(
-        {'who': 'fury-captain',
-         'msg': f'Spawned {N} agents: {IDS_STR}',
-         'ts':  int(time.time())}
-    )
-
-patch_state(STATE_FILE, _apply)
+```
+1. Read(file_path=STATE_FILE)   →  parse JSON (strip N\t prefixes from tool output)
+2. state['phase'] = 'monitoring'
+   for each spawned agent id:     set status='working', task=<short label>
+   for each tasks[] entry whose owner just spawned:  set status='in_progress'
+   state['activity'].append({"who":"fury-captain","msg":"Spawned N agents: <ids>","ts":<epoch>})
+   state['updated_at'] = <epoch>
+3. Write(file_path=STATE_FILE + ".tmp", content=json.dumps(state, indent=2))
+4. Bash(mv <STATE_FILE>.tmp <STATE_FILE>)
 ```
 
-`patch_state()` preserves `tasks[]`, `repo_root`, `budget`, `pr`, `blocked`, and any agent field not explicitly touched — guaranteed. It also writes atomically via tmp + `os.replace`.
+This preserves `tasks[]` items you didn't touch, `repo_root`, `budget`, `pr`, `blocked`, and all untouched agent fields automatically — only the fields you explicitly mutate change.
 
 The bridge will update statuses continuously from here. Fury's next write is on pipeline transition.
 
@@ -727,25 +768,26 @@ Phase 5 — Mission Report
 
 **Important:** if the mission matrix didn't include a role, skip it. A docs-only mission has no tester or validator — after the reviewer returns PASS, go straight to Phase 5.
 
-**STATE WRITE 3 (after each pipeline transition) — uses `patch_state()` from the Golden Rule block:**
+**STATE WRITE 3 (after each pipeline transition) — Read → mutate → Write+mv, same shape as WRITE 2:**
 
-```python
-UPSTREAM    = "stark-senior"        # agent that just finished
-DOWNSTREAM  = "natasha-reviewer"    # agent taking over
-HANDOFF_MSG = f"{UPSTREAM} done → {DOWNSTREAM} starting review"
-
-def _apply(state):
-    for a in state['agents']:
-        if a['id'] == UPSTREAM:   a['status'] = 'done'
-        if a['id'] == DOWNSTREAM: a['status'] = 'working'
-    state.setdefault('activity', []).append(
-        {'who': 'fury-captain', 'msg': HANDOFF_MSG, 'ts': int(time.time())}
-    )
-
-patch_state(STATE_FILE, _apply)
+```
+1. Read(file_path=STATE_FILE)  →  parse JSON (strip N\t prefixes)
+2. agents[<upstream>]['status'] = 'done'
+   agents[<upstream>]['tokens_used'] = <total_tokens from <usage> block>
+   agents[<upstream>]['tool_uses']   = <tool_uses from <usage> block>
+   agents[<upstream>]['duration_ms'] = <duration_ms from <usage> block>
+   agents[<downstream>]['status'] = 'working'
+   tasks[<upstream_task_id>]['status']   = 'completed'
+   tasks[<downstream_task_id>]['status'] = 'in_progress'
+   state['activity'].append({"who":"fury-captain","msg":"<upstream> done → <downstream> starting","ts":<epoch>})
+   state['updated_at'] = <epoch>
+3. Write(file_path=STATE_FILE + ".tmp", content=json.dumps(state, indent=2))
+4. Bash(mv <STATE_FILE>.tmp <STATE_FILE>)
 ```
 
-Do NOT touch `tasks[]`, `repo_root`, `budget`, `blocked`, `pr`, or any other field — `patch_state()` preserves them automatically.
+On the final transition (pipeline finished, no downstream): set `phase = "done"`, mark the last agent's task completed, and append a `MISSION COMPLETE — awaiting commit approval` activity entry.
+
+Do NOT touch `repo_root`, `budget`, `blocked`, `pr`, or any agent/task field you didn't explicitly list — only mutate what's above.
 
 ### Capturing real token + cost usage (MANDATORY for accurate budget meter)
 

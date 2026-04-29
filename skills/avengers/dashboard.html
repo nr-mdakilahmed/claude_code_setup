@@ -2287,33 +2287,60 @@ function renderBudget(s){
   let totalTokens=0,totalCost=0;
   const breakdown=[];
   let estimatedCount=0;
+  let furyHandled=false;
   agents.forEach(function(a){
-    if(a.id==='fury-captain')return;
+    const isFury=a.id==='fury-captain';
     const rate=BLEND_RATE[a.model]||BLEND_RATE.sonnet;
-    let tok,isReal;
-    if(typeof a.tokens_used==='number'&&a.tokens_used>0){
-      tok=a.tokens_used; isReal=true;
+    let tok,cost,isReal,note;
+    if(typeof a.cost_usd==='number'&&a.cost_usd>0){
+      // Bridge fury-usage watcher has written real numbers (from session JSONL)
+      tok=a.tokens_used||0;
+      cost=a.cost_usd;
+      isReal=true;
+      note=a.cost_source==='real'?'real (from session transcript)':undefined;
+    }else if(typeof a.tokens_used==='number'&&a.tokens_used>0){
+      // Subagent reported real token count via <usage>, no pre-computed cost — apply blend
+      tok=a.tokens_used;
+      cost=(tok/1e6)*rate;
+      isReal=true;
+    }else if(isFury){
+      // No real numbers yet — use heuristic until bridge watcher catches up
+      const furyActs=activity.filter(function(e){return e.who==='fury-captain';}).length;
+      tok=15000+furyActs*2500;
+      cost=(tok/1e6)*BLEND_RATE.opus;
+      isReal=false;
+      note='estimate — real numbers arrive within 10s';
     }else{
-      // Fallback estimate for agents still in flight
+      // In-flight subagent — rough estimate
       const n=activity.filter(function(e){return e.who===a.id;}).length;
-      tok=30000+n*3000; isReal=false; estimatedCount++;
+      tok=30000+n*3000;
+      cost=(tok/1e6)*rate;
+      isReal=false;
+      estimatedCount++;
     }
     totalTokens+=tok;
-    const cost=(tok/1e6)*rate;
     totalCost+=cost;
-    breakdown.push({id:a.id,name:meta(a.id).name,model:a.model||'sonnet',tokens:tok,cost:cost,isReal:isReal,tool_uses:a.tool_uses,duration_ms:a.duration_ms});
+    breakdown.push({id:a.id,name:meta(a.id).name,model:a.model||'sonnet',tokens:tok,cost:cost,isReal:isReal,tool_uses:a.tool_uses,duration_ms:a.duration_ms,note:note});
+    if(isFury) furyHandled=true;
   });
-  // Fury's own tokens — Claude Code doesn't expose them to the skill, so estimate
-  // based on orchestration activity. Fury's work is proportional to state writes +
-  // spawn calls + notification parsing (roughly 2-5k per pipeline event).
-  const furyActs=activity.filter(function(e){return e.who==='fury-captain';}).length;
-  const furyTokens=15000+furyActs*2500;
-  const furyCost=(furyTokens/1e6)*BLEND_RATE.opus;
-  totalTokens+=furyTokens; totalCost+=furyCost;
-  breakdown.push({id:'fury-captain',name:'Nick Fury',model:'opus',tokens:furyTokens,cost:furyCost,isReal:false,note:'estimated — CC does not expose captain tokens'});
+  // Back-compat: if Fury isn't in agents[], add the heuristic fallback
+  if(!furyHandled){
+    const furyActs=activity.filter(function(e){return e.who==='fury-captain';}).length;
+    const furyTokens=15000+furyActs*2500;
+    const furyCost=(furyTokens/1e6)*BLEND_RATE.opus;
+    totalTokens+=furyTokens; totalCost+=furyCost;
+    breakdown.push({id:'fury-captain',name:'Nick Fury',model:'opus',tokens:furyTokens,cost:furyCost,isReal:false,note:'estimate — no fury entry in state'});
+  }
+  // If bridge has written a top-level authoritative total, prefer it over the sum
+  // (catches subagent blend-rate undercount vs fury-usage.py's exact per-token-type math)
+  if(typeof s.real_cost_usd==='number'&&s.real_cost_usd>0){
+    totalCost=s.real_cost_usd;
+    if(s.real_total_tokens) totalTokens=s.real_total_tokens;
+  }
   // Render topbar meter numbers
   const tokenLabel=totalTokens>=1e6?(totalTokens/1e6).toFixed(2)+'M':Math.round(totalTokens/1000)+'k';
-  document.getElementById('bm-tokens').textContent=(estimatedCount||furyTokens?'~':'')+tokenLabel;
+  const anyEstimate=breakdown.some(function(b){return !b.isReal;});
+  document.getElementById('bm-tokens').textContent=(anyEstimate?'~':'')+tokenLabel;
   document.getElementById('bm-cost').textContent='$'+(totalCost<0.01?totalCost.toFixed(4):totalCost.toFixed(2));
   // Populate styled budget tooltip
   const tip=document.getElementById('budget-tip');

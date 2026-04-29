@@ -426,6 +426,133 @@ def start_progress_watcher():
     return t
 
 
+# ── Fury usage watcher ───────────────────────────────────────────────────
+# The dashboard's built-in Fury token estimate (15k + 2.5k*acts) is an order
+# of magnitude too low for real Opus workloads. This watcher reads Claude
+# Code's session transcript JSONLs directly via fury_usage.py and injects
+# exact token counts + cost into the state file under `agents[fury-captain]`.
+# Dashboard then renders real numbers instead of the heuristic.
+_FURY_USAGE_TICK_SECS = 10
+try:
+    _SKILL_DIR = os.path.dirname(os.path.abspath(__file__))
+    if _SKILL_DIR not in sys.path:
+        sys.path.insert(0, _SKILL_DIR)
+    import fury_usage as _fury_usage_mod
+except Exception as e:
+    _fury_usage_mod = None
+    print(f'[bridge/fury-usage] helper not importable: {e}', flush=True)
+
+
+def _find_active_state_file():
+    """Return the path to the most recently updated, non-stale avengers
+    state file, or None if nothing is live."""
+    STALE_SECS = 30 * 60
+    now = int(time.time())
+    files = [
+        f for f in glob.glob('/tmp/avengers-*.json')
+        if '-progress-' not in f and '-answer' not in f
+        and os.path.basename(f) != 'avengers-answer.json'
+    ]
+    for f in sorted(files, key=os.path.getmtime, reverse=True):
+        try:
+            with open(f) as fh:
+                s = json.load(fh)
+            if now - s.get('updated_at', 0) <= STALE_SECS:
+                return f, s
+        except Exception:
+            continue
+    return None, None
+
+
+def _fury_usage_tick():
+    if _fury_usage_mod is None:
+        return
+    path_info = _find_active_state_file()
+    if not path_info or not path_info[0]:
+        return
+    state_file, state = path_info
+    team = state.get('team', '')
+    # Extract mission start epoch from "avengers-<epoch>"
+    try:
+        mission_start = float(team.rsplit('-', 1)[-1])
+    except ValueError:
+        return
+
+    # Freeze-on-done: once the mission reaches phase="done", stop extending
+    # the cost window. Everything after that is post-mission chat, not mission
+    # work. The cutoff is the timestamp of Fury's "MISSION COMPLETE" activity
+    # entry — that's the authentic mission-end moment, even if the bridge
+    # doesn't observe the phase transition for a few seconds after.
+    phase = state.get('phase')
+    end_epoch = state.get('pipeline_end_epoch')
+    just_frozen = False
+    if phase == 'done' and not end_epoch:
+        for act in reversed(state.get('activity') or []):
+            msg = act.get('msg') if isinstance(act, dict) else None
+            if isinstance(msg, str) and msg.startswith('MISSION COMPLETE'):
+                ts = act.get('ts')
+                if isinstance(ts, (int, float)) and ts > 0:
+                    end_epoch = int(ts)
+                    break
+        if not end_epoch:
+            end_epoch = int(time.time())  # fallback if marker missing
+        just_frozen = True
+
+    try:
+        r = _fury_usage_mod.compute(mission_start, end_epoch if end_epoch else None)
+    except Exception as e:
+        print(f'[bridge/fury-usage] compute error: {e}', flush=True)
+        return
+
+    fury_tokens = r.get('fury', {}).get('total_tokens', 0)
+    fury_cost   = r.get('fury', {}).get('cost_usd', 0.0)
+    if fury_tokens == 0 and fury_cost == 0.0 and not just_frozen:
+        return
+
+    def updater(s):
+        found = False
+        for a in s.get('agents', []):
+            if a.get('id') == 'fury-captain':
+                a['tokens_used'] = fury_tokens
+                a['cost_usd']    = round(fury_cost, 4)
+                a['cost_source'] = 'real'
+                found = True
+                break
+        if not found:
+            return
+        s['real_cost_usd']     = round(r.get('total_cost_usd', 0.0), 4)
+        s['real_total_tokens'] = r.get('total_tokens', 0)
+        if just_frozen:
+            s['pipeline_end_epoch'] = end_epoch
+
+    try:
+        _atomic_state_update(state_file, updater)
+    except Exception as e:
+        print(f'[bridge/fury-usage] state write error: {e}', flush=True)
+
+
+def _fury_usage_watcher_loop():
+    # Small initial delay so we don't race STATE WRITE 1
+    time.sleep(3)
+    while not _STOP_EVENT.is_set():
+        try:
+            _fury_usage_tick()
+        except Exception as e:
+            print(f'[bridge/fury-usage] tick error: {e}', flush=True)
+        _STOP_EVENT.wait(_FURY_USAGE_TICK_SECS)
+
+
+def start_fury_usage_watcher():
+    if _fury_usage_mod is None:
+        print('[bridge/fury-usage] watcher NOT started (helper missing)', flush=True)
+        return None
+    t = threading.Thread(
+        target=_fury_usage_watcher_loop, daemon=True, name='fury-usage-watcher'
+    )
+    t.start()
+    return t
+
+
 # ── HTTP handler ─────────────────────────────────────────────────────────
 class Bridge(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
@@ -459,6 +586,10 @@ class Bridge(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self._cors()
                 self.send_header('Content-Type', 'text/html; charset=utf-8')
+                # Prevent browser cache so dashboard edits take effect on next reload
+                self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                self.send_header('Pragma', 'no-cache')
+                self.send_header('Expires', '0')
                 self.send_header('Content-Length', len(body))
                 self.end_headers()
                 self.wfile.write(body)
@@ -827,6 +958,7 @@ if __name__ == '__main__':
     # agent activity for background agents (no team_name, no new windows).
     _load_offsets()
     start_progress_watcher()
+    start_fury_usage_watcher()
 
     server = HTTPServer(('localhost', PORT), Bridge)
 
@@ -845,6 +977,7 @@ if __name__ == '__main__':
     print(f'Claude session:  {CC_TARGET or "not detected (run claude in an iTerm2 window)"}')
     print(f'Dashboard file:  {DASHBOARD_HTML or "NOT FOUND"}')
     print(f'Progress watch:  {_PROGRESS_GLOB} (1s tick)')
+    print(f'Fury-usage watch: {_FURY_USAGE_TICK_SECS}s tick (real tokens/cost from session JSONL)')
     print()
     if not CC_TARGET:
         print('  To enable CC mode, open an iTerm2 window and run: claude')
