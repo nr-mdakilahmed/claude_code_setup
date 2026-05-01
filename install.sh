@@ -79,17 +79,31 @@ fi
 
 # ── Skills ────────────────────────────────────────────────────────────────────
 echo ""
-echo "→ Installing skills..."
+echo "→ Installing skills (team version always wins; customizations backed up)..."
+TS=$(date +%Y%m%d-%H%M%S)
 for dir in "$REPO/skills"/*/; do
   name=$(basename "$dir")
   [[ "$name" == "_template" ]] && continue
   target="$CLAUDE/skills/$name"
-  if [ -d "$target" ] && [ ! -L "$target" ]; then
-    echo "  skip $name (local version exists — not overwriting)"
-  else
-    [ -L "$target" ] && rm "$target"
+
+  if [ -L "$target" ]; then
+    # Symlink → remove and install fresh
+    rm "$target"
     cp -r "$dir" "$target"
-    echo "  ✓ $name"
+    echo "  ✓ $name (replaced symlink)"
+  elif [ -d "$target" ]; then
+    # Real dir exists — is it identical to repo version?
+    if diff -rq "$dir" "$target" >/dev/null 2>&1; then
+      : # identical, no action
+    else
+      # Differs — back up, then overwrite
+      mv "$target" "${target}.bak-${TS}"
+      cp -r "$dir" "$target"
+      echo "  ↻ $name (backed up customized version → ${name}.bak-${TS})"
+    fi
+  else
+    cp -r "$dir" "$target"
+    echo "  + $name (new)"
   fi
 done
 
