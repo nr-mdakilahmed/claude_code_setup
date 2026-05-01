@@ -120,7 +120,9 @@ while IFS= read -r path; do
   if [[ "$path" =~ \<[^\>]+\> ]]; then
     continue
   fi
-  if [[ ! -e "$full" ]]; then
+  # Expand ~ to $HOME for existence check
+  expanded_full="${full/#\~/$HOME}"
+  if [[ ! -e "$expanded_full" ]]; then
     echo "  ✗ missing: $path"
     MISSING=$((MISSING + 1))
   fi
