@@ -53,7 +53,7 @@ Output cost dominates: Opus output is $75/M, Sonnet $15/M, Haiku 4.5 $5/M. The s
 | Production incident, unclear cause | Opus 4.7 | high | Deep hypothesis generation |
 | Complex PR review (>500 lines, critical path) | Opus 4.7 | high | Senior-level analysis |
 | Multi-phase initiative planning | Opus 4.7 | high | Dependency + risk analysis |
-| `/graphify`, `/bootstrap` | Opus 4.7 | high | Deep codebase analysis |
+| `/bootstrap` | Opus 4.7 | high | Deep codebase analysis |
 | Pre-implementation audit of big rewrite | Opus 4.7 | high | Single moment that earns Opus |
 | **Rare — max effort** | | | |
 | Novel research problem, truly unknown system | Opus 4.7 | max | Weeks-of-impact decisions only |
@@ -98,26 +98,30 @@ Output cost dominates: Opus output is $75/M, Sonnet $15/M, Haiku 4.5 $5/M. The s
 `/bootstrap` creates two things per repo:
 
 ```
-~/.claude/projects/<REPO_NAME>/    ← memory lives here (global, never committed)
+~/.claude/projects/<REPO_NAME>/    ← per-project state (global, never committed)
 ├── memory/
-│   ├── MEMORY.md                  ← index
-│   ├── architecture.md
-│   ├── todo.md
-│   ├── lessons.md
-│   └── history.md                 ← NOT auto-loaded (large, append-only)
+│   ├── MEMORY.md                  ← index (not auto-loaded; useful for discovery)
+│   ├── hot.md                     ← AUTO-LOADED ~2k tokens: curated digest (wrap-up regenerates)
+│   ├── architecture.md            ← pull-on-demand
+│   ├── todo.md                    ← pull-on-demand
+│   ├── lessons.md                 ← pull-on-demand
+│   └── history.md                 ← pull-on-demand (large, append-only)
+├── plans/                         ← mirrored from ~/.claude/plans/ at /wrap-up
 └── graphs/
-    ├── graph.json
-    ├── GRAPH_REPORT.md
-    └── graph.html
+    ├── GRAPH_REPORT.md            ← AUTO-LOADED: CRG graph summary + MCP tool reminders
+    └── graph.html                 ← optional viz
 
-<repo>/.claude/
-└── CLAUDE.md   ← in .gitignore; auto-loads all 5 artifacts via @ on session start
-    @~/.claude/projects/<REPO_NAME>/memory/MEMORY.md
-    @~/.claude/projects/<REPO_NAME>/memory/architecture.md
-    @~/.claude/projects/<REPO_NAME>/memory/todo.md
-    @~/.claude/projects/<REPO_NAME>/memory/lessons.md
-    @~/.claude/projects/<REPO_NAME>/graphs/GRAPH_REPORT.md
+<repo>/
+├── .mcp.json                      ← per-repo CRG MCP config (code-review-graph serve)
+├── .code-review-graph/            ← SQLite graph (in .gitignore)
+└── .claude/
+    ├── CLAUDE.md                  ← in .gitignore; only 2 @-loads on session start
+    │   @~/.claude/projects/<REPO_NAME>/memory/hot.md
+    │   @~/.claude/projects/<REPO_NAME>/graphs/GRAPH_REPORT.md
+    └── settings.json              ← CRG PostToolUse hooks (auto-update graph on Edit)
 ```
+
+**Why hot.md + pull-on-demand?** Session-start cost is bounded (~2-4k tokens total). Deeper memory is retrieved only when relevant — cheaper per question, avoids drowning in stale context. `/wrap-up` Phase 5 regenerates `hot.md` from curated top truths (active todos, recent lessons, architecture summary).
 
 **Session start**: Claude Code auto-loads `<repo>/.claude/CLAUDE.md` → all 5 `@` references load automatically → full context ready with zero manual steps.  
 **First visit**: run `/bootstrap` (Opus) once to create all of the above.  
@@ -145,10 +149,19 @@ Output cost dominates: Opus output is $75/M, Sonnet $15/M, Haiku 4.5 $5/M. The s
 | `superpowers:systematic-debugging` | Hypothesis-driven debugging protocol |
 | `superpowers:brainstorming` | Multi-angle exploration before committing to approach |
 | `/demo` | 45-minute demo prep (problem-first narrative) |
-| `/graphify` | Knowledge graph generation — 25× token reduction (Opus) |
 | `/bootstrap` | First-visit repo setup — run ONCE with Opus |
 | `/wrap-up` | Session-end persistence — run EVERY session |
 | `/avengers` | Multi-agent missions — Fury (Opus) orchestrates specialists (Sonnet) in parallel |
+| `/golden` | Capture a validated session as a reusable golden-path (save/list/validate) |
+| `/replay` | Load a saved golden as prior-art for a matching task — avoids re-deriving fixes |
+| `/budget` | Daily/weekly/monthly spend tracking vs caps in ~/.claude/budget.json (warn-only) |
+
+### MCP servers (per-repo, auto-installed by /bootstrap)
+
+| Server | Tools | Purpose |
+|---|---|---|
+| `memory` | get_memory, search_memory, list_lessons, get_todo, recall_plan | Pull-on-demand access to project memory (architecture/todo/lessons/history/plans) — avoids @-loading everything at session start |
+| `code-review-graph` | 28 tools (semantic_search_nodes, query_graph, get_impact_radius, detect_changes, ...) | Tree-sitter AST graph of the repo for precise code navigation and blast-radius analysis |
 
 ---
 
@@ -270,3 +283,42 @@ Show the exact command and wait for "yes" before executing.
 - **Jira**: Use `mcp__plugin_nr_atlassian-jira__*` for Jira ticket lookups.
 
 @RTK.md
+
+<!-- code-review-graph MCP tools -->
+## MCP Tools: code-review-graph
+
+**IMPORTANT: This project has a knowledge graph. ALWAYS use the
+code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
+the codebase.** The graph is faster, cheaper (fewer tokens), and gives
+you structural context (callers, dependents, test coverage) that file
+scanning cannot.
+
+### When to use graph tools FIRST
+
+- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
+- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
+- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
+- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
+- **Architecture questions**: `get_architecture_overview` + `list_communities`
+
+Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
+
+### Key Tools
+
+| Tool | Use when |
+|------|----------|
+| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
+| `get_review_context` | Need source snippets for review — token-efficient |
+| `get_impact_radius` | Understanding blast radius of a change |
+| `get_affected_flows` | Finding which execution paths are impacted |
+| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
+| `semantic_search_nodes` | Finding functions/classes by name or keyword |
+| `get_architecture_overview` | Understanding high-level codebase structure |
+| `refactor_tool` | Planning renames, finding dead code |
+
+### Workflow
+
+1. The graph auto-updates on file changes (via hooks).
+2. Use `detect_changes` for code review.
+3. Use `get_affected_flows` to understand impact.
+4. Use `query_graph` pattern="tests_for" to check coverage.

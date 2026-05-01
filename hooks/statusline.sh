@@ -230,13 +230,35 @@ if [ -n "$cost_usd" ] && [ "$cost_usd" != "0" ] && [ "$cost_usd" != "null" ]; th
     fi
 fi
 
-# 4. Daily total (80+)
+# 4. Daily total with budget-aware color (80+)
+# Vivid tier palette distinct from muted session-cost orange so the signal pops
+BUDGET_GREEN="\033[1;38;2;80;220;120m"
+BUDGET_YELLOW="\033[1;38;2;255;200;40m"
+BUDGET_RED="\033[1;38;2;255;70;70m"
+
 if [ "$cols" -ge 80 ] && [ -n "$daily_usd" ] && [ "$daily_usd" != "0" ] && [ "$daily_usd" != "null" ]; then
     daily_int=$(printf "%.0f" "$daily_usd" 2>/dev/null || echo "0")
+
+    # Read budget caps (fallback: unbounded → stays ORANGE)
+    daily_color="$ORANGE"
+    tier_icon=""
+    budget_file="$HOME/.claude/budget.json"
+    if [ -f "$budget_file" ]; then
+        daily_cap=$(jq -r '.daily_cap_usd // 0' "$budget_file" 2>/dev/null)
+        downshift_pct=$(jq -r '.auto_downshift_pct // 80' "$budget_file" 2>/dev/null)
+        if [ -n "$daily_cap" ] && awk -v c="$daily_cap" 'BEGIN{exit !(c>0)}'; then
+            daily_pct=$(awk -v u="$daily_usd" -v c="$daily_cap" 'BEGIN{if(c==0)print 0; else printf "%.0f", 100*u/c}')
+            if   [ "$daily_pct" -ge 100 ]; then daily_color="$BUDGET_RED";    tier_icon="🔴"
+            elif [ "$daily_pct" -ge "$downshift_pct" ]; then daily_color="$BUDGET_YELLOW"; tier_icon="🟡"
+            else daily_color="$BUDGET_GREEN"; tier_icon="🟢"
+            fi
+        fi
+    fi
+
     if [ "${daily_int:-0}" -le 0 ] 2>/dev/null; then
-        status+=$(printf "%b📅 ${ORANGE}<\$1${RESET}" "$S")
+        status+=$(printf "%b%s %b<\$1${RESET}" "$S" "${tier_icon:-📅}" "$daily_color")
     else
-        status+=$(printf "%b📅 ${ORANGE}\$%s${RESET}" "$S" "$daily_int")
+        status+=$(printf "%b%s %b\$%s${RESET}" "$S" "${tier_icon:-📅}" "$daily_color" "$daily_int")
     fi
 fi
 

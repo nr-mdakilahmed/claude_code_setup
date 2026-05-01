@@ -1,0 +1,18 @@
+[project]
+name = "memory-server"
+version = "0.1.0"
+description = "MCP server exposing per-project memory (architecture.md, todo.md, lessons.md, history.md, plans) as pull-on-demand tools"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp>=2.0.0",
+]
+
+[project.scripts]
+memory-server = "memory_server.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["memory_server"]

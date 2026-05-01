@@ -57,14 +57,15 @@ Copy this checklist and check off items as you complete them:)
 - [ ] Step 2: verb + concrete output
 - [ ] Step 3: verb + concrete output
 
-## Feedback loop
+## Validation loop
 
-(Include only for skills with validation — cicd, docker, terraform, bootstrap.)
+**Required for every skill.** Mechanical skills validate with exact commands; judgment skills validate with explicit assertions Claude checks itself. No skill is "done" without this section.
 
 1. Perform the work.
-2. **Validate immediately**: `exact command or check`.
-3. If validation fails: fix → revalidate. Loop until clean.
-4. Proceed only when validation passes.
+2. **Validate immediately**: exact command, schema check, test run, or explicit invariant Claude asserts.
+3. If validation fails: fix → revalidate. Maximum three loops.
+4. After three failures, stop and ask the user with a specific question — do not keep guessing.
+5. Proceed to next step only when validation passes.
 
 ## Anti-patterns
 

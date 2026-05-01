@@ -1,6 +1,6 @@
 ---
 name: bootstrap
-description: Performs first-visit repo setup — detects stack, seeds memory artifacts at ~/.claude/projects/<REPO_NAME>/, invokes /graphify, and writes <repo>/.claude/CLAUDE.md with @ references. Fires only on explicit /bootstrap. Runs once per repo; re-runs are safe but preserve existing memory. Opus-routed because judgment on stack classification and conventions benefits from stronger reasoning.
+description: Performs first-visit repo setup — detects stack, seeds memory artifacts at ~/.claude/projects/<REPO_NAME>/, builds a code-review-graph (Tree-sitter + 28 MCP tools) with per-repo .mcp.json, and writes <repo>/.claude/CLAUDE.md with @ references. Fires only on explicit /bootstrap. Runs once per repo; re-runs are safe but preserve existing memory. Opus-routed because judgment on stack classification and conventions benefits from stronger reasoning.
 when_to_use: Invoke explicitly with /bootstrap on first visit to a new repo, or after a structural rewrite that invalidates architecture.md. Never invoke on incidental prompts.
 allowed-tools: Read Grep Bash Write
 disable-model-invocation: true
@@ -14,6 +14,8 @@ Turns Claude into a repo on-boarder: detects the tech stack, seeds five memory f
 
 **Freedom level: Low** — the memory layout and CLAUDE.md `@` contract feed `wrap-up` and every future session, so the sequence and output shape are not negotiable. Claude follows the workflow exactly; judgment is limited to stack classification and writing the architecture narrative.
 
+**Graph backend**: bootstrap builds a [code-review-graph](https://github.com/tirth8205/code-review-graph) per repo — Tree-sitter AST + SQLite + 28 MCP tools. Replaces the former grep-based graphify skill. The graph's live MCP tools are Claude's primary code-navigation mechanism in future sessions; `GRAPH_REPORT.md` is the cheap session-start overview.
+
 ## 1. Detect Stack First
 
 **Classify languages and frameworks before touching memory — the result drives every later step.**
@@ -25,11 +27,11 @@ Turns Claude into a repo on-boarder: detects the tech stack, seeds five memory f
 
 ## 2. Seed Memory Before Work
 
-**All five skeleton files exist before `/graphify` runs.**
+**All five skeleton files exist before the graph build runs.**
 
 - Run `scripts/seed-memory.sh --repo-name "$REPO_NAME" --memory-dir "$MEMORY_DIR"`; it creates the directory and the 5 files idempotently.
 - Re-runs preserve prior `architecture.md` / `todo.md` / `lessons.md` / `history.md`; only `MEMORY.md` is rewritten.
-- Populate `architecture.md` from `$GRAPHS_DIR/GRAPH_REPORT.md` after `/graphify` completes — do not write stack guesses before the graph exists.
+- Populate `architecture.md` from `$GRAPHS_DIR/GRAPH_REPORT.md` after `scripts/build-graph.sh` completes — do not write stack guesses before the graph exists.
 - Seed content templates in `references/memory-templates.md`; read it before hand-editing any memory file.
 
 ## 3. Link Project To Global
@@ -46,7 +48,7 @@ Turns Claude into a repo on-boarder: detects the tech stack, seeds five memory f
 **Bootstrap is a seeder, not a maintainer. After the first run, `/wrap-up` owns ongoing updates.**
 
 - If `$MEMORY_DIR/MEMORY.md` already exists: warn, show the last-modified date, and require user confirmation before any overwrite.
-- If `$GRAPHS_DIR/graph.json` exists: skip the `/graphify` step unless the user opts into refresh.
+- If `$REPO_ROOT/.code-review-graph/` exists: skip the build step unless the user opts into a rebuild (CRG auto-updates incrementally via hooks).
 - For structural rewrites (large refactor, language swap), re-run bootstrap with explicit consent; `/wrap-up` refreshes less invasively for incremental drift.
 
 ## Quick reference
@@ -69,8 +71,8 @@ Copy this checklist and check off items as you complete them:
 - [ ] **Phase 1 — Detect stack**: run `scripts/detect-stack.sh --repo "$REPO_ROOT"`; capture `primary`, `languages`, `frameworks`. Confirm classification with the user if `primary` is `unknown`.
 - [ ] **Phase 2 — Seed memory**: run `scripts/seed-memory.sh --repo-name "$REPO_NAME" --memory-dir "$MEMORY_DIR"`.
 - [ ] **Phase 3 — Write project CLAUDE.md**: run `scripts/write-project-claude.sh --repo "$REPO_ROOT" --memory-dir "$MEMORY_DIR"`. Fill in the Stack, Entry Points, Conventions, and Skills sections using detector output; pick 5–8 relevant skills.
-- [ ] **Phase 4 — Invoke /graphify**: only if `$GRAPHS_DIR/graph.json` is absent or the user opted into refresh. Produces `graph.json`, `GRAPH_REPORT.md`, optionally `graph.html` in `$GRAPHS_DIR`.
-- [ ] **Phase 5 — Link**: populate `architecture.md` narrative from `GRAPH_REPORT.md` (Tech Stack, Entry Points, Key Modules, Conventions, Known Risks). Append first entry to `history.md` with stack summary.
+- [ ] **Phase 4 — Build graph**: run `scripts/build-graph.sh --repo "$REPO_ROOT" --graphs-dir "$GRAPHS_DIR"`. Skip if `$REPO_ROOT/.code-review-graph/` exists unless user opted into rebuild. Produces `<repo>/.code-review-graph/` (SQLite), `<repo>/.mcp.json` (MCP config), `$GRAPHS_DIR/GRAPH_REPORT.md`, and optional `$GRAPHS_DIR/graph.html`.
+- [ ] **Phase 5 — Link**: populate `architecture.md` narrative from `GRAPH_REPORT.md` (stack from detector, entry points, communities, hub nodes). Append first entry to `history.md` with stack summary.
 - [ ] Print summary: repo name, stack, memory dir, graph dir, project CLAUDE.md path.
 
 ## Feedback loop
@@ -85,7 +87,7 @@ Copy this checklist and check off items as you complete them:
 
 | Pattern | Fix |
 |---|---|
-| Writing `architecture.md` before `/graphify` ran | Seed skeletons first, invoke graphify, then populate the narrative from `GRAPH_REPORT.md` |
+| Writing `architecture.md` before the graph built | Seed skeletons first, run `build-graph.sh`, then populate the narrative from `GRAPH_REPORT.md` |
 | Duplicating architecture content inside `.claude/CLAUDE.md` | Use `@` references only — content lives in `~/.claude/projects/<REPO_NAME>/memory/` |
 | Including `history.md` in the CLAUDE.md `@` refs | Exclude it — the file grows unboundedly and bloats every session start |
 | Running bootstrap twice without checking | Detect existing `MEMORY.md`; require explicit user confirmation to overwrite |
@@ -99,8 +101,9 @@ Copy this checklist and check off items as you complete them:
 - `scripts/detect-stack.sh` — `--repo <path>`; emits JSON `{"languages":[], "frameworks":[], "primary":"..."}`.
 - `scripts/seed-memory.sh` — `--repo-name <name> --memory-dir <path>`; creates all 5 skeleton files idempotently.
 - `scripts/write-project-claude.sh` — `--repo <path> --memory-dir <path>`; emits `<repo>/.claude/CLAUDE.md` with 5 `@` refs and updates `.gitignore`.
+- `scripts/build-graph.sh` — `--repo <path> --graphs-dir <path>`; wires code-review-graph (MCP config + hooks), builds the graph, emits `GRAPH_REPORT.md` and optional `graph.html`. Requires `code-review-graph` CLI (`pipx install code-review-graph`).
 
 ## Cross-references
 
-- `/graphify` — bootstrap invokes this in Phase 4; depends on the `graph.json` schema and `GRAPH_REPORT.md` section names defined by that skill.
-- `/wrap-up` — owns ongoing mutation of `todo.md`, `lessons.md`, `history.md`, and refreshes `architecture.md` when the graph drifts. Run at the end of every session.
+- `code-review-graph` — installed as a pipx package; its 28 MCP tools become Claude's primary code-navigation mechanism once bootstrap wires it in. `.mcp.json` in each repo activates the tools per-session.
+- `/wrap-up` — owns ongoing mutation of `todo.md`, `lessons.md`, `history.md`, and refreshes `GRAPH_REPORT.md` via `code-review-graph update` + `wiki`. Run at the end of every session.

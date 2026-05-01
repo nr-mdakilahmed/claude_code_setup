@@ -107,14 +107,47 @@ if [[ ! -f "$GITIGNORE" ]] || ! grep -qE '^\.claude/?$' "$GITIGNORE"; then
     echo ".claude/"
   } >> "$GITIGNORE"
 fi
+if ! grep -qE '^\.mcp\.json$' "$GITIGNORE" 2>/dev/null; then
+  echo ".mcp.json" >> "$GITIGNORE"
+fi
+
+# --- .mcp.json (memory server; CRG merges its entry later via build-graph.sh)
+MCP_CONFIG="$REPO_ABS/.mcp.json"
+MEMORY_SERVER_PATH="$HOME/.claude-kit/mcp-servers/memory-server"
+if [[ -d "$MEMORY_SERVER_PATH" ]]; then
+  MEMORY_ENTRY=$(/usr/bin/jq -n \
+    --arg path "$MEMORY_SERVER_PATH" \
+    --arg repo "$REPO_NAME" \
+    '{
+      command: "uvx",
+      args: ["--from", $path, "memory-server", "--repo-name", $repo],
+      type: "stdio"
+    }')
+  if [[ -f "$MCP_CONFIG" ]]; then
+    TMP_MCP=$(mktemp)
+    /usr/bin/jq --argjson entry "$MEMORY_ENTRY" '.mcpServers.memory = $entry' "$MCP_CONFIG" > "$TMP_MCP"
+    mv "$TMP_MCP" "$MCP_CONFIG"
+  else
+    /usr/bin/jq -n --argjson entry "$MEMORY_ENTRY" '{mcpServers: {memory: $entry}}' > "$MCP_CONFIG"
+  fi
+fi
 
 # --- write CLAUDE.md -----------------------------------------------------
 cat > "$PROJECT_CLAUDE" <<EOF
-@~/.claude/projects/${REPO_NAME}/memory/MEMORY.md
-@~/.claude/projects/${REPO_NAME}/memory/architecture.md
-@~/.claude/projects/${REPO_NAME}/memory/todo.md
-@~/.claude/projects/${REPO_NAME}/memory/lessons.md
+@~/.claude/projects/${REPO_NAME}/memory/hot.md
 @~/.claude/projects/${REPO_NAME}/graphs/GRAPH_REPORT.md
+
+<!--
+Only hot.md + GRAPH_REPORT.md are auto-loaded at session start (~2-4k tokens).
+Full memory (architecture, todo, lessons, history, plans) is pull-on-demand:
+  Read ~/.claude/projects/${REPO_NAME}/memory/architecture.md
+  Read ~/.claude/projects/${REPO_NAME}/memory/todo.md
+  Read ~/.claude/projects/${REPO_NAME}/memory/lessons.md
+  Read ~/.claude/projects/${REPO_NAME}/memory/history.md
+  Read ~/.claude/projects/${REPO_NAME}/plans/<slug>.md
+MEMORY.md is the index — load it if you need to discover what's available.
+-->
+
 
 # ${REPO_NAME}
 
