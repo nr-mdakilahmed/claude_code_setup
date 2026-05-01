@@ -1,135 +1,106 @@
 ---
 name: bootstrap
-description: >
-  Run ONCE per new repo. Scans codebase, seeds memory at ~/.claude/projects/<REPO_NAME>/,
-  creates <repo>/.claude/CLAUDE.md that references memory via @.
-  Use opus model. Invoke with /bootstrap.
+description: Performs first-visit repo setup — detects stack, seeds memory artifacts at ~/.claude/projects/<REPO_NAME>/, invokes /graphify, and writes <repo>/.claude/CLAUDE.md with @ references. Fires only on explicit /bootstrap. Runs once per repo; re-runs are safe but preserve existing memory. Opus-routed because judgment on stack classification and conventions benefits from stronger reasoning.
+when_to_use: Invoke explicitly with /bootstrap on first visit to a new repo, or after a structural rewrite that invalidates architecture.md. Never invoke on incidental prompts.
+allowed-tools: Read Grep Bash Write
+disable-model-invocation: true
+model: opus
+effort: high
 ---
 
-# /bootstrap — First Visit Setup
+# Bootstrap — First Visit Setup
 
-**Run ONCE per new repo.** Scans codebase, seeds memory, generates project CLAUDE.md.
-Use **opus** model.
+Turns Claude into a repo on-boarder: detects the tech stack, seeds five memory files, generates a knowledge graph, and wires project-local `@` references so every future session auto-loads full context.
 
-## Setup Variables
+**Freedom level: Low** — the memory layout and CLAUDE.md `@` contract feed `wrap-up` and every future session, so the sequence and output shape are not negotiable. Claude follows the workflow exactly; judgment is limited to stack classification and writing the architecture narrative.
 
-```bash
-REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-REPO_NAME=$(basename "$REPO_ROOT")
-MEMORY_DIR="$HOME/.claude/projects/$REPO_NAME/memory"
-GRAPHS_DIR="$HOME/.claude/projects/$REPO_NAME/graphs"
-PROJECT_CLAUDE_DIR="$REPO_ROOT/.claude"
-PROJECT_CLAUDE="$PROJECT_CLAUDE_DIR/CLAUDE.md"
-mkdir -p "$MEMORY_DIR" "$GRAPHS_DIR" "$PROJECT_CLAUDE_DIR"
-```
+## 1. Detect Stack First
 
-## Phase 1 — Detect Repo
+**Classify languages and frameworks before touching memory — the result drives every later step.**
 
-1. Check `$MEMORY_DIR/MEMORY.md` exists — if yes, warn and confirm before overwriting
-2. Check `$GRAPHS_DIR/graph.json` — if exists, skip Phase 2
-3. Detect stack: scan for pyproject.toml, requirements.txt, package.json, go.mod, Cargo.toml, dags/, Dockerfile, docker-compose.yml, *.tf, dbt_project.yml, airflow.cfg, Makefile
-4. Classify as Data Engineering repo if: Python + any of (airflow, pyspark, dbt, kafka, snowflake, bigquery, redshift)
-5. Print status: Repo, Root, Stack detected, Memory (new/exists), Graph (new/exists)
+- Run `scripts/detect-stack.sh --repo "$REPO_ROOT"` and parse the JSON; do not re-implement detection inline.
+- Never guess from a single file (`package.json` alone does not make a Node service — check for TypeScript, framework deps).
+- Data Engineering classification: Python + any of `airflow`, `pyspark`, `dbt`, `kafka`, `snowflake`, `bigquery`, `redshift` from the detector's `frameworks` array.
+- Print `{languages, frameworks, primary}` to the user and confirm before proceeding if ambiguous.
 
-## Phase 2 — /graphify
+## 2. Seed Memory Before Work
 
-Invoke `/graphify` to scan codebase and produce graph.json, GRAPH_REPORT.md, graph.html in `$GRAPHS_DIR`.
-Skip if graph.json exists and user confirms it's current.
+**All five skeleton files exist before `/graphify` runs.**
 
-## Phase 3 — Seed Memory Files
+- Run `scripts/seed-memory.sh --repo-name "$REPO_NAME" --memory-dir "$MEMORY_DIR"`; it creates the directory and the 5 files idempotently.
+- Re-runs preserve prior `architecture.md` / `todo.md` / `lessons.md` / `history.md`; only `MEMORY.md` is rewritten.
+- Populate `architecture.md` from `$GRAPHS_DIR/GRAPH_REPORT.md` after `/graphify` completes — do not write stack guesses before the graph exists.
+- Seed content templates in `references/memory-templates.md`; read it before hand-editing any memory file.
 
-Create files in `$MEMORY_DIR/` (skip if already exists, except MEMORY.md which always refreshes).
-**Substitute actual `$REPO_NAME` value everywhere** — never write the literal string `<REPO_NAME>`.
+## 3. Link Project To Global
 
-- **architecture.md** — extracted from `$GRAPHS_DIR/GRAPH_REPORT.md`: tech stack, key modules, entry points, data flow, conventions (100-200 lines max)
-- **todo.md** — three sections: `## Active`, `## Backlog`, `## Done`
-- **lessons.md** — three sections: `## Patterns` (rules), `## Anti-patterns` (what not to do), `## Wins` (approaches that worked)
-- **history.md** — append-only; first entry: bootstrap date + stack summary
-- **MEMORY.md** — index linking all files (write actual `$REPO_NAME`, not placeholder):
-  ```markdown
-  # $REPO_NAME Memory Index
+**The per-repo `.claude/CLAUDE.md` contains only `@` references to user-global memory — never duplicated content.**
 
-  - [Architecture](~/.claude/projects/$REPO_NAME/memory/architecture.md) — tech stack, modules, entry points
-  - [Todo](~/.claude/projects/$REPO_NAME/memory/todo.md) — active tasks and backlog
-  - [Lessons](~/.claude/projects/$REPO_NAME/memory/lessons.md) — patterns and anti-patterns
-  - [History](~/.claude/projects/$REPO_NAME/memory/history.md) — session history (not auto-loaded)
-  - [Graph Report](~/.claude/projects/$REPO_NAME/graphs/GRAPH_REPORT.md) — codebase knowledge graph
-  ```
+- Run `scripts/write-project-claude.sh --repo "$REPO_ROOT" --memory-dir "$MEMORY_DIR"`; it emits the 5 `@` lines and ensures `.claude/` is in `.gitignore`.
+- `history.md` is intentionally **excluded** from `@` refs — it grows unboundedly and isn't useful on every session.
+- The file contains `~/` paths, which leak home-directory layout — it must never be committed.
+- "Paste architecture table inline in CLAUDE.md" → "`@~/.claude/projects/$REPO_NAME/memory/architecture.md`".
 
-## Phase 4 — Generate Project CLAUDE.md + .gitignore
+## 4. Run Once Per Repo
 
-### 4a — .gitignore
+**Bootstrap is a seeder, not a maintainer. After the first run, `/wrap-up` owns ongoing updates.**
 
-Add `.claude/` to `$REPO_ROOT/.gitignore` if not already present. The project CLAUDE.md contains personal `~/` paths and must never be committed.
+- If `$MEMORY_DIR/MEMORY.md` already exists: warn, show the last-modified date, and require user confirmation before any overwrite.
+- If `$GRAPHS_DIR/graph.json` exists: skip the `/graphify` step unless the user opts into refresh.
+- For structural rewrites (large refactor, language swap), re-run bootstrap with explicit consent; `/wrap-up` refreshes less invasively for incremental drift.
 
-### 4b — Write `$PROJECT_CLAUDE`
+## Quick reference
 
-Top section MUST be `@` references to ALL project artifacts (write actual `$REPO_NAME`, not placeholder).
-**history.md is intentionally excluded** — it's large and append-only; not useful every session.
+The single lookup consulted on every invocation — which memory file to touch for which need.
 
-### Base template (all repos):
+| Memory file | When Claude writes it | Loaded on session start? |
+|---|---|---|
+| `MEMORY.md` | Bootstrap only — pure index | yes |
+| `architecture.md` | Bootstrap (from graph) + wrap-up on structural change | yes |
+| `todo.md` | Bootstrap seeds; wrap-up appends | yes |
+| `lessons.md` | Bootstrap seeds; wrap-up appends corrections | yes |
+| `history.md` | Bootstrap seeds; wrap-up prepends every session | **no** (append-only) |
 
-```markdown
-@~/.claude/projects/$REPO_NAME/memory/MEMORY.md
-@~/.claude/projects/$REPO_NAME/memory/architecture.md
-@~/.claude/projects/$REPO_NAME/memory/todo.md
-@~/.claude/projects/$REPO_NAME/memory/lessons.md
-@~/.claude/projects/$REPO_NAME/graphs/GRAPH_REPORT.md
+## Workflow
 
-# $REPO_NAME
+Copy this checklist and check off items as you complete them:
 
-## Stack
-| Layer | Tech |
-|-------|------|
-<auto-detected rows>
+- [ ] **Phase 1 — Resolve paths**: `REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)`, `REPO_NAME=$(basename "$REPO_ROOT")`, `MEMORY_DIR=$HOME/.claude/projects/$REPO_NAME/memory`, `GRAPHS_DIR=$HOME/.claude/projects/$REPO_NAME/graphs`.
+- [ ] **Phase 1 — Detect stack**: run `scripts/detect-stack.sh --repo "$REPO_ROOT"`; capture `primary`, `languages`, `frameworks`. Confirm classification with the user if `primary` is `unknown`.
+- [ ] **Phase 2 — Seed memory**: run `scripts/seed-memory.sh --repo-name "$REPO_NAME" --memory-dir "$MEMORY_DIR"`.
+- [ ] **Phase 3 — Write project CLAUDE.md**: run `scripts/write-project-claude.sh --repo "$REPO_ROOT" --memory-dir "$MEMORY_DIR"`. Fill in the Stack, Entry Points, Conventions, and Skills sections using detector output; pick 5–8 relevant skills.
+- [ ] **Phase 4 — Invoke /graphify**: only if `$GRAPHS_DIR/graph.json` is absent or the user opted into refresh. Produces `graph.json`, `GRAPH_REPORT.md`, optionally `graph.html` in `$GRAPHS_DIR`.
+- [ ] **Phase 5 — Link**: populate `architecture.md` narrative from `GRAPH_REPORT.md` (Tech Stack, Entry Points, Key Modules, Conventions, Known Risks). Append first entry to `history.md` with stack summary.
+- [ ] Print summary: repo name, stack, memory dir, graph dir, project CLAUDE.md path.
 
-## Entry Points
-<list from graph, e.g.:>
-- `src/main.py` — application entrypoint
-- `dags/` — Airflow DAG definitions
+## Feedback loop
 
-## Key Conventions
-<auto-detected from graph, e.g.:>
-- Config: environment variables via python-dotenv
-- Tests: pytest in `tests/`, fixtures in `conftest.py`
-- Naming: snake_case modules, PascalCase classes
+1. After `seed-memory.sh` runs, verify the 5 files exist and the index lists all 5 links.
+2. **Validate immediately**: `ls "$MEMORY_DIR" | wc -l` is `5` and `grep -c '^- \[' "$MEMORY_DIR/MEMORY.md"` is `5`.
+3. After `write-project-claude.sh` runs, verify `grep -c '^@~/.claude/projects' "$REPO_ROOT/.claude/CLAUDE.md"` is `5`.
+4. If any count is off: delete the file, re-run the script. Never hand-edit to match — schema mismatch means a script bug or wrong argument, and silent edits leave the next session reading a broken layout.
+5. Confirm `.claude/` is in `$REPO_ROOT/.gitignore`. If not, `write-project-claude.sh` will add it — rerun.
 
-## Skills
-<relevant subset based on detected stack — use actual skill names>
-- `/python` — code review, ruff/uv/pyright, pytest
-- `/systematic-debugging` — hypothesis-driven debugging
-- `/wrap-up` — run at end of every session
-```
+## Anti-patterns
 
-### Additional section for Data Engineering repos:
+| Pattern | Fix |
+|---|---|
+| Writing `architecture.md` before `/graphify` ran | Seed skeletons first, invoke graphify, then populate the narrative from `GRAPH_REPORT.md` |
+| Duplicating architecture content inside `.claude/CLAUDE.md` | Use `@` references only — content lives in `~/.claude/projects/<REPO_NAME>/memory/` |
+| Including `history.md` in the CLAUDE.md `@` refs | Exclude it — the file grows unboundedly and bloats every session start |
+| Running bootstrap twice without checking | Detect existing `MEMORY.md`; require explicit user confirmation to overwrite |
+| Committing `<repo>/.claude/CLAUDE.md` | Ensure `.claude/` is in `.gitignore`; the file contains `~/` paths that must not leak |
+| Inlining 50+ lines of detection bash in SKILL.md | Extract to `scripts/detect-stack.sh`; SKILL.md invokes, never re-implements |
+| Writing the literal string `<REPO_NAME>` into memory files | Substitute the actual repo name — scripts handle this with `--repo-name` arg |
 
-```markdown
-## Data Engineering Rules
-- **No large XCom** — pass S3/GCS paths, not data payloads
-- **Idempotent tasks** — every Airflow task must be safe to re-run
-- **Parameterized SQL** — never f-string values into queries; use bind params
-- **Schema-first** — define Pydantic/dataclass contracts before writing transforms
-- **Test pyramid** — unit (pure functions) → integration (with fixtures) → E2E (staging only)
-- **Lazy imports in DAGs** — no heavy imports at DAG module level
-- **Secrets via env** — use Airflow Connections, Vault, or env vars; never hardcode
+## References
 
-## DE Skills
-- `/airflow` — DAG patterns, TaskFlow API, debugging pipeline runs
-- `/pyspark` — optimization, joins, Delta Lake, partitioning
-- `/sql` — Snowflake/BigQuery/Redshift/dbt patterns
-- `/cicd` — pipeline CI/CD, deployment strategies
-- `/docker` — multi-stage builds, non-root, security
-- `/profiling` — Python performance profiling
-```
+- `references/memory-templates.md` — skeletons and example content for all 5 memory files, plus wrap-up's mutation rules. Read before hand-editing any memory file.
+- `scripts/detect-stack.sh` — `--repo <path>`; emits JSON `{"languages":[], "frameworks":[], "primary":"..."}`.
+- `scripts/seed-memory.sh` — `--repo-name <name> --memory-dir <path>`; creates all 5 skeleton files idempotently.
+- `scripts/write-project-claude.sh` — `--repo <path> --memory-dir <path>`; emits `<repo>/.claude/CLAUDE.md` with 5 `@` refs and updates `.gitignore`.
 
-## Phase 5 — Summary
+## Cross-references
 
-```
-Bootstrap complete — $REPO_NAME
-  Memory:  ~/.claude/projects/$REPO_NAME/memory/
-  Graph:   ~/.claude/projects/$REPO_NAME/graphs/
-  Rules:   $REPO_ROOT/.claude/CLAUDE.md  (5 @ refs load full context on session open)
-  Stack:   <detected stack summary>
-
-Next: run /wrap-up at end of every session.
-```
+- `/graphify` — bootstrap invokes this in Phase 4; depends on the `graph.json` schema and `GRAPH_REPORT.md` section names defined by that skill.
+- `/wrap-up` — owns ongoing mutation of `todo.md`, `lessons.md`, `history.md`, and refreshes `architecture.md` when the graph drifts. Run at the end of every session.

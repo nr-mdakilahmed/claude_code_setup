@@ -2,6 +2,17 @@
 
 > **When to load:** Phase 2 (Data Quality) — programmatic test building, running, and inline ETL validation using the Python SDK.
 
+## Contents
+
+- Requirements & configuration
+- TestRunner API (table-level testing)
+- Test metadata customization (fluent API)
+- TestRunner configuration
+- Processing results
+- DataFrameValidator (inline ETL validation)
+- Loading tests from YAML
+- Best practices
+
 **Requirements:** Python 3.10+, `openmetadata-ingestion>=1.11.0.0`, OpenMetadata 1.11.0+
 
 ```bash

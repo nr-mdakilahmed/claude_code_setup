@@ -1,5 +1,15 @@
 # New Relic Alert Intelligence — Correlation Details
 
+
+## Contents
+
+- Custom Decision Builders
+- 9 Similarity Algorithms
+- Topology Correlation
+- Correlation Assistant
+- Smart Alerts (Preview)
+- NR Correlation Platform (Future — Internal PRD)
+
 > **When to load:** Phase 2 (Configure) — setting up custom correlation decisions, topology, Smart Alerts, and understanding the Correlation Platform roadmap.
 
 ## Custom Decision Builders

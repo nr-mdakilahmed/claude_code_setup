@@ -1,155 +1,145 @@
 ---
 name: airflow
-description: >
-  Use when creating DAGs, using TaskFlow API, sensors, branching, dynamic tasks,
-  or debugging Airflow issues. Covers DAG patterns, idempotency, lazy imports,
-  error callbacks, and executor selection.
-  Auto-triggers when working with Airflow DAGs or pipeline orchestration.
+description: Writes, reviews, and debugs Apache Airflow DAGs at data-engineering standards. Enforces TaskFlow API, idempotency, lazy imports, deferrable sensors, and failure callbacks. Triggers when writing DAGs, using the TaskFlow API, configuring sensors or branching, investigating DAG import errors, or debugging task failures in Kubernetes-deployed Airflow.
+when_to_use: Auto-triggers when editing files under dags/ or plugins/, or when the user mentions Airflow orchestration, executor selection, XCom, dynamic task mapping, or scheduler parse errors.
+paths:
+  - "**/dags/**/*.py"
+  - "**/plugins/**/*.py"
+  - "airflow.cfg"
 ---
 
 # Airflow DAG Patterns
 
-## TaskFlow API
+Turns Claude into a data-pipeline reviewer for Airflow: enforces idempotent tasks, module-load hygiene, deferrable sensors over blocking pokes, failure callbacks, and Kubernetes log access before guessing at task failures.
 
-```python
-from airflow.decorators import dag, task
-from datetime import datetime, timedelta
+**Freedom level: High** — DAG design admits many shapes. The skill directs judgment with principles and a decision table, not fixed recipes.
 
-@dag(
-    dag_id="daily_etl",
-    schedule="0 2 * * *",
-    start_date=datetime(2024, 1, 1),
-    catchup=False,
-    default_args={
-        "owner": "data-engineering",
-        "retries": 3,
-        "retry_delay": timedelta(minutes=5),
-        "retry_exponential_backoff": True,
-    },
-    tags=["production"],
-)
-def daily_etl():
-    @task
-    def extract() -> dict:
-        return {"path": "s3://raw/data/", "count": 1000}
+## 1. DAGs Are Idempotent
 
-    @task
-    def transform(data: dict) -> dict:
-        return {"path": data["path"].replace("raw", "transformed")}
+**Re-running a task for the same logical date must produce the same result.**
 
-    @task
-    def load(data: dict) -> None:
-        pass
+- DELETE-then-INSERT, MERGE, or partition-overwrite — never append-without-key.
+- Parameterize every SQL on `{{ ds }}` or `{{ data_interval_start }}`; never `CURRENT_DATE`.
+- Name targets deterministically (`dt=2024-01-15` partition), not by wall-clock.
+- "Append new rows" → "MERGE on `(date, id)` or overwrite partition `dt={{ ds }}`".
 
-    load(transform(extract()))
+## 2. Lazy Imports In Tasks
 
-daily_etl()
-```
+**Top-level imports run on every scheduler parse — heavy imports stall the whole scheduler.**
 
-## Dynamic Task Mapping
+- Import `pandas`, `pyspark`, `tensorflow`, cloud SDKs **inside** the `@task` function.
+- `Variable.get()` and `Connection.get()` go inside tasks, not at module scope.
+- Keep the module body to: decorators, DAG definition, task wiring — nothing that touches I/O or heavy libs.
+- "top-level `import pandas as pd`" → "move `import pandas as pd` inside the `@task` body".
 
-```python
-@task
-def get_partitions() -> list[str]:
-    return ["us", "eu", "apac"]
+## 3. Sensors Block; Deferrable Frees
 
-@task
-def process(partition: str) -> dict:
-    return {"partition": partition, "status": "done"}
+**A poking sensor holds a worker slot for hours. A deferrable operator holds nothing.**
 
-results = process.expand(partition=get_partitions())
-```
+- Prefer `deferrable=True` when the operator supports it (most 2.7+ provider sensors do).
+- If no deferrable variant exists, use `mode='reschedule'` + `poke_interval >= 60`.
+- Always set `timeout` — unbounded sensors fill the queue.
+- "`S3KeySensor(mode='poke')` for 4h wait" → "`S3KeySensor(deferrable=True)` or `mode='reschedule'`".
 
-## Decision Guide
+## 4. Callbacks For Failure
+
+**Silent task failures become 3 AM pages. Wire callbacks at DAG creation.**
+
+- Set `on_failure_callback` for Slack/PagerDuty; `sla_miss_callback` for latency SLOs.
+- Set `retries=3, retry_exponential_backoff=True, retry_delay=timedelta(minutes=5)` in `default_args`.
+- Set `execution_timeout` on every task — no task should hang forever.
+- Log structured context (`dag_id`, `task_id`, `run_id`) in the callback body.
+
+## 5. K8s Logs First
+
+**When a task fails on a Kubernetes-deployed Airflow, read the logs before theorizing.**
+
+- Scheduler pod logs show DAG parse errors; worker pod logs show task runtime errors.
+- Celery/KubernetesExecutor spreads tasks across worker pods — check all of them.
+- See `references/k8s-log-protocol.md` for the full kubectl command set; use `scripts/grep-worker-logs.sh` to emit the canonical command.
+
+## Quick reference
+
+The single decision lookup consulted on every invocation.
 
 | Scenario | Use | Why |
 |---|---|---|
-| Pure Python ETL | TaskFlow (`@task`) | Cleaner, automatic XCom |
-| Provider operators (S3, Snowflake) | Classic operators | Already optimized |
-| Short wait (<5 min) | Sensor `mode='poke'` | Less overhead |
-| Long/unknown wait | Sensor `mode='reschedule'` | Frees worker slot |
-| Deferrable sensor available | `deferrable=True` | Zero worker usage |
-| Runtime-determined tasks | `expand()` / dynamic mapping | Parallel execution |
-| Config-driven DAG variations | DAG Factory | Loop over YAML configs |
+| Pure Python ETL | TaskFlow (`@task`) | Clean syntax, automatic XCom |
+| Cloud provider ops (S3, Snowflake, GCS) | Classic operators (`SQLExecuteQueryOperator`, `GCSToGCSOperator`, `KubernetesPodOperator`) | Already optimized, battle-tested |
+| Long wait, deferrable available | `deferrable=True` | Zero worker-slot cost |
+| Long wait, no deferrable | Sensor `mode='reschedule'` + `timeout` | Frees slot between pokes |
+| Runtime-determined fan-out | `.expand()` dynamic mapping | Parallel, dependency-aware |
 
-## Critical Rules
+## Feedback loop
 
-- **Lazy imports**: Never import heavy libraries at module level — move inside `@task`
-- **Idempotent tasks**: DELETE then INSERT, or MERGE/overwrite by partition
-- **No large XCom**: Pass file paths/S3 URIs, never DataFrames
-- **Always set retries**: `retries=3, retry_exponential_backoff=True`
-- **Always set timeouts**: `timeout` on sensors, `execution_timeout` on tasks
-- **Use Connections**: Never hardcode credentials — use `snowflake_conn_id` etc.
+1. Write or edit the DAG.
+2. **Validate immediately**: `bash scripts/check-dag-import.sh --dag-file dags/<file>.py` (AST + Airflow import check).
+3. If import fails: read the traceback, fix, rerun the check.
+4. After deploy: `kubectl logs -n <ns> deploy/airflow-scheduler --tail=200 | grep -i "error\|import"` for parse errors; `scripts/grep-worker-logs.sh` for runtime errors.
+5. Loop until both scheduler parse and first task run are clean.
 
-## Anti-Patterns
+## Anti-patterns
 
 | Pattern | Fix |
 |---|---|
-| Heavy imports at top level | Lazy imports inside `@task` |
-| Processing 10GB in worker | Offload to Snowflake/Spark/external compute |
-| No retries | `retries=3` with exponential backoff |
-| Large objects in XCom | Pass S3 paths, not data |
-| 50 tasks in one DAG | Split into focused DAGs with Dataset triggers |
-| Hardcoded connections | Use Airflow Connections (UI or env vars) |
-| No timeout on sensors | `timeout=7200, poke_interval=300, mode='reschedule'` |
-| `catchup=True` with old start_date | Set `catchup=False` or recent start_date |
+| Heavy `import` at module top | Move inside the `@task` body |
+| Large DataFrame in XCom | Pass S3/GCS URI; use custom XCom backend for real state |
+| `Variable.get("x")` at module scope | Move inside the task function |
+| `catchup=True` with old `start_date` | `catchup=False` or a recent `start_date` |
+| Hardcoded DB password in DAG | Airflow Connection via `conn_id` |
+| Sensor `mode='poke'` for multi-hour wait | `deferrable=True`, or `mode='reschedule'` |
+| 50 unrelated tasks in one DAG | Split into focused DAGs wired by `Dataset` triggers |
 
 ## Troubleshooting
 
-| Issue | Fix |
+| Symptom | Fix |
 |---|---|
-| DAG not appearing | `airflow dags list-import-errors`; check file location |
-| Task stuck in queued | Check worker logs; increase `parallelism` / `max_active_tasks_per_dag` |
-| Task stuck in scheduled | Verify scheduler running; unpause DAG |
-| XCom size exceeded | Pass file paths instead of data; custom XCom backend |
-| Import error | Run `python dags/my_dag.py` locally |
-| Scheduler lag | Enable lazy imports; reduce top-level computation |
-| Task received SIGTERM | Increase worker memory; set `execution_timeout` |
-| Duplicate runs | Set `catchup=False`; use recent `start_date` |
+| DAG not appearing in UI | `airflow dags list-import-errors`; check scheduler pod logs |
+| DAG parse error at import | Run `scripts/check-dag-import.sh --dag-file <path>`; read traceback |
+| Task stuck in `queued` | Worker logs; raise `parallelism` / `max_active_tasks_per_dag` |
+| Task stuck in `scheduled` | Scheduler not running, or DAG paused — unpause, check scheduler pod |
+| Task received SIGTERM | Raise worker memory limits; set `execution_timeout` to a sane value |
+| `XCom too large` | Pass file path or S3 URI; configure custom XCom backend |
+| Scheduler CPU pinned | Lazy-import rule violated — move heavy imports into tasks |
+| Duplicate DAG runs on first deploy | `catchup=False` and bump `start_date` forward |
+| Task ran on wrong executor/queue | Check `executor_config` and `queue` on the operator |
+| Kubernetes pod stuck `Pending` | `kubectl describe pod` — usually image pull, resource quota, or node selector |
 
-## Log Checking Protocol (Kubernetes)
+## Executor selection
 
-### Quick Task State Check
-```bash
-# List recent task instances for a DAG
-kubectl exec -n <namespace> deploy/airflow-worker -- \
-  airflow tasks states-for-dag-run <dag_id> <run_id>
+| Executor | Use when |
+|---|---|
+| `LocalExecutor` | Single-node dev; ≤50 concurrent tasks |
+| `CeleryExecutor` | Steady workload, predictable concurrency, Redis/RabbitMQ available |
+| `KubernetesExecutor` | Bursty workload, per-task isolation, resource-heavy tasks |
+| `CeleryKubernetesExecutor` | Mix: default Celery, route heavy tasks to K8s via `queue='kubernetes'` |
 
-# Check a specific task's state
-kubectl exec -n <namespace> deploy/airflow-worker -- \
-  airflow tasks state <dag_id> <task_id> <execution_date>
-```
+## Checklist
 
-### Grep Worker Logs
-```bash
-# Search logs for errors across all workers
-kubectl logs -n <namespace> -l component=worker --tail=500 | grep -i "error\|exception\|failed"
+- [ ] TaskFlow `@task` for pure-Python steps; classic operators for provider integrations
+- [ ] Every task idempotent (MERGE / partition overwrite / `{{ ds }}` parameterization)
+- [ ] No top-level heavy imports; no `Variable.get()` at module scope
+- [ ] `retries`, `retry_exponential_backoff`, `execution_timeout` set
+- [ ] `on_failure_callback` wired for Slack/PagerDuty
+- [ ] Sensors use `deferrable=True` or `mode='reschedule'` with `timeout`
+- [ ] XCom carries URIs/paths, not DataFrames
+- [ ] `catchup=False` unless a backfill is actively intended
+- [ ] Credentials via Airflow Connections, never hardcoded
+- [ ] DAG imports cleanly: `bash scripts/check-dag-import.sh --dag-file <path>`
+- [ ] Executor chosen to match workload shape (see Executor selection table)
 
-# Follow live logs from a specific worker pod
-kubectl logs -n <namespace> <worker-pod-name> -f | grep -i "task_id\|error"
-```
+## References
 
-### Multi-Date Log Loop
-```bash
-for dt in $(seq 0 6); do
-  DATE=$(date -v-${dt}d +%Y-%m-%d 2>/dev/null || date -d "$dt days ago" +%Y-%m-%d)
-  echo "=== $DATE ==="
-  kubectl exec -n <namespace> deploy/airflow-worker -- \
-    airflow tasks state <dag_id> <task_id> "${DATE}T00:00:00+00:00" 2>/dev/null || echo "not found"
-done
-```
+- `references/k8s-log-protocol.md` — full kubectl command set for scheduler/worker logs, multi-pod grep, multi-date state loops, and executor-specific differences
+- `references/taskflow-patterns.md` — XCom backends, deferrable operator patterns, dynamic task mapping, task groups, dataset triggers
+- `scripts/check-dag-import.sh` — validates a DAG file with `ast.parse` + Airflow import; usage: `bash scripts/check-dag-import.sh --dag-file dags/my_dag.py`
+- `scripts/grep-worker-logs.sh` — emits the canonical kubectl command to grep logs for a run/task; usage: `bash scripts/grep-worker-logs.sh --run-id <id> --task-id <id>`
 
-### Always Check Both Workers
-Celery/KubernetesExecutor may run tasks on different worker pods — always check all:
-```bash
-for pod in $(kubectl get pods -n <namespace> -l component=worker -o name); do
-  echo "=== $pod ==="
-  kubectl logs -n <namespace> "$pod" --tail=100 | grep -i "error\|exception"
-done
-```
+## Cross-references
 
-### Scheduler Logs
-```bash
-# DAG parse errors surface here, not in task logs
-kubectl logs -n <namespace> deploy/airflow-scheduler --tail=200 | grep -i "error\|import\|syntax"
-```
+| Skill | When |
+|---|---|
+| `python` | Code quality inside `@task` bodies (types, testing, error handling) |
+| `pyspark` | Tasks that launch Spark jobs via `SparkSubmitOperator` |
+| `sql` | Idempotent MERGE / partition patterns for warehouse targets |
+| `docker` | Image design for `KubernetesPodOperator` task containers |

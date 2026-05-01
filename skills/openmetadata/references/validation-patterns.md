@@ -1,5 +1,13 @@
 # OpenMetadata Chunk-Based Validation Patterns
 
+## Contents
+
+- Method 1: manual chunk processing
+- Method 2: using `run()` with callbacks
+- Transaction-safe processing
+- Chunk-based validation warnings
+- Two-phase approach
+
 ## Method 1: Manual Chunk Processing
 
 ```python

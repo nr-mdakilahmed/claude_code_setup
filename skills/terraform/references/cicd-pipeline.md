@@ -1,5 +1,12 @@
 # Terraform CI/CD Pipeline for New Relic
 
+
+## Contents
+
+- GitHub Actions Workflow
+- Plan-Based Testing in CI (Matrix Strategy)
+- Pre-Commit Hooks
+
 > **When to load:** Phase 4 (Deploy) — setting up CI/CD for validate, plan, and apply.
 
 ## GitHub Actions Workflow

@@ -1,5 +1,27 @@
 # MCP Server Evaluation Guide
 
+
+## Contents
+
+- Overview
+- Quick Reference
+- Purpose of Evaluations
+- Evaluation Overview
+- Question Guidelines
+- Answer Guidelines
+- Evaluation Process
+- Output Format
+- Evaluation Examples
+- Verification Process
+- Tips for Creating Quality Evaluations
+- Setup
+- Evaluation File Format
+- Running Evaluations
+- Command-Line Options
+- Output
+- Complete Example Workflow
+- Troubleshooting
+
 ## Overview
 
 This document provides guidance on creating comprehensive evaluations for MCP servers. Evaluations test whether LLMs can effectively use your MCP server to answer realistic, complex questions using only the tools provided.

@@ -1,5 +1,17 @@
 # New Relic Terraform — Project Structure & Operations
 
+
+## Contents
+
+- Directory Layout
+- Backend Configuration
+- Provider Versions
+- Variables Pattern
+- Naming Conventions
+- Module Composition Strategy
+- Import Existing Resources
+- Debugging & State Commands
+
 > **When to load:** Phase 2 (Structure) — setting up directory layout, backend, modules, naming, and import operations.
 
 ## Directory Layout

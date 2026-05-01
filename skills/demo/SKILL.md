@@ -1,87 +1,93 @@
 ---
 name: demo
-description: >
-  Use when preparing demos, show-and-tells, or reframing after a bad presentation.
-  Frames a 45-minute technical demo that leads with the problem, not the solution.
-  Supports --reframe (post-bad-demo) and --objections (Q&A prep only).
-  Auto-triggers when preparing demos or presentations.
+description: Frames a 45-minute technical demo that leads with the problem, not the solution, and produces cheat sheet, full script, Q&A prep, and pre-demo checklist. Fires only on explicit /demo invocation with optional --reframe (post-bad-demo rewrite) or --objections (Q&A-only prep). Demo prep is intentional work the presenter starts, not ambient assistance Claude should guess at.
+disable-model-invocation: true
 ---
 
-# Demo Prep Skill
+# Demo Preparation
 
-## Usage
+Turns Claude into a demo coach: makes the audience feel the problem before any product appears, structures 45 minutes into five acts, and scripts honest answers to the sharpest objections before Q&A.
 
-- `/demo <topic>` — Full demo prep
-- `/demo <topic> --reframe` — Rewrite after bad demo with feedback
-- `/demo <topic> --objections` — Focus only on Q&A prep
+**Freedom level: High** — demo narrative varies by audience, topic, and incident inventory. The skill directs judgment with principles, not a fixed script.
 
-**Golden rule**: The audience must FEEL the problem before you show the solution.
+## 1. Lead With The Problem
 
-## Phase 1: Discovery (ask before generating)
+**The audience must feel the pain before any product appears on screen.**
 
-### 1.1 — The Basics
-- What are you demoing?
-- Who's in the room? (engineers, managers, directors)
-- What's their current workflow?
+- Open with a question or real incident the audience has lived — no slides, no product for the first two minutes.
+- Name real tables, teams, tools, and dollar / hour costs. Abstractions do not land; specifics do.
+- If the presenter cannot quote a recent incident in discovery, pause prep until they find one.
+- "Here's what we built" → "Here's the 3am page you got last Tuesday, and why it kept happening."
 
-### 1.2 — The Problem
-- What breaks today without your solution? Get a real incident.
-- Who gets hurt? Name the persona.
-- How do they find out today? Later discovery = stronger pitch.
+## 2. Five Acts, Not Slides
 
-### 1.3 — The Objections
-- What's the "why not just X?" alternative?
-- What does existing tool do BETTER? (acknowledge honestly)
-- What's genuinely impossible with existing tool? (sharpest argument)
+**Structure beats decks. Every beat maps to a gap the audience already feels.**
 
-### 1.4 — Live Demo
-- Single most impressive thing in under 3 minutes?
-- Fallback if demo breaks?
+- Act 1 "World Is Broken" (8m) → Act 2 "Better Way" (15m) → Act 3 "See It Work" (12m) → Act 4 "Why This Matters" (5m) → Act 5 Q&A (5m).
+- Each Act 2 capability cites the Act 1 gap it closes: "Remember the gap where X? Here's what it looks like now."
+- Time-box strictly. A demo that overruns Act 3 kills Q&A, which is where buy-in actually forms.
+- Full per-act timing and transitions in `references/narrative-templates.md`.
 
-## Phase 2: Narrative Structure (45 min)
+## 3. Objections Have Scripts
 
-### Act 1: "The World Is Broken" (8 min)
-- **Hook (2 min)**: Question the audience has felt. No slides. No product.
-- **Gap (3 min)**: What's covered today vs NOT covered. Name real tables/tools/teams.
-- **Cost (3 min)**: Quantify impact for audience personas. Use real incidents.
+**Every sharp objection gets a rehearsed answer before the presenter walks in.**
 
-### Act 2: "There's a Better Way" (15 min)
-- **Product (10 min)**: Show output first, explain machinery later. Each capability maps to a gap from Act 1: "Remember gap? Here's what it looks like now."
-- **Comparison (5 min)**: Address "why not X?" head-on. Acknowledge X's strengths. Show what X can't do. Say "complementary, not replacement."
+- Write the top 10 likely objections and a "Short + Detailed + Yes-And" answer for each — do not improvise on stage.
+- Identify the single Killer Question (the one that sinks the demo if unanswered) and draft a paragraph response that acknowledges, reframes, and cites a concrete example.
+- Acknowledge the competing tool's real strengths honestly; then show what it cannot do. "Complementary, not replacement" disarms the turf objection.
+- Full playbook in `references/objection-playbook.md`.
 
-### Act 3: "See It Work" (12 min)
-- **Live Demo (8 min)**: One happy path, narrate the WHY. Time-box strictly.
-- **"One More Thing" (2 min)**: Show flexibility — change/add something.
-- **Close the Loop (2 min)**: Path from demo to production in 3-4 steps.
+## 4. Reframe, Don't Defend
 
-### Act 4: "Why This Matters" (5 min)
-- **Use Cases (3 min)**: 2-3 persona-specific before/after scenarios.
-- **Getting Started (2 min)**: Step table with What/Who. Show current adoption numbers.
+**When a demo bombs, the fix is almost always the opening, not the product.**
 
-### Act 5: Q&A (5 min)
-- 5-8 likely questions with Short + Detailed answers
-- **"Yes, And" technique**: Agree with valid part, then extend
+- In `--reframe` mode, run a post-mortem first: what feedback landed, which question hit hardest, what were the first 2 minutes. Do not touch Act 2+ until Act 1 is rebuilt.
+- Symptoms map to specific act-level edits (see Quick reference).
+- Defensive answers ("but we also…") lose the room. "Yes, and here's what that unlocks" keeps it.
 
-## Phase 3: Output (generate all)
+## Quick reference
 
-1. **One-Page Cheat Sheet** — Quick-reference during demo
-2. **Full Demo Script** — Per-beat: [Screen], Say, Show, Transition
-3. **Q&A Prep** — 5-8 questions with short/detailed/pushback answers
-4. **Pre-Demo Checklist** — Setup verification
+Mode selection and symptom-to-fix map — the lookup consulted on every invocation.
 
-## Phase 4: Reframe Mode (`--reframe`)
+| Mode | When to use | Output |
+|---|---|---|
+| `/demo <topic>` | First-time prep for an upcoming demo | Full 5-act narrative, cheat sheet, Q&A, checklist |
+| `/demo <topic> --reframe` | Previous demo landed badly, rewriting before next attempt | Post-mortem + Act 1 rebuild + updated Q&A |
+| `/demo <topic> --objections` | Deck is fine; presenter wants only Q&A rehearsal | Top 10 objections, Killer Question paragraph, "Yes-And" responses |
 
-Post-mortem first: What feedback? Which question hit hardest? What did you open with?
-
-| Symptom | Fix |
+| Post-demo symptom | Act-level fix |
 |---|---|
-| "Why do we need this when we have X?" | Differentiate BEFORE showing product |
-| "Can't we just extend X?" | Sharpen gaps X can't fill |
-| Disengagement after 10 min | Shorten features, add pain callbacks |
-| "Seems like a lot of work" | Show results first, machinery later |
-| Director strategic question | Add cost beat for directors |
+| "Why do we need this when we have X?" | Differentiate in Act 1 before Act 2 shows product |
+| "Seems like a lot of work" | Show output first in Act 2; machinery second |
+| Disengagement after 10 min | Shorten Act 2 features; add pain callbacks to Act 1 gaps |
+| Director asked a strategic question you had no answer for | Add cost / business-impact beat in Act 1 |
+| "Can't we just extend X?" | Sharpen the "genuinely impossible with X" gap in Act 1 |
 
-## Phase 5: Objections-Only (`--objections`)
+## Workflow
 
-8-10 questions with Short + Detailed + "Yes, And" responses.
-Identify the single Killer Question with a paragraph answer that acknowledges, reframes, and gives concrete example.
+Copy this checklist and check off items as you complete them. Steps 1–2 are gating — do not skip.
+
+- [ ] Discovery: confirm audience, their current workflow, and at least one real incident
+- [ ] Discovery: name the sharpest "why not just X?" alternative and what it does better
+- [ ] Act 1 draft (8m): hook + gap + cost, with real names and numbers
+- [ ] Act 2 draft (15m): product capabilities each tied back to an Act 1 gap; competitor comparison honest
+- [ ] Act 3 draft (12m): one happy-path demo scripted beat-by-beat, plus fallback if live demo breaks
+- [ ] Act 4 draft (5m): 2–3 persona before/after scenarios and getting-started steps
+- [ ] Act 5 draft (5m): 5–8 likely questions with Short + Detailed answers
+- [ ] Generate one-page cheat sheet (for use during the demo)
+- [ ] Generate full script (per beat: `[Screen]`, Say, Show, Transition)
+- [ ] Generate Q&A prep (short / detailed / pushback answers)
+- [ ] Generate pre-demo checklist (setup verification)
+- [ ] Dry run against the checklist — cut anything that does not earn its minute
+
+## References
+
+- `references/narrative-templates.md` — full 45-minute outline with per-beat timing, plus three variant narratives (greenfield / retrofit / migration)
+- `references/objection-playbook.md` — top 10 objections with scripted responses, Killer Question frame, `--objections` mode playbook
+
+## Cross-references
+
+| Skill | When |
+|---|---|
+| `python` / `sql` / `pyspark` | Topic is a code-heavy demo — pull real snippets from the repo, not toy examples |
+| `nrql` / `nralert` | Topic is observability — use real incident queries in Act 1 |

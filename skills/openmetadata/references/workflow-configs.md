@@ -2,6 +2,15 @@
 
 > **When to load:** Phase 1 (Catalog Setup) — configuring ingestion pipelines for metadata, usage, lineage, profiler, dbt, and test suites.
 
+## Contents
+
+1. Metadata Workflow (DatabaseMetadata)
+2. Usage Workflow (DatabaseUsage)
+3. Lineage Workflow (DatabaseLineage)
+4. Profiler Workflow (Profiler)
+5. DBT Workflow (DBT)
+6. Test Suite Workflow (TestSuite)
+
 All workflows require a `sink` (type: `metadata-rest`) and `workflowConfig` with `openMetadataServerConfig` (hostPort, authProvider, JWT token).
 
 ---

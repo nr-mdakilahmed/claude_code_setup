@@ -1,142 +1,146 @@
 ---
 name: pyspark
-description: >
-  Use when writing PySpark jobs, optimizing joins, handling data skew, tuning partitions,
-  working with Delta Lake, or debugging Spark performance. Covers PB-scale patterns,
-  AQE, broadcast joins, salting, window functions, and structured streaming.
-  Auto-triggers when working with PySpark or Spark code.
+description: Writes, optimizes, and debugs PySpark jobs at PB scale. Triggers when Claude edits Spark code, tunes joins or partitions, handles data skew, configures Delta Lake operations, writes structured streaming, or debugs Spark performance on Databricks or open-source clusters.
+when_to_use: Auto-trigger on PySpark files. Invoke explicitly when diagnosing slow stages, skewed joins, small-file problems, AQE tuning, or Delta maintenance (OPTIMIZE/VACUUM/Z-ORDER).
+paths:
+  - "**/spark/**/*.py"
+  - "**/*_spark.py"
+  - "**/databricks/**/*.py"
 ---
 
 # PySpark Optimization
 
-## Session Config (Production Baseline)
+Turns Claude into a senior Spark engineer: picks the right join strategy, kills skew, validates in notebooks but ships in jobs, and runs Delta maintenance before shipping.
 
-```python
-spark = (SparkSession.builder
-    .config("spark.sql.adaptive.enabled", "true")
-    .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
-    .config("spark.sql.adaptive.skewJoin.enabled", "true")
-    .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    .config("spark.sql.shuffle.partitions", "auto")
-    .config("spark.sql.files.maxPartitionBytes", "128m")
-    .config("spark.sql.execution.arrow.pyspark.enabled", "true")
-    .getOrCreate())
-```
+**Freedom level: Medium** — Spark has preferred patterns (broadcast thresholds, salting, AQE, Delta ops) with known parameters. Claude selects between known options guided by decision tables, not free-form judgment.
 
-## Partition Strategy
+## 1. Partition Before You Join
 
-Target: **128MB per partition, 2-4 partitions per core**.
+**Right-size partitions first; joins that follow become cheap.**
 
-```python
-# Repartition: full shuffle — use when INCREASING or rebalancing
-df = df.repartition(400, "user_id")
+- Target **128 MB per partition, 2–4 partitions per core**. Deviation is the root cause of most "my Spark job is slow" tickets.
+- `repartition(n, col)` when increasing or rebalancing (full shuffle). `coalesce(n)` when decreasing before a write (no shuffle).
+- Set `spark.sql.files.maxPartitionBytes=128m` on reads; set `spark.sql.shuffle.partitions` to ~2–4× total cores (or `auto` with AQE).
+- "No partition pruning on read" → "`.filter('date = ...')` before any join; verify with `explain()` for `PartitionFilters`".
 
-# Coalesce: no shuffle — use when DECREASING (before write)
-df = df.coalesce(100)
-```
+## 2. Kill Skew With Salt
 
-## Join Optimization
+**Measure skew in the UI first; salt only the keys that hurt.**
 
-| Join Type | When | Trigger |
+- Check Spark UI → Stages → task duration p75/max ratio. >3 after AQE = real skew.
+- AQE's `skewJoin.enabled` handles most cases in 3.2+. Salt only when AQE demonstrably fails (non-inner joins, post-window skew, or partition > `skewedPartitionThresholdInBytes`).
+- Prefer **asymmetric salting**: identify the 1–10 offender keys, salt only those, `union` back with the normal-key join.
+- "Salt every key with `SALT_RANGE=100`" → "Measure first; asymmetric salt at `SALT_RANGE=20`; retune only if p75/max still >3".
+
+## 3. Prefer Broadcast, Then Built-Ins
+
+**Small side <100 MB? Broadcast. Transform? Built-in functions. UDF is the last resort.**
+
+- Broadcast hash join when the small side fits in memory post-filter. Built-ins beat Python UDFs 10–100×.
+- Python UDF only when built-ins genuinely cannot express the logic. Use `pandas_udf` for vectorized paths.
+- "`@udf` cleaning a string" → "`F.initcap(F.trim(col))`".
+- "`collect()` on a large DataFrame" → "`.take(n)`, `.show()`, or write to storage".
+
+## 4. Validate In Notebooks, Ship In Jobs
+
+**Prototype in a notebook, but the merged artifact is a tested `.py` module with `chispa` assertions.**
+
+- Use `chispa.assert_df_equality` with `ignore_row_order=True` for deterministic unit tests; never assert on `collect()` output order.
+- Session fixture: `local[2]`, `spark.sql.shuffle.partitions=2`, `spark.ui.enabled=false` — tests run in seconds.
+- Assert row counts, schema, and idempotency (re-running produces identical output) — not just "it ran".
+- Delta maintenance (`OPTIMIZE`, `VACUUM`, `Z-ORDER`) belongs in a separately scheduled job, never inline with the write.
+
+## Join-strategy selector
+
+The single lookup consulted on every join.
+
+| Situation | Strategy | How |
 |---|---|---|
-| Broadcast hash | Small side < 100MB | `broadcast(small_df)` |
-| Sort-merge | Both sides large | Default for large-large |
-| Bucket join | Repeated joins on same key | Pre-bucket both tables |
+| Small side < 100 MB post-filter | Broadcast hash | `fact.join(F.broadcast(dim), "k")` |
+| Both sides large, same key | Sort-merge (default) | AQE + adequate `shuffle.partitions` |
+| Repeated joins on same key | Bucket join | Pre-bucket both tables on key |
+| One key dominates the join | Salt (asymmetric) | See `references/salting-patterns.md` |
+| Row-level lookup across small lookup table | Broadcast + `filter` | Broadcast the lookup, not the fact |
+
+## AQE tuning
+
+| Symptom | Knob | Value |
+|---|---|---|
+| Too many small shuffle partitions | `spark.sql.adaptive.coalescePartitions.enabled` | `true` (default in 3.2+) |
+| Hot task after shuffle | `spark.sql.adaptive.skewJoin.enabled` | `true` + `skewedPartitionFactor=5` |
+| AQE miscounts broadcast-eligibility | `spark.sql.adaptive.autoBroadcastJoinThreshold` | `100m` (raise cautiously) |
+| Streaming query | AQE off | Not supported for continuous processing |
+
+## Salting teaser
 
 ```python
-from pyspark.sql.functions import broadcast
-result = fact_df.join(broadcast(dim_df), "dim_key")
-```
-
-### Skew Handling (Salting)
-
-```python
-SALT_RANGE = 10
+# Inline teaser — full pattern (asymmetric, two-stage agg, verification) in
+# references/salting-patterns.md
+from pyspark.sql import functions as F
+SALT_RANGE = 20
 salted_left = (left_df
     .withColumn("salt", F.explode(F.array([F.lit(i) for i in range(SALT_RANGE)])))
-    .withColumn("salted_key", F.concat("key", F.lit("_"), "salt")))
-
+    .withColumn("salted_key", F.concat_ws("_", "key", "salt")))
 salted_right = (right_df
     .withColumn("salt", (F.rand() * SALT_RANGE).cast("int"))
-    .withColumn("salted_key", F.concat("key", F.lit("_"), "salt")))
-
-result = salted_left.join(salted_right, "salted_key").drop("salt", "salted_key")
+    .withColumn("salted_key", F.concat_ws("_", "key", "salt")))
 ```
 
-## UDF Rules
+## Feedback loop
 
-**Always prefer built-in functions** (10-100x faster than UDFs).
+1. Write the transform; run `pytest` with `chispa` assertions locally.
+2. **Validate immediately**: `spark.read.parquet(out).count()` matches expected; `explain("formatted")` shows broadcast/sort-merge as planned.
+3. If skew or OOM: open Spark UI → Stages → fix the worst task first (partition, broadcast, or salt); rerun.
+4. Ship only when row-count, schema, and idempotency assertions pass.
 
-```python
-# BAD: Python UDF
-@udf(StringType())
-def clean_name(name): return name.strip().title()
-
-# GOOD: Built-in
-df = df.withColumn("name", F.initcap(F.trim("name")))
-
-# OK: Pandas UDF when built-ins can't do it
-@pandas_udf("double")
-def custom_metric(values: pd.Series) -> pd.Series:
-    return values.rolling(7).mean().fillna(0)
-```
-
-## Delta Lake
-
-```python
-# UPSERT (Merge)
-target = DeltaTable.forPath(spark, "s3://lake/users/")
-(target.alias("t")
-    .merge(updates.alias("s"), "t.user_id = s.user_id")
-    .whenMatchedUpdate(set={"email": "s.email", "updated_at": "s.updated_at"})
-    .whenNotMatchedInsertAll()
-    .execute())
-
-# Maintenance
-delta_table.optimize().executeCompaction()
-delta_table.optimize().executeZOrderBy("user_id")
-delta_table.vacuum(retentionHours=168)
-```
-
-## Testing (chispa)
-
-```python
-@pytest.fixture(scope="session")
-def spark():
-    return (SparkSession.builder
-        .master("local[2]")
-        .config("spark.sql.shuffle.partitions", "2")
-        .config("spark.ui.enabled", "false")
-        .getOrCreate())
-
-def test_transform(spark):
-    input_df = spark.createDataFrame([("alice", 100)], ["name", "amount"])
-    expected = spark.createDataFrame([("ALICE", 100)], ["name", "amount"])
-    assert_df_equality(transform(input_df), expected, ignore_row_order=True)
-```
-
-## Anti-Patterns
+## Anti-patterns
 
 | Pattern | Fix |
 |---|---|
-| `collect()` on large DataFrame | `.take(n)`, `.show()`, or write to storage |
-| Python UDF for simple ops | Built-in functions: `F.when()`, `F.regexp_replace()` |
-| `df.count()` in loop | Cache count once |
-| `repartition(1)` before write | `coalesce()` or accept multiple files |
-| No partition pruning on read | Add `WHERE date =` or `.filter()` |
-| `toPandas()` on large DataFrame | Enable Arrow, limit rows |
-| Unhandled skew in joins | Salt keys or enable AQE skew join |
-| `SELECT *` from wide table | Select only needed columns |
-| Nested `withColumn` calls | Use `select()` with all columns at once |
-| No schema on read | Provide explicit `StructType` schema |
+| `collect()` on large DataFrame | `.take(n)` / `.show()` / write to storage |
+| Python UDF for simple ops | Built-ins: `F.when`, `F.regexp_replace`, `F.initcap` |
+| `df.count()` inside a loop | Materialize once; cache if reused |
+| `repartition(1)` before write | `coalesce(n)` or accept multiple files |
+| No partition pruning on read | `.filter('date = ...')` before anything else |
+| `toPandas()` on large DataFrame | Enable Arrow, `.limit(n)` first, or rethink |
+| Unhandled skew in joins | Measure p75/max; AQE skewJoin → asymmetric salt |
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| `OutOfMemoryError` heap | Increase memory, avoid `collect()`, reduce broadcast |
-| Container killed by YARN | Increase `spark.executor.memoryOverhead` to 20% |
-| One task 100x slower | Data skew — salt key or enable AQE |
-| Task not serializable | Use broadcast variables or make class Serializable |
-| Job hangs at last tasks | Enable `spark.speculation=true` |
-| Slow writes, many small files | `coalesce()` before write or Delta OPTIMIZE |
+| `OutOfMemoryError` heap | Drop `collect()`/`toPandas()`; lower broadcast threshold; raise executor memory |
+| Container killed by YARN/K8s | Raise `spark.executor.memoryOverhead` to 20% of executor memory |
+| One task 100× slower than peers | Data skew — AQE `skewJoin`, then asymmetric salt |
+| `Task not serializable` | Broadcast the object or make the class `Serializable` |
+| Job hangs on final tasks | Speculation: `spark.speculation=true` (idempotent writes only) |
+| Slow write, thousands of small files | `coalesce(n)` before write; `OPTIMIZE` on Delta hot partitions |
+| Merge is slow and rewrites every file | Add partition cols to merge predicate; deduplicate source first |
+| Streaming state grows unbounded | Add `.withWatermark()`; switch state store to RocksDB |
+| AQE not kicking in | Confirm `spark.sql.adaptive.enabled=true`; AQE off for streaming |
+| Delta `VACUUM` refuses <168h | `spark.databricks.delta.retentionDurationCheck.enabled=false` only if you own all readers |
+
+## Checklist
+
+- [ ] Partition size ~128 MB; `shuffle.partitions` ≈ 2–4× cores (or AQE `auto`)
+- [ ] Filters pushed down before joins; `explain()` shows `PartitionFilters`
+- [ ] Small-side join broadcast when <100 MB post-filter
+- [ ] Skew measured in UI before salting; asymmetric salt when needed
+- [ ] No `collect()` / `toPandas()` on large DataFrames
+- [ ] Built-in functions used; UDFs only when built-ins fail
+- [ ] Explicit schema on every `read` / `from_json` (streaming non-negotiable)
+- [ ] Delta MERGE: partition cols in predicate + idempotent `whenMatched` condition
+- [ ] OPTIMIZE + VACUUM scheduled as separate jobs, not inline
+- [ ] `chispa` tests assert rows, schema, and idempotency — not execution success
+
+## References
+
+- `references/salting-patterns.md` — symmetric vs asymmetric salting, two-stage aggregation, verification
+- `references/streaming-patterns.md` — structured streaming, watermarks, output modes, checkpoints
+- `references/delta-maintenance.md` — MERGE, OPTIMIZE, Z-ORDER, VACUUM, schema evolution, CDF
+
+## Cross-references
+
+- See `/python` for general code-quality standards (typing, testing, SOLID).
+- See `/sql` for warehouse-side query tuning and dbt patterns.
+- See `/airflow` for scheduling Spark jobs and handling retries.

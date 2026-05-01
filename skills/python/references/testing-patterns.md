@@ -1,5 +1,19 @@
 # Python Testing Patterns — Senior Engineer Standards
 
+
+## Contents
+
+- Test Organization
+- Database Fixtures with Temp Tables
+- Mock External APIs
+- Factory Fixture for Test Data
+- Parameterized Tests for Edge Cases
+- Freezing Time in Tests
+- Property-Based Testing (Hypothesis)
+- Async Testing
+- What to Mock vs What NOT to Mock
+- Coverage Strategy
+
 > **When to load:** When writing tests, reviewing test quality, or setting up test infrastructure for data pipelines.
 
 ## Test Organization

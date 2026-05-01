@@ -1,5 +1,17 @@
 # Modern Python Tooling & Features (2024-2026)
 
+
+## Contents
+
+- Tooling Stack (2024-2026)
+- Ruff Configuration
+- uv — Package Manager
+- pyproject.toml Template
+- Project Layout (src layout — 2024 consensus)
+- Python 3.12+ Features Worth Using
+- CLI Tools Pattern (Typer)
+- FastAPI Service Pattern
+
 > **When to load:** When setting up a Python project, configuring tooling, or using Python 3.12+ features.
 
 ## Tooling Stack (2024-2026)

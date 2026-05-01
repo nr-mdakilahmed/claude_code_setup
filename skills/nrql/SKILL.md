@@ -1,132 +1,110 @@
 ---
 name: nrql
-description: >
-  Use when writing NRQL queries, optimizing alert conditions, or debugging slow/empty queries
-  in New Relic. Covers query patterns, aggregation functions, FACET, subqueries,
-  alert-specific rules, and performance optimization.
-  Auto-triggers when writing or optimizing NRQL queries.
+description: Writes, optimizes, and debugs NRQL for New Relic dashboards and alert conditions. Triggers when the user asks about writing NRQL queries, optimizing alert conditions, debugging slow NRQL queries, NRQL FACET, or NRQL aggregation — including empty results, timeouts, percentile/rate/percentage math, and alert-window tuning.
+when_to_use: Auto-trigger for NRQL authoring or troubleshooting. Pairs with /nralert for correlation/muting wiring and /terraform when the condition/dashboard is authored in HCL.
 ---
 
-# NRQL Optimization Patterns
+# NRQL Query Craft
 
-## Query Structure
+Turns Claude into an NRQL author: filters early with indexed attributes, picks the right aggregation before writing the query, and enforces alert-specific NRQL rules (no `TIMESERIES`, no `LIMIT` inside FACET alerts, no `SINCE`, no `COMPARE WITH`).
 
-```sql
-SELECT function(attribute)
-FROM event_type
-WHERE condition
-SINCE time_range
-FACET attribute
-LIMIT number
-```
+**Freedom level: Medium** — A preferred pattern exists per query shape (count, rate, percentile, funnel, eventstream), but thresholds, windows, and FACET cardinality depend on event volume and service topology.
 
-## Performance: Filter Early with Indexed Attributes
+## 1. SELECT Only What You Aggregate
 
-Indexed (fast): `appId`, `appName`, `host`, `entityGuid`, `transactionType`, `name`
+**Every SELECT is an aggregation function over a filtered event set — never `SELECT *` and never raw attributes without a function.**
 
-```sql
--- GOOD: Filter on indexed attributes first
-SELECT average(duration) FROM Transaction
-WHERE appName = 'MyApp' AND transactionType = 'Web'
-SINCE 1 hour ago
+- Pick the function first: `count()` / `rate()` / `average()` / `percentile()` / `percentage()` / `filter()` / `funnel()`.
+- `SELECT duration FROM Transaction` (row scan) → `SELECT percentile(duration, 50, 95, 99) FROM Transaction` (aggregated).
+- `uniqueCount()` is expensive at high cardinality — use `count(*)` when exact uniqueness is not required.
+- `latest()` on sparse attributes returns NULL — wrap with `coalesce(latest(attr), 0)`.
 
--- AVOID: Broad queries without indexed filters
-SELECT average(duration) FROM Transaction WHERE duration > 1
-```
+## 2. FACET Costs Cardinality
 
-## Alert Query Patterns
+**Every FACET multiplies scan cost by the number of groups; keep it under 100 in dashboards, under 100 in alerts (LIMIT is silently ignored in alert FACETs).**
 
-```sql
--- Error rate
-SELECT percentage(count(*), WHERE error IS true) FROM Transaction WHERE appName = 'MyApp'
+- Bucket continuous values with `FACET CASES(WHERE … AS 'Fast', WHERE … AS 'Slow')` rather than faceting raw latency.
+- High-cardinality attributes (`request.id`, `userId`, `traceId`) never belong in FACET — filter on them in WHERE instead.
+- Alert FACETs need the faceted attribute exposed as `tags.<NAME>` for muting rules to target one facet.
+- `FACET appName, host` (cross-product) → separate charts or `FACET concat(appName, ':', host)` when the intent is a single series per pair.
 
--- Latency
-SELECT average(duration) FROM Transaction WHERE appName = 'MyApp'
+## 3. Alert Windows Match Signal
 
--- Throughput
-SELECT rate(count(*), 1 minute) FROM Transaction WHERE appName = 'MyApp'
+**Aggregation window and evaluation offset are the alert; the NRQL is just the signal producer.**
 
--- Conditional aggregation
-SELECT filter(count(*), WHERE httpResponseCode >= 500) as 'Server Errors',
-       filter(count(*), WHERE httpResponseCode < 400) as 'Success'
-FROM Transaction WHERE appName = 'MyApp'
+- Error spike 1–5 min; latency 5–15 min; throughput 5–10 min; resource 5–15 min; business metric 15–60 min.
+- Never include `SINCE` in alert NRQL — overridden by the condition's aggregation window and produces stale evaluations.
+- Remove `TIMESERIES` — alert engine evaluates one value per window, not a series.
+- Remove `COMPARE WITH` — not supported in alert conditions; use a baseline condition with std-deviation threshold.
+- Pair signal-loss tuning (`expiration_duration`, `fill_option`) on the condition, not in NRQL (see `/nralert`).
 
--- Infrastructure
-SELECT average(cpuPercent) FROM SystemSample WHERE hostname LIKE 'prod-%'
-```
+## 4. Index Your WHERE
 
-## Alert-Specific Rules (CRITICAL)
+**Put an indexed attribute as the first WHERE predicate on every query that hits high-volume events.**
 
-- **No TIMESERIES** — alert engine evaluates single value per window
-- **No LIMIT in FACET alerts** — silently truncates; keep cardinality under 100
-- **No COMPARE WITH** — not supported in alerts; use baseline conditions
-- **No SINCE** — overridden by aggregation window setting
-- **No nested subqueries** in alerts — keep NRQL simple
+> Indexed attributes (fast filters): `appId`, `appName`, `entityGuid`, `host`, `hostname`, `transactionType`, `name`. Filter on these BEFORE any function call, `LIKE`, `RLIKE`, or arithmetic comparison.
 
-## Time Windows for Alerts
+- `WHERE duration > 1` alone → scans every Transaction row. `WHERE appName = 'MyApp' AND duration > 1` → scans only that app's slice.
+- `RLIKE` is 3–10× slower than `LIKE`; replace with `LIKE 'prefix%'` or narrow by indexed filter first.
+- Validate the keyset when unsure: `SELECT keyset() FROM Transaction SINCE 1 day ago`.
+- Always include `SINCE` in dashboard queries — no `SINCE` defaults to a huge scan window.
 
-| Alert Type | Window |
-|---|---|
-| Error spikes | 1-5 min |
-| Latency degradation | 5-15 min |
-| Throughput changes | 5-10 min |
-| Resource usage | 5-15 min |
-| Business metrics | 15-60 min |
+## Query-shape chooser
 
-## FACET Patterns
+Single lookup consulted on every invocation.
 
-```sql
--- Custom buckets
-SELECT count(*) FROM Transaction WHERE appName = 'MyApp'
-FACET CASES(
-  WHERE duration < 0.1 AS 'Fast',
-  WHERE duration < 0.5 AS 'Normal',
-  WHERE duration < 1 AS 'Slow',
-  WHERE duration >= 1 AS 'Very Slow'
-)
-```
+| Shape | Use | When |
+|---|---|---|
+| Count / rate | `count(*)` or `rate(count(*), 1 minute)` | Throughput, request volume, event frequency |
+| Percentile | `percentile(duration, 50, 95, 99)` | Latency SLOs, tail-sensitive metrics |
+| Percentage | `percentage(count(*), WHERE error IS true)` | Error rate, success rate, apdex-like ratios |
+| Funnel | `funnel(session, WHERE step1, WHERE step2, …)` | Conversion, multi-step workflow drop-off |
+| Eventstream | `SELECT ... FROM Log WHERE ... LIMIT 1000` | Raw log inspection, debugging, audit trail |
 
-## Decision Guide
-
-| Need | Approach |
-|---|---|
-| Error rate | `percentage()` with error filter |
-| Throughput | `rate()` function |
-| Latency percentiles | `percentile(duration, 50, 95, 99)` |
-| Week-over-week (dashboards only) | `COMPARE WITH 1 week ago` |
-| Custom event monitoring | `FROM CustomEvent` |
-| Infrastructure | `FROM SystemSample` / `StorageSample` |
-| Log analysis | `FROM Log WHERE level = 'ERROR'` |
-| Funnel | `funnel(session, WHERE ...)` |
-
-## Anti-Patterns
+## Anti-patterns
 
 | Pattern | Fix |
 |---|---|
-| `TIMESERIES` in alert | Remove; use simple aggregation |
-| `LIMIT` in alert FACET | Remove; keep cardinality < 100 |
-| Short window (<30s) | 1-5 min minimum for stability |
-| `SELECT *` | Select needed columns; use aggregations |
-| No `SINCE` clause (dashboards) | Always include; reduces scan scope |
-| `RLIKE` on high-volume events | Replace with `LIKE`; filter with indexed attrs first |
-| `uniqueCount()` high cardinality | Use `count(*)` if exact uniqueness not needed |
-| `latest()` on sparse attributes | `coalesce(latest(attr), 0)` |
+| `SELECT *` or raw attribute without aggregation | `SELECT count(*)` / `percentile()` / `average()` |
+| `TIMESERIES` in alert NRQL | Remove; alert produces one value per window |
+| `LIMIT` inside FACET alert | Remove; cap cardinality at the data source instead |
+| `SINCE` in alert NRQL | Remove; use condition's aggregation window |
+| `COMPARE WITH` in alert | Switch to baseline condition (`upper_only`, std deviations) |
+| `RLIKE` on high-volume events | `LIKE 'prefix%'`, or filter indexed attrs first |
+| `uniqueCount()` on high-cardinality attr | `count(*)` if exact uniqueness not required |
+| Missing `SINCE` in dashboard | Add `SINCE 1 hour ago` — default scan is huge |
 
 ## Troubleshooting
 
-| Issue | Fix |
+| Symptom | Fix |
 |---|---|
-| Query returns no data | Verify event type: `SHOW EVENT TYPES`; check attrs: `SELECT uniques(appName)` |
-| Unexpected NULL | `WHERE attr IS NOT NULL`; `coalesce(attr, 0)` |
-| Query timeout | Add indexed filters; shorten time range; avoid `RLIKE` |
-| FACET too many groups | `FACET CASES()`; add WHERE filters; `LIMIT` (max 5000) |
-| percentage() wrong values | Test filter independently; `coalesce()` for NULL outer |
-| Aggregation window mismatch | Don't include `SINCE` in alert NRQL — use condition config |
+| Query returns no data | `SHOW EVENT TYPES`; `SELECT uniques(appName, 100) FROM <Event> SINCE 1 day ago`; verify attribute casing (`appName` not `appname`) |
+| Query timeout | Add indexed filter first; shorten `SINCE`; drop `RLIKE` for `LIKE`; avoid `uniqueCount()` on high cardinality |
+| FACET explosion (thousands of groups) | `FACET CASES(…)` bucketing; narrow WHERE; confirm attribute is not an ID/UUID |
+| Alert has NRQL but no data points | NRQL valid in Query Builder but empty in window → check casing, `SINCE` removed, event type agent is reporting |
+| `percentage()` returns NULL | Outer `count(*)` is zero for the window — `coalesce(percentage(...), 0)` |
+| `latest()` returns NULL | Sparse attribute in window — `coalesce(latest(attr), 0)` or widen window |
+| Timezone confusion in `SINCE '2024-…'` | NRQL uses UTC by default; add `WITH TIMEZONE 'America/New_York'` at end of query |
+| Indexed-attribute filter not applying | Verify spelling + case via `SELECT keyset() FROM <Event>`; `host` vs `hostname` varies by event type |
+| Alert muting rule targets condition but not facet | Mute `tags.<FACETED_ATTR>` not `conditionName` (see `/nralert`) |
+| `TIMESERIES` works in UI but alert silently fails | Alerts reject series output — remove `TIMESERIES`; use aggregation window |
 
-## Diagnostic Queries
+## Diagnostic queries
 
 ```sql
-SHOW EVENT TYPES
+SHOW EVENT TYPES SINCE 1 day ago
 SELECT keyset() FROM Transaction SINCE 1 day ago
 SELECT uniques(appName, 100) FROM Transaction SINCE 1 hour ago
+SELECT count(*) FROM Transaction WHERE appName = 'MyApp' FACET name SINCE 1 hour ago LIMIT 10
 ```
+
+## References
+
+- `references/advanced-functions.md` — funnel queries, histogram bucketing, eventstream replay, percentile and percentage calculations with worked examples
+
+## Cross-references
+
+| Skill | When |
+|---|---|
+| `nralert` | Correlation, muting rules, signal-loss tuning around the condition |
+| `terraform` | Author the NRQL condition/dashboard as HCL (`newrelic_nrql_alert_condition`, `newrelic_one_dashboard`) |

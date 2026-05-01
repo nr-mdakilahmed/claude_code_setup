@@ -1,5 +1,14 @@
 # YAML-Driven Alert Module (service_alerts_v5)
 
+
+## Contents
+
+- Module Structure
+- Module Variables
+- YAML Alert Definition
+- Per-Entity Config YAML
+- Module Usage with Per-Entity Thresholds
+
 > **When to load:** Phase 3 (Implement) — building per-entity alerting with YAML config files and threshold maps.
 
 ## Module Structure

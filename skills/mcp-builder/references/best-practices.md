@@ -1,5 +1,20 @@
 # MCP Server Best Practices
 
+
+## Contents
+
+- Quick Reference
+- Server Naming Conventions
+- Tool Naming and Design
+- Response Formats
+- Pagination
+- Transport Options
+- Security Best Practices
+- Tool Annotations
+- Error Handling
+- Testing Requirements
+- Documentation Requirements
+
 ## Quick Reference
 
 ### Server Naming

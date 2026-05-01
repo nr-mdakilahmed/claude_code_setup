@@ -89,6 +89,9 @@ def main():
             # Atlassian tokens can't be auto-refreshed — skip silently
             continue
 
+        if not entry.get("refreshToken"):
+            continue  # no refresh token stored — skip silently
+
         try:
             result = refresh_token(entry, endpoint)
             if "access_token" not in result:

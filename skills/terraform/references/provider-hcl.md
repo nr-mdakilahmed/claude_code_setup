@@ -1,5 +1,25 @@
 # New Relic Terraform — HCL Resource Examples
 
+
+## Contents
+
+- Provider Configuration
+- NRQL Alert Condition (Static)
+- NRQL Alert Condition (Baseline/Anomaly)
+- Alert Policy
+- Notification Destination
+- Notification Channel
+- Workflow
+- Dashboard
+- Muting Rule
+- Data Sources
+- Dynamic Alert Conditions (for_each)
+- Lifecycle Block Example
+- Alerting Module
+- Workflow Module
+- Root Module Usage
+- Validation Patterns
+
 > **When to load:** Phase 3 (Implement) — writing provider config, alert conditions, workflows, dashboards.
 
 ## Provider Configuration

@@ -1,5 +1,21 @@
 # Python Coding Patterns — Senior Engineer Standards
 
+
+## Contents
+
+- Philosophy
+- Delete Aggressively
+- Naming Conventions
+- Security: No Hardcoded Secrets
+- Type Hints (Modern — 3.12+)
+- Import Order & Lazy Loading
+- Error Handling
+- Logging (not print)
+- SOLID in Practice
+- Data Structures Decision
+- Timeouts
+- Path Handling
+
 > **When to load:** When writing new Python code or reviewing existing code for quality, naming, error handling, logging, security, and architecture.
 
 ## Philosophy
