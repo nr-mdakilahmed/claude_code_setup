@@ -13,23 +13,83 @@
 
 ---
 
-## Model Routing
+## Model × Effort Routing — Use the Cheapest Combination That Preserves Quality
 
-| Model | Use for | Cost |
-|-------|---------|------|
-| **haiku** | Docs lookup, Jira/NRQL query execution, simple Q&A, file search, README edits, Confluence, documentation | cheapest |
-| **sonnet** ← DEFAULT | Coding, testing, debugging, refactoring, validation, general tasks | — |
-| **opus** | Code review, architecture design/review, complex reasoning, planning, `/graphify`, `/bootstrap` | 5× |
+Output cost dominates: Opus output is $75/M, Sonnet $15/M, Haiku 4.5 $5/M. The session model sets the floor for subagents, so defaults matter.
 
-### Auto Model Dispatch
+**Defaults**: Sonnet 4.6 + `medium` effort. Escalate per-turn, not per-session.
 
-Models don't switch mid-session automatically, but **spawn subagents with the correct model** based on task type:
+### Task → Model × Effort matrix
 
-- **Spawn `haiku` subagent** for: Jira lookups, NRQL queries, doc searches, Confluence reads, README/documentation, simple Q&A, file search
-- **Use current session (Sonnet)** for: all coding, testing, debugging, refactoring, validation, implementation
-- **Spawn `opus` subagent** for: code review (`/python`), architecture decisions, `/graphify`, `/bootstrap`, complex multi-file planning
+| Task | Model | Effort | Why |
+|---|---|---|---|
+| **Lookups & mechanics** | | | |
+| Jira / Confluence fetch + summarize | Haiku 4.5 | low | Read + structured output |
+| NRQL query execution + format | Haiku 4.5 | low | Deterministic tool use |
+| File search / grep / glob / cat | Haiku 4.5 | low | Pattern match |
+| Lint fix from explicit error | Haiku 4.5 | low | Direct fix |
+| Rename / format / simple transform | Haiku 4.5 | low | Mechanical |
+| Commit message from diff | Haiku 4.5 | low | Summarize known input |
+| Apply well-specified template to 1 file | Haiku 4.5 | medium | Fill-in-the-blanks |
+| **Standard engineering** | | | |
+| Bug fix with clear hypothesis | Sonnet 4.6 | medium | Localized reasoning |
+| Feature implementation (follows patterns) | Sonnet 4.6 | medium | Pattern + judgment |
+| Unit tests on known function | Sonnet 4.6 | medium | Pattern-based |
+| Local refactor (within file/module) | Sonnet 4.6 | medium | Bounded reasoning |
+| Writing docs / CLAUDE.md / READMEs | Sonnet 4.6 | medium | Structured prose |
+| Template-driven rewrite (like skills rewrite) | Sonnet 4.6 | medium | Judgment within guardrails |
+| Research unfamiliar library + apply | Sonnet 4.6 | medium | Explore + synthesize |
+| Code review on bounded PR (<500 lines) | Sonnet 4.6 | medium | Quality check |
+| Migration (systematic: Airflow 2→3, Py2→3) | Sonnet 4.6 | medium | Rule application |
+| **Complex engineering** | | | |
+| Cross-file refactor that ripples | Sonnet 4.6 | high | Multi-file impact tracking |
+| Debugging when first hypothesis fails | Sonnet 4.6 | high | Systematic exploration |
+| Feature with no analog in codebase | Sonnet 4.6 | high | Novel pattern design |
+| Test-writing for async/concurrent code | Sonnet 4.6 | high | Edge-case reasoning |
+| **Architecture, security, deep work** | | | |
+| Brainstorming new feature (multiple paths) | Opus 4.7 | high | Trade-off exploration |
+| Architecture design (new service/schema) | Opus 4.7 | xhigh | Long-term consequences |
+| Security review / threat modeling | Opus 4.7 | high | Subtle reasoning |
+| Production incident, unclear cause | Opus 4.7 | high | Deep hypothesis generation |
+| Complex PR review (>500 lines, critical path) | Opus 4.7 | high | Senior-level analysis |
+| Multi-phase initiative planning | Opus 4.7 | high | Dependency + risk analysis |
+| `/graphify`, `/bootstrap` | Opus 4.7 | high | Deep codebase analysis |
+| Pre-implementation audit of big rewrite | Opus 4.7 | high | Single moment that earns Opus |
+| **Rare — max effort** | | | |
+| Novel research problem, truly unknown system | Opus 4.7 | max | Weeks-of-impact decisions only |
 
-This gives 60-90% cost savings on lookup-heavy tasks without manual model switching.
+### Subagent routing
+
+| Subagent role | Model | Why |
+|---|---|---|
+| Explore agent (audit, codebase scan) | Sonnet 4.6 | Needs judgment on relevance |
+| Explore agent (narrow search by pattern) | Haiku 4.5 | Bounded tool chain |
+| Plan agent (design for implementation) | Opus 4.7 | Full design depth |
+| Plan agent (task breakdown with clear scope) | Sonnet 4.6 | Linear decomposition |
+| General-purpose (mechanical rewrite from template) | Haiku 4.5 | Template follow |
+| General-purpose (investigation, multi-step) | Sonnet 4.6 | Multi-step research |
+| Code-reviewer (complex PR) | Opus 4.7 | Depth matters |
+| Code-reviewer (bounded PR) | Sonnet 4.6 | Quality check |
+
+### Operational rules (enforce every session)
+
+1. **Default session**: Sonnet 4.6 + `medium`. Start here. Not Opus. Not xhigh.
+2. **Escalate per-turn**: When hitting a design/security/incident moment, `/model opus` + `/effort high` for that turn; drop back after.
+3. **Every Agent call passes explicit `model`** when it deviates from session default. Don't let Opus leak into mechanical subagents.
+4. **Every subagent prompt ends with a word budget**: "Report under 100 words — files touched, counts, any content cut worth a second opinion. No narrative."
+5. **No pre-narration, no post-recap**. One sentence before a tool call. Tool output stands on its own.
+6. **Verification runs once per batch**, not per step. If it passes, move silently.
+7. **Plan once**. Clarify via AskUserQuestion BEFORE writing the plan doc. Don't iterate the written doc for directional changes.
+8. **Bash generates data tables, not markdown prose**. If `wc` / `awk` / `jq` can emit it, don't format it myself.
+9. **Commit messages**: imperative summary ≤10 words + ≤4 bullet description. 15-line commits are exceptions.
+10. **Skip `superpowers:brainstorming`** when the task is clearly scoped — it produces ~5k of ceremony tokens. Use only when direction is genuinely unknown.
+
+### Why this saves massively without quality loss
+
+- **Per-token cost drops 5×** when routing mechanical work to Haiku, standard coding to Sonnet, escalating only on genuine need.
+- **Token count drops 30–50%** when narration, recap, and re-verification are cut.
+- **Combined effect**: a bulk-rewrite session like this one's $58 reprices to roughly $10–15 with identical deliverables.
+- Quality stays the same because the routing matches task requirements; Opus is only where depth actually matters.
 
 ---
 
