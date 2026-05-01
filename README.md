@@ -39,6 +39,10 @@ cd ~/claude_code_setup
 
 ## Architecture
 
+![Claude Code System Architecture](architecture.png)
+
+> The ASCII diagram below is the canonical reference. The PNG is a visual aid.
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
 │ GLOBAL LAYER (~/.claude/)                                                   │
