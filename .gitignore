@@ -5,3 +5,6 @@ scripts/__pycache__/
 skills/avengers/certs/
 skills/avengers/__pycache__/
 .claude/
+.mcp.json
+# Added by code-review-graph
+.code-review-graph/
