@@ -1,266 +1,372 @@
 # CC Team Setup
 
-AI-led Claude Code environment for the Data Engineering team. One install gives every teammate
-the same skills, hooks, model routing, and multi-agent capabilities — consistent AI tooling across the whole team.
+**AI-led Claude Code environment for Data Engineering teams.** One install gives every teammate the same skills, hooks, model routing, memory layout, MCP servers, and multi-agent capabilities — consistent AI tooling across the whole team, with compounding per-session value.
 
 ---
 
-## ⚡ Quickstart — 3 minutes to a fully-wired CC
+## ⚡ Quickstart — 5 minutes to a fully-wired CC
 
 ```bash
-# 1 — Prereqs (install anything you're missing)
+# 1 — Prereqs (install what you're missing)
 claude --version        # Claude Code — https://docs.claude.com/claude-code
-python3 --version       # brew install python3  (if missing)
-git --version           # brew install git       (if missing)
-ssh -T git@source.datanerd.us   # must say "successfully authenticated" for NR plugins
+python3 --version       # brew install python3  (3.10+)
+git --version           # brew install git
+jq --version            # brew install jq         (required)
+pipx --version          # brew install pipx && pipx ensurepath
+uv --version            # brew install uv         (required for memory-server)
+ssh -T git@source.datanerd.us   # optional: NR plugins need this
 
 # 2 — Clone & install
 git clone git@github.com:nr-mdakilahmed/claude_code_setup.git ~/claude_code_setup
 cd ~/claude_code_setup
-./install.sh            # checks prereqs → copies skills/hooks → merges settings.json
+./install.sh            # installs skills, hooks, CRG, memory-server, budget, golden
 
 # 3 — Verify
-./verify.sh             # confirms skills, hooks, settings.json keys, SSH, plugin list
+./verify.sh             # end-to-end check of prereqs + skills + hooks + MCP servers
 
 # 4 — Restart Claude Code
-#     (plugins auto-install on first start — takes ~30s)
-#     Inside CC, confirm:  /plugin list   → should show 11 active plugins
+#     Plugins auto-install on first start (~30s)
+#     Inside CC, confirm:   /plugin list   → 11 active plugins
 ```
 
-> **First session on a new repo?** Run `/bootstrap` once — seeds memory files + knowledge graph.
-> **End of every session?** Run `/wrap-up` — persists history, todo, lessons.
-> **Complex multi-file task?** Run `/avengers` — Opus orchestrates parallel specialist agents.
+> **First visit to a repo?** `/bootstrap` — seeds memory, installs per-repo CRG + memory MCP, builds graph
+> **Every session end?** `/wrap-up` — persists memory, mirrors plans, regenerates hot.md, refreshes graph
+> **Complex multi-file task?** `/avengers` — Opus orchestrates parallel specialist subagents
+> **After a validated fix?** `/golden save <slug>` — capture reusable session template
+> **Hit a familiar problem?** `/replay <slug>` — load a prior-art plan
 
 ---
 
 ## Architecture
 
-![Claude Code System Architecture](architecture.png)
-
-<details>
-<summary>Text version (expand)</summary>
-
 ```
-~/.claude/
-│
-├── CLAUDE.md                    ← global rules: security, model routing, workflows,
-│                                   git rules, self-healing protocol (auto-loaded every session)
-│
-├── hooks/                       ← lifecycle automation
-│   ├── rtk hook claude          ← PreToolUse: rewrites Bash → RTK (60-90% token savings)
-│   ├── refresh-mcp-tokens.py    ← UserPromptSubmit: auto-refreshes MCP OAuth tokens
-│   ├── self-heal-stop.sh        ← Stop: daily lesson-capture reminder → lessons.md
-│   └── statusline.sh            ← renders model · cost · context % in status bar
-│
-├── skills/                      ← 18 on-demand skills (invoke with /skill-name)
-│   ├── /python                  ← code review, ruff, uv, pyright, pytest, SOLID
-│   ├── /terraform               ← NR alert conditions, dashboards, module patterns
-│   ├── /nrql                    ← NRQL queries, alert condition patterns
-│   ├── /nralert                 ← alert correlation, muting rules, Smart Alerts
-│   ├── /airflow                 ← DAG patterns, TaskFlow API, pipeline debugging
-│   ├── /pyspark                 ← optimization, joins, Delta Lake, partitioning
-│   ├── /sql                     ← Snowflake, BigQuery, Redshift, dbt patterns
-│   ├── /openmetadata            ← data catalog, lineage, data quality workflows
-│   ├── /mcp-builder             ← build MCP servers (tool design, transport, testing)
-│   ├── /shell                   ← Bash scripts, strict mode, error handling
-│   ├── /docker                  ← multi-stage builds, non-root, security
-│   ├── /cicd                    ← pipelines, deployment strategies, pre-commit
-│   ├── /profiling               ← Python perf: cProfile, py-spy, tracemalloc
-│   ├── /demo                    ← 45-minute demo prep (problem-first narrative)
-│   ├── /bootstrap               ← first-visit repo setup (run once per new repo)
-│   ├── /graphify                ← knowledge graph generation (25x token reduction)
-│   ├── /wrap-up                 ← session-end: persist history, todo, lessons
-│   └── /avengers                ← multi-agent missions (see below)
-│
-├── plugins/                     ← 13 plugins (11 enabled + 2 disabled by default, auto-install on CC restart)
-│   ├── nr                       ← New Relic MCP: NRQL, dashboards, alerts, entities
-│   ├── nr-kafka                 ← Kafka MCP: topic analysis, lag investigation
-│   ├── superpowers              ← auto-loads brainstorming + systematic-debugging skills
-│   ├── data-engineering         ← Airflow, dbt, OpenLineage, warehouse patterns
-│   ├── terraform                ← Terraform registry lookups, provider/module docs
-│   ├── coderabbit               ← AI code review
-│   ├── code-review              ← PR code review
-│   ├── pr-review-toolkit        ← full PR review: code, tests, types, silent failures
-│   ├── github                   ← GitHub PR/issue management
-│   ├── skill-creator            ← create and modify skills
-│   └── security-guidance        ← security review and vulnerability guidance
-│
-└── projects/<repo>/             ← per-project memory (seeded by /bootstrap)
-    └── memory/
-        ├── MEMORY.md            ← index (auto-loaded every session)
-        ├── architecture.md      ← condensed codebase knowledge (25x reduction)
-        ├── todo.md              ← active + backlog tasks
-        ├── lessons.md           ← self-improving pattern library
-        └── history.md           ← session append log
+┌────────────────────────────────────────────────────────────────────────────┐
+│ GLOBAL LAYER (~/.claude/)                                                   │
+│                                                                             │
+│  CLAUDE.md          ← rules: security, model routing, workflows (@-loaded) │
+│  budget.json        ← daily/weekly/monthly spend caps                      │
+│  golden/            ← reusable session patterns + index.json               │
+│  plans/             ← Anthropic's global plan dir (mirrored per-project)   │
+│  telemetry/         ← cost.jsonl + greps.jsonl                             │
+│  skills/            ← 20 skills (language/domain + meta workflows)         │
+│  hooks/             ← rtk, refresh-mcp-tokens, self-heal, statusline,      │
+│                       log-grep-usage, stop-record-cost                     │
+└────────────────────────────────────────────────────────────────────────────┘
+                                     ↓ /bootstrap
+┌────────────────────────────────────────────────────────────────────────────┐
+│ PROJECT LAYER (~/.claude/projects/<repo>/)                                  │
+│                                                                             │
+│  memory/                                                                    │
+│    ├── hot.md         ← AUTO-LOADED ~2k tokens (wrap-up regenerates)       │
+│    ├── MEMORY.md      ← index (pull-on-demand)                             │
+│    ├── architecture.md, todo.md, lessons.md, history.md                    │
+│  plans/ ← mirrored from ~/.claude/plans/ at wrap-up                        │
+│  graphs/                                                                    │
+│    ├── GRAPH_REPORT.md ← AUTO-LOADED ~2k tokens                            │
+│    └── graph.html                                                           │
+└────────────────────────────────────────────────────────────────────────────┘
+                                     ↓ /bootstrap
+┌────────────────────────────────────────────────────────────────────────────┐
+│ REPO LAYER (<repo>/)                                                        │
+│                                                                             │
+│  .claude/CLAUDE.md     ← @ hot.md + @ GRAPH_REPORT.md only (~4k total)     │
+│  .mcp.json             ← memory + code-review-graph MCP servers            │
+│  .code-review-graph/   ← SQLite graph (auto-updates on Edit)               │
+│  .gitignore            ← .claude/, .mcp.json, .code-review-graph/          │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
-</details>
+### Session-start token profile
+
+| Before (5 @ refs of full files) | After (hot.md + GRAPH_REPORT) |
+|---|---|
+| 10–30k tokens | **~4k tokens** (3–7× cheaper) |
+
+Deeper memory is pulled on demand via the memory MCP server — cheaper per question, no drowning in stale context.
+
+---
+
+## Skills (20 total)
+
+### Meta / workflow (7 — explicit `/command`)
+
+| Skill | When |
+|---|---|
+| `/bootstrap` | First visit per repo — detects stack, seeds memory, installs MCPs, builds graph |
+| `/wrap-up` | Session end — persists memory, mirrors plans, regenerates hot.md, refreshes graph |
+| `/avengers` | Complex multi-agent work — Fury (Opus) + specialists (Sonnet) in parallel |
+| `/golden` | `save \| list \| validate` — capture reusable session patterns |
+| `/replay` | Load a saved golden as prior-art for the current task |
+| `/budget` | `status \| set \| override \| report` — spend awareness against caps |
+| `/demo` | 45-minute demo prep (problem-first narrative) |
+
+### Language / framework (7 — auto-triggered by file paths)
+
+| Skill | Auto-triggers on |
+|---|---|
+| `/python` | `**/*.py`, `pyproject.toml`, `requirements*.txt` |
+| `/sql` | `**/*.sql`, dbt models, `schema.yml` |
+| `/airflow` | `**/dags/**/*.py`, `**/plugins/**/*.py` |
+| `/pyspark` | `**/spark/**/*.py`, `**/*_spark.py`, `**/databricks/**/*.py` |
+| `/shell` | `**/*.sh`, `**/*.bash` |
+| `/docker` | `**/Dockerfile*`, `**/docker-compose*.yml` |
+| `/cicd` | `.github/workflows/*.yml`, `.pre-commit-config.yaml` |
+
+### Domain (6 — auto-triggered by topic in prompt)
+
+| Skill | Auto-triggers when |
+|---|---|
+| `/nrql` | User mentions NRQL / New Relic query |
+| `/nralert` | User mentions alerts, muting rules, incidents |
+| `/terraform` | `**/*.tf`, `**/*.tfvars` or terraform-specific prompt |
+| `/openmetadata` | Ingestion yamls or OpenMetadata mentions |
+| `/mcp-builder` | MCP server / tool design prompts |
+| `/profiling` | Performance / cProfile / py-spy prompts |
+
+---
+
+## MCP Servers (auto-activated per repo after `/bootstrap`)
+
+### `memory` server (5 tools, ~100–500 tokens/call)
+
+Pull-on-demand access to per-project memory — avoids `@`-loading 30k tokens every session.
+
+| Tool | Purpose |
+|---|---|
+| `get_memory(topic)` | Read architecture/todo/lessons/history/hot/memory/graph_report |
+| `search_memory(query, k)` | Grep across memory files with line refs |
+| `list_lessons(tag?, recent?)` | Filter Patterns section |
+| `get_todo(status)` | active \| backlog \| done |
+| `recall_plan(slug?)` | List or fetch a past-session plan |
+
+### `code-review-graph` server (28 tools, 100–2000 tokens/call)
+
+Tree-sitter AST + SQLite graph of the repo. Replaces the former `/graphify` skill with a proper live MCP.
+
+Key tools: `semantic_search_nodes`, `query_graph`, `get_impact_radius`, `get_review_context`, `detect_changes`, `get_architecture_overview`, `get_hub_nodes`, `refactor_tool`, `traverse_graph`, `get_affected_flows`, `get_knowledge_gaps`, `list_communities`, `generate_wiki_tool`…
 
 ### Model Routing
 
 | Model | Used for | Cost |
-|-------|----------|------|
-| `haiku` | Jira lookups, NRQL queries, doc search, Confluence, Q&A | cheapest |
-| `sonnet` | Coding, testing, debugging, refactoring, validation | **DEFAULT** |
-| `opus` | /avengers Fury, /graphify, /bootstrap, architecture review | 5x |
+|---|---|---|
+| `haiku-4.5` | Lookups, NRQL, doc search, mechanical transforms | cheapest |
+| `sonnet-4.6` | Coding, testing, debugging, refactoring | **DEFAULT** |
+| `opus-4.7` | /avengers Fury, /bootstrap, /golden distillation, architecture review | 5× |
 
 ### /avengers — Multi-Agent Orchestration
 
 ```
-/avengers → fury-captain        (Nick Fury, Opus — orchestrates everything)
-              │
-              ├── stark-engineer-1…N  (Tony Stark, Sonnet — coders, run in parallel)
-              │
-              ├── natasha-reviewer    (Black Widow, Sonnet  — reviews coder output)
-              ├── banner-tester       (Bruce Banner, Sonnet — runs validation)
-              └── hawkeye-validator   (Hawkeye, Sonnet      — final gate, confirms PASS)
+/avengers → fury-captain (Nick Fury, Opus — orchestrator)
+              ├── stark-engineer-1…N  (Tony Stark, Sonnet — coders, parallel)
+              ├── natasha-reviewer    (Black Widow, Sonnet — reviews coder output)
+              ├── banner-tester       (Bruce Banner, Sonnet — validation)
+              └── hawkeye-validator   (Hawkeye, Sonnet — final gate)
 
 Optional specialists (spawned on demand by Fury):
-  strange-architect        (Doctor Strange  — system design, API contracts)
-  rogers-data-engineer     (Captain America — pipelines, ETL, warehouse)
-  maximoff-python-engineer (Scarlet Witch   — PySpark, Airflow, pandas)
-  thor-devops              (Thor            — Terraform, CI/CD, K8s, secrets)
+  strange-architect        (system design, API contracts)
+  rogers-data-engineer     (pipelines, ETL, warehouse)
+  maximoff-python-engineer (PySpark, Airflow, pandas)
+  thor-devops              (Terraform, CI/CD, K8s)
 
-Dashboard: https://avengers:2026  (live mission view while agents work)
+Dashboard: https://avengers:2026
 Pipeline: Mission → Plan → Spawn → Code → Review → Test → Validate → Shutdown
+```
+
+---
+
+## Per-Repo Workflow
+
+### First visit — `/bootstrap` (once, ~15s)
+
+```
+Phase 1: detect-stack.sh            → classify language/framework
+Phase 2: seed-memory.sh             → 6 memory files + plans/ dir
+Phase 3: write-project-claude.sh    → <repo>/.claude/CLAUDE.md + .mcp.json + .gitignore
+Phase 4: build-graph.sh             → code-review-graph install + build + GRAPH_REPORT.md
+Phase 5: populate architecture.md   → from GRAPH_REPORT.md
+```
+
+After this, `<repo>/.mcp.json` contains both `memory` and `code-review-graph` servers.
+
+### Every session end — `/wrap-up` (~10s)
+
+```
+Phase 0: corrections audit          → lessons.md
+Phase 1: append-history             → new ## <date> block
+Phase 2: todo update                → Active → Done, new → Backlog
+Phase 3: lessons dedupe             → promote 2+ hits to CLAUDE.md Conventions
+Phase 3.5: golden-worthiness check  → auto-prompt (not auto-save) if signals present
+Phase 4: refresh-graph-report       → code-review-graph update + regenerate GRAPH_REPORT.md
+Phase 5: mirror-plans + regen hot.md → per-repo isolation + curated digest
+Phase 6: handoff summary            → counts + paths
+```
+
+---
+
+## `/golden` + `/replay` — The Compounding Layer
+
+After a validated fix:
+
+```
+> /golden save snowflake-copy-lock-timeout
+Claude asks:
+  • Pattern slug? (kebab-case)
+  • Scope? (global or repo:<name>)
+  • Success criteria? (measurable)
+  • Trigger hints? (phrases you'd say when hitting this again)
+Distills session → writes ~/.claude/golden/<slug>.md
+```
+
+Next time:
+
+```
+> /golden list --tag snowflake
+> /replay snowflake-copy-lock-timeout
+→ Claude validates file refs, restates the plan, executes adapted version
+```
+
+**Auto-prompt at wrap-up**: Phase 3.5 scans the session for save-worthy signals (explicit success confirmation + ≥5 coherent steps + concrete problem resolved). If all three present, asks "Save as golden? [y/n/edit]". No accidental pollution.
+
+---
+
+## `/budget` — Spend Awareness
+
+The statusline shows a color-coded daily indicator:
+- 🟢 `$X` — under 80% of daily cap
+- 🟡 `$X` — 80–100% (switch to Haiku for mechanical work)
+- 🔴 `$X` — over cap (override or stop)
+
+```bash
+/budget status              # all 3 tiers (daily/weekly/monthly)
+/budget set --daily 75 --weekly 200 --monthly 700
+/budget override 5 --reason "prod incident"
+/budget report --days 7     # weekly review; flags if ≥3 overrides
+```
+
+Default caps after install: `daily=$75, weekly=$200, monthly=$700`. Tune via `/budget set`.
+
+---
+
+## Hooks Reference
+
+| Hook | Event | What it does |
+|---|---|---|
+| `rtk hook claude` | PreToolUse (Bash) | Token-optimize Bash output (60–90% savings) |
+| `refresh-mcp-tokens.py` | UserPromptSubmit | Auto-refresh expired MCP OAuth tokens |
+| `log-grep-usage.sh` | PostToolUse (Grep\|Glob) | Logs fallback rate for weekly review |
+| `self-heal-stop.sh` | Stop | Daily lesson-capture reminder |
+| `stop-record-cost.sh` | Stop | Append session cost to cost.jsonl |
+| `statusline.sh` | Continuous | Model · context % · session $ · daily $ (budget-colored) |
+
+### Grep telemetry review (weekly)
+
+```bash
+~/.claude/hooks/grep-telemetry-report.sh --days 7
+# High Grep fallback rate on a repo with a graph →
+#   either tune .code-review-graphignore or strengthen CLAUDE.md graph-first guidance
 ```
 
 ---
 
 ## What `install.sh` Does
 
-1. **Pre-flight checks** — confirms `claude`, `python3`, `git` are installed; warns about missing `rtk` or SSH access
-2. Copies all 18 skills into `~/.claude/skills/`
-3. Copies hooks into `~/.claude/hooks/` (backs up any existing ones)
-4. Copies `CLAUDE.md` + `RTK.md` into `~/.claude/` (backs up existing)
-5. Merges `settings.template.json` into `~/.claude/settings.json` non-destructively:
-   - Adds missing hooks, allowlist entries, plugins, marketplaces
-   - Preserves your existing personal settings (apiKeyHelper, additionalDirectories, etc.)
+1. **Pre-flight** — confirms `claude, python3, git, jq, pipx, uv` (fatal if missing); warns about `rtk`, `code-review-graph`, SSH
+2. **Installs `code-review-graph`** via pipx (if not present)
+3. **Syncs memory-server** dependencies with `uv sync`
+4. Copies 20 skills into `~/.claude/skills/`
+5. Copies all hooks into `~/.claude/hooks/` (backs up existing)
+6. Copies `CLAUDE.md` + `RTK.md` into `~/.claude/` (backs up existing)
+7. Merges `settings.template.json` into `~/.claude/settings.json` non-destructively
+8. Seeds `~/.claude/budget.json` (daily=$75, weekly=$200, monthly=$700)
+9. Seeds `~/.claude/golden/index.json`
+10. Creates `~/.claude/{golden, telemetry, plans}` dirs
 
-**Run `./verify.sh` after `./install.sh`** to confirm everything landed correctly before restarting CC.
-
----
-
-## Skills Reference
-
-| Skill | When to use |
-|-------|-------------|
-| `/python` | Code review, ruff/uv/pyright, SOLID, pytest |
-| `/terraform` | NR alert conditions, dashboards, module patterns |
-| `/nrql` | NRQL queries, alert condition patterns |
-| `/nralert` | Alert correlation, muting rules, Smart Alerts |
-| `/airflow` | DAG patterns, TaskFlow API, debugging pipeline runs |
-| `/pyspark` | Optimization, joins, Delta Lake, partitioning |
-| `/sql` | Snowflake, BigQuery, Redshift, dbt patterns |
-| `/openmetadata` | Data catalog, lineage, data quality workflows |
-| `/mcp-builder` | Build MCP servers |
-| `/shell` | Bash scripts, strict mode, error handling |
-| `/docker` | Multi-stage builds, non-root, security |
-| `/cicd` | Pipelines, deployment strategies, pre-commit |
-| `/profiling` | Python perf — cProfile, py-spy, tracemalloc |
-| `/demo` | 45-minute demo prep |
-| `/bootstrap` | First-visit repo setup — run once per new repo |
-| `/graphify` | Knowledge graph — 25x token reduction |
-| `/wrap-up` | Session end — persist history, todo, lessons |
-| `/avengers` | Complex multi-file missions — Fury (Opus) orchestrates parallel coders + reviewer + tester + validator |
-
----
-
-## Hooks Reference
-
-| Hook | Trigger | What it does |
-|------|---------|--------------|
-| `rtk hook claude` | Every Bash command | Token-optimizes output (60-90% savings) |
-| `refresh-mcp-tokens.py` | Every prompt submit | Auto-refreshes expired MCP OAuth tokens |
-| `self-heal-stop.sh` | Session stop | Reminds to capture lessons if not done today |
-| `statusline.sh` | Continuous | Shows model · cost · context % in status bar |
-
----
-
-## First Time on a New Repo
-
-```
-/bootstrap
-```
-
-Runs once per repo. Scans the codebase, builds a knowledge graph, seeds memory files.
-After bootstrap, every session auto-loads the project context.
-
----
-
-## Every Session End
-
-```
-/wrap-up
-```
-
-Persists session history, updates todo.md and lessons.md, refreshes the graph if >5 files changed.
-
----
-
-## Running a Complex Mission
-
-```
-/avengers
-```
-
-For tasks that need multiple parallel agents — Fury (Opus) reads the Jira ticket or your description,
-writes a mission plan, spawns coders + reviewer + tester + validator, monitors everything autonomously.
-You watch the dashboard at https://avengers:2026 and get a VALIDATED result.
-
----
-
-## Updating
-
-Skills, hooks, CLAUDE.md, and RTK.md are copied (not symlinked), so updates require a re-run:
-
-```bash
-cd ~/claude_code_setup
-git pull
-./install.sh   # re-runs safely — backs up existing files before overwriting
-```
-
----
-
-## Adding Personal Skills
-
-Create a skill that won't be shared with the team:
-
-```bash
-mkdir -p ~/.claude/skills/my-skill
-cat > ~/.claude/skills/my-skill/SKILL.md << 'EOF'
-# /my-skill — description
-
-Your skill content here.
-EOF
-```
-
-Personal skills in `~/.claude/skills/` are never touched by `install.sh`.
+**Run `./verify.sh` after `./install.sh`** to confirm CLI prereqs, skills, hooks, MCPs, budget, settings keys, and SSH are all wired.
 
 ---
 
 ## Troubleshooting
 
-**First stop: run `./verify.sh`** — it pinpoints exactly which piece is missing (prereqs, skills, hooks, settings keys, SSH, plugin count) and how to fix each.
+**First stop: `./verify.sh`** — pinpoints what's missing.
 
-**Plugins not installing on restart**
-→ Run `./verify.sh` — if `enabledPlugins` shows `< 10`, re-run `./install.sh`.
-→ If SSH to `source.datanerd.us` fails, NR plugins (`nr`, `nr-kafka`) silently skip.
-→ See `plugins.md` for manual `/plugin install` fallback commands.
-→ Inside CC, run `/plugin list` to see what's actually loaded.
+| Symptom | Fix |
+|---|---|
+| Plugins not loading | `/plugin list` inside CC; re-run `./install.sh`; check SSH to `source.datanerd.us` |
+| Hook not firing | `chmod +x ~/.claude/hooks/*.sh ~/.claude/hooks/*.py` |
+| `code-review-graph` missing | `pipx install code-review-graph` |
+| Memory MCP not activating | Per-repo `.mcp.json` created by `/bootstrap`; restart CC after bootstrap |
+| Statusline colors not showing | Submit a fresh prompt to trigger re-render; confirm `jq` + truecolor terminal |
+| `/budget status` shows $0 | Today's data comes from NR MCP or JSONL scan; first session after install may lag |
+| Grep telemetry not logging | Hook only fires PostToolUse on Grep/Glob; check `~/.claude/telemetry/greps.jsonl` |
+| Goldens not auto-prompting at wrap-up | Phase 3.5 requires all 3 signals; not every session qualifies (by design) |
+| "I want to uninstall / roll back" | `install.sh` backs up replaced files as `<name>.bak`; restore via `mv` |
 
-**Hook not firing**
-→ `chmod +x ~/.claude/hooks/*.sh ~/.claude/hooks/*.py`
-→ `./verify.sh` shows `⚠` for non-executable hooks.
+---
 
-**Skills not showing up**
-→ Restart Claude Code after install.
-→ `./verify.sh` lists missing skills by name.
+## Updating
 
-**RTK not found**
-→ Ask your team lead for the RTK install link.
-→ Without RTK, hooks still work but token savings are disabled.
+```bash
+cd ~/claude_code_setup
+git pull
+./install.sh   # safe re-run; backs up any existing files before overwrite
+./verify.sh    # confirm new bits landed
+```
 
-**"I want to uninstall / roll back"**
-→ `install.sh` backs up any file it replaces as `<name>.bak` in `~/.claude/`.
-→ To undo: restore each `.bak` (`mv ~/.claude/CLAUDE.md.bak ~/.claude/CLAUDE.md`) and remove the skills dirs from `~/.claude/skills/` that came from this repo.
+Update cadence: pull before starting a week's work. New skills / memory-server changes show up automatically.
+
+---
+
+## Adding Personal Skills
+
+Personal skills live only in `~/.claude/skills/` and are never touched by `install.sh`:
+
+```bash
+mkdir -p ~/.claude/skills/my-skill
+cat > ~/.claude/skills/my-skill/SKILL.md <<'EOF'
+---
+name: my-skill
+description: What this skill does. When to auto-trigger.
+disable-model-invocation: false
+---
+
+# /my-skill
+Your skill content here.
+EOF
+```
+
+---
+
+## Team Adoption Rollout
+
+**Week 1 — solo**: install, bootstrap 1 repo, work normally, `/wrap-up` every session
+**Week 2 — discipline**: all active repos bootstrapped, daily `/budget status`, save 1–2 goldens
+**Week 3 — advanced**: `/avengers` on real multi-file task, `/replay` on recurring problem
+**Week 4+ — steady state**: system self-improves, team golden library grows
+
+### Health signals
+
+- ✅ **Green**: `wc -l ~/.claude/golden/*.md` grows 2–5/week; Grep fallback <10%; session start <$0.05
+- ⚠️ **Yellow**: overrides ≥3/week → raise caps; Grep fallback >30% → tune `.code-review-graphignore`
+- 🔴 **Red**: engineers skip `/wrap-up` frequently; goldens never used → tags too narrow
+
+---
+
+## Expected Productivity Impact
+
+Honest, compounding:
+
+| Work type | Multiplier |
+|---|---|
+| Repetitive DE tasks (DAG edits, alert tuning) with goldens | **~50×** |
+| Novel feature work with graph-first nav + memory MCP | **~10×** |
+| Architecture/design (thinking bound, not context bound) | **~3×** |
+| Prod debugging (your understanding is the bottleneck) | **~1×** |
+
+**Sustained team average: 15–25×** over a month of real DE work. The 100× aspirational number applies only to cherry-picked replay-heavy scenarios.
+
+---
+
+## License & Source
+
+Internal tooling. Repo: [`nr-mdakilahmed/claude_code_setup`](https://github.com/nr-mdakilahmed/claude_code_setup).
+Issues/PRs welcome. Contribute a shared golden once you've collected 5+ personal ones.

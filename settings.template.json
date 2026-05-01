@@ -22,12 +22,27 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/log-grep-usage.sh"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/self-heal-stop.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/stop-record-cost.sh"
           }
         ]
       }
@@ -70,6 +85,8 @@
       "Bash(git show*)",
       "Bash(python3*)",
       "Bash(uv*)",
+      "Bash(uvx*)",
+      "Bash(pipx*)",
       "Bash(pip*)",
       "Bash(pytest*)",
       "Bash(ruff*)",
@@ -78,6 +95,7 @@
       "Bash(terraform fmt*)",
       "Bash(terraform plan*)",
       "Bash(terraform output*)",
+      "Bash(code-review-graph*)",
       "Bash(jq*)",
       "Bash(curl*)",
       "Bash(bash*)",
