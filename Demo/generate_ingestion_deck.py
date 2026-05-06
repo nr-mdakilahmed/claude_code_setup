@@ -111,7 +111,7 @@ def s01_title(p):
     chips = [
         ("🚀", "8–12×  productivity for DE tasks"),
         ("⏱", "2–3 days → 2–6 hours per ticket"),
-        ("🔍", "0–20 min Kafka/NR diagnosis"),
+        ("🔍", "0–20 min Alert issue diagnosis"),
         ("⚡", "5 parallel agents with /avengers"),
         ("📦", "Knowledge that compounds daily"),
     ]
@@ -130,7 +130,7 @@ def s02_problem(p):
 
     cards = [
         ("🕐", "Slow Development Tickets",  "2–3 DAYS",   "per ticket — regardless of complexity or volume",   RED),
-        ("🔍", "Pipeline Debugging",        "30 MIN–3 HRS", "backtracking Kafka & NRDB pipelines one by one",  AMB),
+        ("🔍", "Pipeline Debugging",        "30 MIN–3 HRS", "backtracking alert issues one by one manually",  AMB),
         ("💥", "Hidden Blast Radius",       "5-DAY",      "incident caused by a change no one knew would break", CHR),
         ("🗂", "No Historical Context",     "HOURS–DAYS", "re-discovering repo structure and past decisions\nevery time someone joined, left, or came back",     CHR),
     ]
@@ -199,7 +199,7 @@ def s03_how_we_work(p):
         ("1", "Start with full context",       "Memory + codebase graph auto-load in seconds"),
         ("2", "Copilot: lines + blind spot check", "Autocomplete in IDE · cross-model review catches what Claude misses"),
         ("3", "Skills trigger automatically",  "/airflow · /pyspark · /nrql · /terraform · /sql"),
-        ("4", "Incidents diagnosed via NR MCP","30 min–3 hrs → 0–20 min for Kafka & NRDB"),
+        ("4", "Incidents diagnosed via NR MCP","30 min–3 hrs → 0–20 min for alert issues"),
         ("5", "/avengers for big tasks",       "5 parallel agents — 2–3 days → 2–6 hours"),
         ("6", "/wrap-up closes the loop",      "Jira updated · knowledge captured · graph refreshed"),
     ]
@@ -382,7 +382,7 @@ def s05_lifecycle(p):
 
     # Bottom summary — only confirmed phases shown; "—" = not yet measured
     R(s, Inches(0.4), Inches(5.96), Inches(12.5), Inches(0.62), fill=G)
-    T(s, "Confirmed by engineer  ·  Spec+Arch+Build: days → hours  ·  Kafka diagnosis: hours → 0–20 min  ·  Overall: 8–12×",
+    T(s, "Confirmed by engineer  ·  Spec+Arch+Build: days → hours  ·  Alert issue diagnosis: hours → 0–20 min  ·  Overall: 8–12×",
       Inches(0.6), Inches(6.08), Inches(12.1), Inches(0.42),
       sz=15, bold=True, c=W, a=PP_ALIGN.CENTER)
     ftr(s)
@@ -713,7 +713,7 @@ def s13_numbers(p):
     big4 = [
         ("8–12×",  "overall productivity\nfor DE tasks",          G),
         ("2–6h",   "dev ticket\nvs 2–3 days before",              GB),
-        ("0–20m",  "Kafka/NR diagnosis\nvs 1–10 hours before",    BLU),
+        ("0–20m",  "Alert issue diagnosis\nvs 1–10 hours before",    BLU),
         ("25+ SP", "sprint capacity\n+ adhoc on top",             GD),
     ]
     for i, (num, label, c_) in enumerate(big4):
@@ -765,7 +765,7 @@ def s14_comparison(p):
         ("Architecture + CDD",        "2–4 days",                 "1–2 days  ✅"),
         ("Development ticket",        "2–3 days",                 "2–6 hours (task-dependent)  ✅"),
         ("New pipeline (full cycle)", "2–4 days",                 "3–5 hours  ✅"),
-        ("Kafka / NR diagnosis",      "1–10 hours",               "0–20 minutes (NR MCP)  ✅"),
+        ("Alert issue diagnosis",      "30 min – 3 hours",         "0–20 minutes (NR MCP)  ✅"),
         ("Context after absence",     "Hours / days",             "5–15 min via /bootstrap  ✅"),
         ("Sprint throughput",         "25 SP (at capacity)",      "25 SP + additional + adhoc  ✅"),
         ("Documentation effort",      "Manual, often skipped",    "Automatic via /wrap-up  ✅"),
@@ -879,7 +879,7 @@ def s17_ask(p):
         T(s, detail, Inches(3.45), y + Inches(0.14), Inches(6.38), Inches(0.72), sz=14, c=W)
 
     # Right panel numbers
-    for i, (val, lbl) in enumerate([("8–12×","sustained avg"),("2–6h","dev ticket"),("0–20m","Kafka diagnosis"),("25+ SP","sprint capacity"),("8–12×","overall DE tasks")]):
+    for i, (val, lbl) in enumerate([("8–12×","Productivity"),("2–6h","dev ticket"),("0–20m","alert diagnosis"),("25+ SP","sprint capacity"),("8–12×","overall DE tasks")]):
         T(s, val, Inches(10.2), Inches(1.3 + i * 1.08), Inches(3.13), Inches(0.68), sz=26, bold=True, c=G, a=PP_ALIGN.CENTER)
         T(s, lbl, Inches(10.2), Inches(1.95 + i * 1.08), Inches(3.13), Inches(0.3), sz=10, it=True, c=GR, a=PP_ALIGN.CENTER)
 
