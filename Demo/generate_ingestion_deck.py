@@ -109,11 +109,11 @@ def s01_title(p):
       Inches(0.6), Inches(3.86), Inches(7.6), Inches(0.42), sz=15, c=GR, it=True)
 
     chips = [
-        ("🚀", "10×  faster feature delivery"),
-        ("🧠", "Onboard in hours, not weeks"),
-        ("🔍", "30-min incident diagnosis"),
-        ("⚡", "5 agents working in parallel"),
-        ("📦", "Knowledge that compounds"),
+        ("🚀", "8–12×  productivity for DE tasks"),
+        ("⏱", "2–3 days → 2–6 hours per ticket"),
+        ("🔍", "0–20 min Kafka/NR diagnosis"),
+        ("⚡", "5 parallel agents with /avengers"),
+        ("📦", "Knowledge that compounds daily"),
     ]
     for i, (ic, lb) in enumerate(chips):
         yy = Inches(1.2 + i * 1.05)
@@ -388,17 +388,18 @@ def s05_lifecycle(p):
     ftr(s)
 
 
-def s06_onboard(p):
+def s06_faster_dev(p):
+    """Faster Development — matches Challenge 1: Slow Development Tickets."""
     s = blank(p)
-    hdr(s, "Onboard in Hours, Not Weeks  —  Full Context on Day One")
+    hdr(s, "Faster Development  —  Days Became Hours")
 
     # Before
     card(s, Inches(0.4), Inches(0.82), Inches(5.8), Inches(3.72))
     top_bar(s, Inches(0.4), Inches(0.82), Inches(5.8), color=RED)
     T(s, "BEFORE", Inches(0.6), Inches(0.98), Inches(5.4), Inches(0.34), sz=12, bold=True, c=GR)
-    T(s, "2 WEEKS", Inches(0.6), Inches(1.36), Inches(5.4), Inches(1.02),
-      sz=64, bold=True, c=RED, a=PP_ALIGN.CENTER)
-    T(s, "50 Slack DMs  ·  git archaeology  ·  tribal knowledge\nStill not fully productive by end of week 2",
+    T(s, "2–3 DAYS", Inches(0.6), Inches(1.36), Inches(5.4), Inches(1.02),
+      sz=58, bold=True, c=RED, a=PP_ALIGN.CENTER)
+    T(s, "Per development ticket — regardless of complexity\nContext rebuilt from scratch every time",
       Inches(0.6), Inches(2.52), Inches(5.4), Inches(0.78), sz=12, c=GR, a=PP_ALIGN.CENTER)
 
     T(s, "→", Inches(6.38), Inches(2.0), Inches(0.55), Inches(0.7),
@@ -409,22 +410,22 @@ def s06_onboard(p):
          fill=RGBColor(0xF0, 0xFB, 0xF5))
     top_bar(s, Inches(7.1), Inches(0.82), Inches(5.8), color=G)
     T(s, "AFTER", Inches(7.3), Inches(0.98), Inches(5.4), Inches(0.34), sz=12, bold=True, c=GD)
-    T(s, "2 HOURS", Inches(7.3), Inches(1.36), Inches(5.4), Inches(1.02),
-      sz=64, bold=True, c=G, a=PP_ALIGN.CENTER)
-    T(s, "/bootstrap: detects stack, seeds memory, builds graph\nFull codebase context ready in 15 seconds",
+    T(s, "2–6 HOURS", Inches(7.3), Inches(1.36), Inches(5.4), Inches(1.02),
+      sz=52, bold=True, c=G, a=PP_ALIGN.CENTER)
+    T(s, "Task & volume dependent\nFull context auto-loaded · skills auto-trigger · graph aware",
       Inches(7.3), Inches(2.52), Inches(5.4), Inches(0.78), sz=12, c=GD, a=PP_ALIGN.CENTER)
 
     # Three outcome cards
     cs = [
-        ("Full context\nDay 1",     "Architecture + lessons + todos\nauto-loaded every session"),
-        ("Never re-explain\nthe codebase", "Team knowledge lives in\nmemory, not in one person"),
-        ("4 weeks/year\nsaved",     "2 new engineers × 2 weeks\n= 4 engineering-weeks back"),
+        ("Spec & Plan\n4–6h → 20m–1h",  "AI assists planning from existing\ncodebase patterns — not from scratch"),
+        ("Architecture\n2–4d → 1–2d",    "Code graph shows impact +\nCDD & Confluence auto-updated"),
+        ("Context\nalways ready",         "Memory + graph auto-load\nNo archaeology every session"),
     ]
     for i, (title, desc) in enumerate(cs):
         x = Inches(0.4 + i * 4.3)
         card(s, x, Inches(4.72), Inches(4.06), Inches(1.92))
         top_bar(s, x, Inches(4.72), Inches(4.06), color=G)
-        T(s, title, x + Inches(0.18), Inches(4.84), Inches(3.7), Inches(0.52), sz=14, bold=True, c=GD)
+        T(s, title, x + Inches(0.18), Inches(4.84), Inches(3.7), Inches(0.52), sz=13, bold=True, c=GD)
         T(s, desc,  x + Inches(0.18), Inches(5.42), Inches(3.7), Inches(1.0),  sz=11, c=GR)
     ftr(s)
 
@@ -901,7 +902,7 @@ SLIDES = [
     # Act 3 — The lifecycle
     s05_lifecycle,         # Full lifecycle with verified timings
     # Act 4 — Benefits (capabilities in action)
-    s06_onboard,           # Onboard in hours
+    s06_faster_dev,        # Faster development — 2-3 days → 2-6 hours
     s07_parallel,          # /avengers parallel build
     s08_investigate,       # NR MCP diagnosis
     s09_ship,              # Impact analysis
