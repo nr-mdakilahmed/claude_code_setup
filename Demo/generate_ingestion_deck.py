@@ -197,7 +197,7 @@ def s03_how_we_work(p):
     T(s, "Daily Workflow", Inches(4.92), Inches(0.9), Inches(3.7), Inches(0.34), sz=14, bold=True, c=W)
     steps = [
         ("1", "Start with full context",       "Memory + codebase graph auto-load in seconds"),
-        ("2", "Copilot handles the lines",     "IDE autocomplete running alongside Claude Code"),
+        ("2", "Copilot: lines + blind spot check", "Autocomplete in IDE · cross-model review catches what Claude misses"),
         ("3", "Skills trigger automatically",  "/airflow · /pyspark · /nrql · /terraform · /sql"),
         ("4", "Incidents diagnosed via NR MCP","30 min–3 hrs → 0–20 min for Kafka & NRDB"),
         ("5", "/avengers for big tasks",       "5 parallel agents — 2–3 days → 2–6 hours"),
@@ -219,7 +219,7 @@ def s03_how_we_work(p):
     T(s, "Tools in Use", Inches(9.25), Inches(0.9), Inches(3.45), Inches(0.34), sz=14, bold=True, c=W)
     tools = [
         ("Claude Code",        "20 skills · memory · /avengers\nTeam environment AI",      G),
-        ("GitHub Copilot",     "Line completion · inline chat\nSide by side in IDE",        CHR),
+        ("GitHub Copilot",     "Line completion · inline chat\nCross-model review (covers Claude blind spots)", CHR),
         ("NR MCP",             "Live logs · metrics · traces\nDiagnose without leaving chat", BLU),
         ("Jira + Confluence",  "Tickets + docs auto-updated\non every /wrap-up",            TEAL),
         ("Code Graph",         "28 tools · blast radius\nImpact analysis before coding",   PUR),
@@ -250,7 +250,7 @@ def s03b_two_tools(p):
         "Autocomplete lines & functions as you type",
         "Inline chat: explain, refactor, or debug code",
         "Generate tests and boilerplate instantly",
-        "Works inside VS Code alongside your workflow",
+        "Cross-model review: GPT catches Claude blind spots",
     ]
     for i, txt_ in enumerate(copilot_items):
         T(s, "✅  " + txt_, Inches(0.62), Inches(2.06 + i * 0.52),
@@ -258,12 +258,12 @@ def s03b_two_tools(p):
 
     # "Claude Code fills the gap" label
     HL(s, Inches(0.62), Inches(4.2), Inches(5.3))
-    T(s, "Claude Code takes over where Copilot stops:",
+    T(s, "Together: deliberate cross-model coverage —",
       Inches(0.62), Inches(4.3), Inches(5.3), Inches(0.3),
       sz=10, bold=True, c=GD, it=True)
     gap_items = [
-        "Cross-session memory  ·  NR/Jira/Confluence queries",
-        "Blast-radius analysis  ·  Multi-agent parallel work",
+        "Different AI models catch different blind spots",
+        "Claude leads · Copilot verifies · humans approve",
     ]
     for i, txt_ in enumerate(gap_items):
         T(s, txt_, Inches(0.62), Inches(4.66 + i * 0.36),
@@ -287,7 +287,7 @@ def s03b_two_tools(p):
         ("Incident diagnosis via NR MCP — 0–20 min",          "✅"),
         ("20 skills auto-trigger on file type or topic",      ""),
         ("Jira + Confluence auto-update on every session end",""),
-        ("5-layer review: CC + Copilot + agents + human",     ""),
+        ("5-layer review: CC Opus → Copilot GPT (blind spots) → agents → human", ""),
     ]
     for i, (txt_, badge) in enumerate(cc_items):
         line = ("⚡  " if badge else "✅  ") + txt_
