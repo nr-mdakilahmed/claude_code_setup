@@ -1,7 +1,7 @@
 ---
 name: demo
 description: Frames a 45-minute technical demo that leads with the problem, not the solution, and produces cheat sheet, full script, Q&A prep, and pre-demo checklist. Fires only on explicit /demo invocation with optional --reframe (post-bad-demo rewrite) or --objections (Q&A-only prep). Demo prep is intentional work the presenter starts, not ambient assistance Claude should guess at.
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Demo Preparation

@@ -3,7 +3,7 @@ name: bootstrap
 description: Performs first-visit repo setup — detects stack, seeds memory artifacts at ~/.claude/projects/<REPO_NAME>/, builds a code-review-graph (Tree-sitter + 28 MCP tools) with per-repo .mcp.json, and writes <repo>/.claude/CLAUDE.md with @ references. Fires only on explicit /bootstrap. Runs once per repo; re-runs are safe but preserve existing memory. Opus-routed because judgment on stack classification and conventions benefits from stronger reasoning.
 when_to_use: Invoke explicitly with /bootstrap on first visit to a new repo, or after a structural rewrite that invalidates architecture.md. Never invoke on incidental prompts.
 allowed-tools: Read Grep Bash Write
-disable-model-invocation: true
+disable-model-invocation: false
 model: opus
 effort: high
 ---

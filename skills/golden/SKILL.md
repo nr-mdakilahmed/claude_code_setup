@@ -3,7 +3,7 @@ name: golden
 description: Captures a successful session as a reusable "golden path" — a distilled, tag-indexed sequence of steps that solved a specific problem. Stores at ~/.claude/golden/<pattern>.md. Invoke with /golden save <pattern> after a win to make it replayable next time.
 when_to_use: Invoke explicitly with /golden save <pattern>, /golden list, or /golden validate <pattern>. Never auto-invokes.
 allowed-tools: Read Grep Bash Write Edit
-disable-model-invocation: true
+disable-model-invocation: false
 model: opus
 ---
 

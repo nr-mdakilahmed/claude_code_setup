@@ -3,7 +3,7 @@ name: replay
 description: Loads a saved golden-path markdown into context as prior-art for the current task, so Claude follows proven steps instead of re-deriving the fix. Golden must exist at ~/.claude/golden/<pattern>.md. Invoke with /replay <pattern>.
 when_to_use: Invoke explicitly with /replay <pattern> when starting a task that matches a past success. Run /golden list first to find the slug. Never auto-invokes.
 allowed-tools: Read Grep Bash
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Replay — Load A Golden Path

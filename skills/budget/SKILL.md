@@ -3,7 +3,7 @@ name: budget
 description: Tracks Claude Code daily/weekly/monthly spend against caps defined in ~/.claude/budget.json. Shows status, updates caps, grants one-time overrides. Warn-only — does not hard-block tool calls, since Claude Code doesn't expose pre-turn cost reliably. Invoke with /budget status, /budget set, /budget override, /budget report.
 when_to_use: Invoke explicitly. Check /budget status at session start on heavy days; adjust caps via /budget set when your workload shifts.
 allowed-tools: Read Grep Bash Write Edit
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Budget — Spend Awareness + Caps

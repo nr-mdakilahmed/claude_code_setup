@@ -3,7 +3,7 @@ name: wrap-up
 description: Persists session context at end of work by appending to history.md, updating todo.md and lessons.md, and refreshing the code-review-graph (incremental update + regenerated GRAPH_REPORT.md). Fires only on explicit /wrap-up invocation.
 when_to_use: Invoke explicitly with /wrap-up at the end of every session. Never runs implicitly — the user alone starts it.
 allowed-tools: Read Grep Bash Write Edit
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Wrap-Up — Session Persistence
