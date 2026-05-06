@@ -31,9 +31,10 @@ BLU    = RGBColor(0x00, 0x52, 0xCC)   # Atlassian
 PUR    = RGBColor(0x7C, 0x3A, 0xED)
 TEAL   = RGBColor(0x06, 0x82, 0xA0)   # teal for docs
 
-FTR = "© 2025 New Relic, Inc.  All rights reserved.  Confidential and proprietary.  For internal use only."
-DIR = os.path.dirname(os.path.abspath(__file__))
+FTR = "© 2025 New Relic, Inc. All rights reserved. Confidential and proprietary. For internal use only, not for external distribution."
+DIR      = os.path.dirname(os.path.abspath(__file__))
 ARCH_IMG = os.path.join(DIR, "architecture (1).png")
+NR_LOGO  = os.path.join(DIR, "nr_logo_2.png")
 
 SW, SH = Inches(13.33), Inches(7.5)
 
@@ -68,9 +69,10 @@ def HL(s, x, y, w, c=MG):
     R(s, x, y, w, Inches(0.018), fill=c)
 
 def ftr(s):
-    T(s, FTR, Inches(0.3), Inches(7.06), Inches(11.6), Inches(0.36), sz=7, c=GR)
-    T(s, "⬢ new relic", Inches(11.8), Inches(7.01), Inches(1.4), Inches(0.42),
-      sz=10, bold=True, c=G, a=PP_ALIGN.RIGHT)
+    T(s, FTR, Inches(0.3), Inches(7.08), Inches(11.0), Inches(0.34), sz=7, c=GR)
+    if os.path.exists(NR_LOGO):
+        # Logo aspect ratio ~4.73:1  →  1.3" × 0.275"
+        s.shapes.add_picture(NR_LOGO, Inches(11.75), Inches(7.07), width=Inches(1.3))
 
 def hdr(s, title, h=Inches(0.68)):
     R(s, 0, 0, SW, h, fill=G)
@@ -97,8 +99,8 @@ def s01_title(p):
     R(s, 0, 0, SW, Inches(0.06), fill=G)
     R(s, 0, SH - Inches(0.06), SW, Inches(0.06), fill=G)
     R(s, Inches(8.6), 0, Inches(4.73), SH, fill=RGBColor(0x12, 0x12, 0x30))
-    T(s, "⬢ new relic", Inches(0.6), Inches(0.32), Inches(3), Inches(0.52),
-      sz=22, bold=True, c=G)
+    if os.path.exists(NR_LOGO):
+        s.shapes.add_picture(NR_LOGO, Inches(0.6), Inches(0.28), width=Inches(2.0))
     T(s, "Ingestion Team",           Inches(0.6), Inches(1.52), Inches(7.6), Inches(0.72), sz=38, bold=True, c=W)
     T(s, "AI-Led Development",       Inches(0.6), Inches(2.26), Inches(7.6), Inches(0.65), sz=34, bold=True, c=G)
     T(s, "Environment",              Inches(0.6), Inches(2.93), Inches(7.6), Inches(0.62), sz=34, bold=True, c=W)
@@ -824,7 +826,9 @@ def s17_ask(p):
     R(s, 0, 0, SW, Inches(0.06), fill=G)
     R(s, Inches(10.2), 0, Inches(3.13), SH, fill=RGBColor(0x12, 0x12, 0x30))
 
-    T(s, "⬢ new relic", Inches(0.6), Inches(0.3), Inches(3), Inches(0.5), sz=20, bold=True, c=G)
+    if os.path.exists(NR_LOGO):
+        # On dark background use the same logo — white bg is transparent enough
+        s.shapes.add_picture(NR_LOGO, Inches(0.6), Inches(0.26), width=Inches(2.0))
     T(s, "What We're Asking",
       Inches(0.6), Inches(0.98), Inches(9.3), Inches(0.66), sz=34, bold=True, c=W)
     HL(s, Inches(0.6), Inches(1.7), Inches(8.0), G)
