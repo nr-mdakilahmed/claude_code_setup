@@ -1,310 +1,478 @@
-# Gemini Redesign Prompt — DataOS Ingestion AI-Led Development Deck
-
-Paste this prompt into Google Gemini, then attach all 17 slide images from the `ingestion_ai/` folder.
-
----
-
-## PROMPT
-
-I am attaching 17 slides (slide_01.png through slide_17.png) from an existing PowerPoint presentation. I need you to redesign all 17 slides into a **stunning, modern, executive-level presentation** while keeping every piece of content exactly as shown. Do not invent, add, or remove any content.
+# Gemini Redesign Prompts — DataOS Ingestion AI-Led Development Deck
+# 17 individual slide prompts · Split into 2 batches (10 + 7)
 
 ---
 
-### BRAND REQUIREMENTS — NON-NEGOTIABLE
+## BRAND RULES — Copy this block into EVERY prompt
 
-**Colors:**
-- Primary green: `#00AC69` (New Relic green — headers, accents, highlights, CTAs)
-- Dark navy: `#0D0D24` (hero/title slides background)
-- Charcoal: `#1F2937` (dark section headers)
-- White: `#FFFFFF` (slide backgrounds, text on dark)
-- Light green: `#E8F8F1` (subtle background tint for cards)
-- Body grey: `#6B7280` (secondary text)
-- Border grey: `#E5E7EB` (card borders, dividers)
-
-**Logo:** Every slide must show the **New Relic logo** (green hexagon + "new relic." wordmark) in the bottom-right corner, exactly as it appears in the current slides.
-
-**Disclaimer:** Every slide must show this exact text in the bottom-left, small grey font:
-`© 2025 New Relic, Inc. All rights reserved. Confidential and proprietary. For internal use only, not for external distribution.`
-
-**Typography:** Modern sans-serif (Inter, Calibri, or similar). Bold headers. Clean hierarchy.
-
-**Slide dimensions:** 16:9 widescreen (1920×1080px or equivalent).
+```
+BRAND RULES (apply to every slide):
+- Primary green: #00AC69 | Dark navy: #0D0D24 | Charcoal: #1F2937
+- White backgrounds for content slides | Dark navy for hero/impact slides
+- New Relic logo (green hexagon + "new relic." wordmark) — bottom-right, every slide
+- Disclaimer bottom-left every slide (small grey font):
+  "© 2025 New Relic, Inc. All rights reserved. Confidential and proprietary. For internal use only, not for external distribution."
+- Typography: modern sans-serif (Inter or similar) | Bold headers | Clean hierarchy
+- Slide size: 1920×1080px (16:9)
+- Style: world-class executive presentation — hero numbers dominate, generous white space,
+  full-width green header bars, card-based layouts, no bullet lists
+- Output: single PNG image, named slide_01 (or matching slide number)
+- Do NOT change any text, number, or metric — reproduce content exactly as described
+```
 
 ---
 
-### DESIGN DIRECTION
-
-Make this look like a **world-class executive presentation** — the kind you'd see at a Google or Stripe all-hands. Specific guidance:
-
-- Use **large hero numbers** (80–100pt) for key metrics — they should dominate the slide
-- Use **generous white space** — don't crowd every pixel
-- Use **full-width green header bars** on content slides
-- Use **dark navy backgrounds** for impact slides (Title, Knowledge Compounds, Thank You)
-- Use **card-based layouts** with subtle shadows and rounded corners
-- Use **color-coded accents** (green stripe on left of cards for AI/after, red for before/pain)
-- **Avoid bullet point lists** — use visual cards, flow diagrams, and icons instead
-- Each slide should have **one dominant visual focal point** that a viewer sees in 3 seconds
+## BATCH 1 — Upload slides 01–10 together, then use each prompt individually
 
 ---
 
-### SLIDE-BY-SLIDE CONTENT (do not change any text, numbers, or facts)
+### SLIDE 01 PROMPT
+*(attach slide_01.png)*
+
+```
+Redesign this slide as slide_01.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: Dark navy full background. Left half: content. Right half: darker navy panel.
+
+LEFT SIDE:
+- New Relic logo top-left (large, 2")
+- "Ingestion Team" — very large (38pt), white, bold
+- "AI-Led Development" — very large (34pt), #00AC69 green, bold
+- "Environment" — very large (34pt), white, bold
+- Thin green divider line
+- Italic grey subtitle: "Claude Code  +  GitHub Copilot  +  New Relic MCP"
+
+RIGHT PANEL (darker navy):
+Five horizontal chips, each with green left stripe, icon + text:
+🚀  "8–12×  productivity for DE tasks"
+⏱  "2–3 days → 2–6 hours per ticket"
+🔍  "0–20 min alert issue diagnosis"
+⚡  "5 parallel agents with /avengers"
+📦  "Knowledge that compounds daily"
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 01 — Title (dark navy background)
-**Left side (white text on navy):**
-- Logo top-left
-- "Ingestion Team" (large, white, bold)
-- "AI-Led Development" (large, green, bold)
-- "Environment" (large, white, bold)
-- Divider line (green)
-- Subtitle (italic, grey): "Claude Code  +  GitHub Copilot  +  New Relic MCP"
+### SLIDE 02 PROMPT
+*(attach slide_02.png)*
 
-**Right side (dark panel):**
-Five outcome chips, each with icon + text:
-1. 🚀  "8–12×  productivity for DE tasks"
-2. ⏱  "2–3 days → 2–6 hours per ticket"
-3. 🔍  "0–20 min alert issue diagnosis"
-4. ⚡  "5 parallel agents with /avengers"
-5. 📦  "Knowledge that compounds daily"
+```
+Redesign this slide as slide_02.png using the brand rules below.
 
----
+[PASTE BRAND RULES BLOCK HERE]
 
-#### SLIDE 02 — The Challenge (white background, green header)
-**Header:** "The Challenge — Four Real Pains the DataOS Ingestion Team Was Living With"
+LAYOUT: White background. Full-width green header bar. 2×2 grid of cards.
 
-**Four cards in 2×2 grid, each with:**
-- Top accent stripe (color per card)
-- Icon + title
-- Large hero number (bold, colored)
-- Divider line
-- Description text (grey)
+HEADER: "The Challenge — Four Real Pains the DataOS Ingestion Team Was Living With"
 
-Card 1 (red accent): 🕐 "Slow Development Tickets" — **2–3 DAYS** — "per ticket — regardless of complexity or volume"
-Card 2 (amber accent): 🔍 "Pipeline Debugging" — **30 MIN–3 HRS** — "backtracking alert issues one by one manually"
-Card 3 (charcoal accent): 💥 "Hidden Blast Radius" — **5-DAY** — "incident caused by a change no one knew would break"
-Card 4 (charcoal accent): 🗂 "No Historical Context" — **HOURS–DAYS** — "re-discovering repo structure and past decisions every time someone joined, left, or came back"
+FOUR CARDS (each has: top accent stripe, icon+title, large hero number, divider, grey description):
 
----
+Card 1 — top-left (RED #E53E3E accent):
+🕐  "Slow Development Tickets"
+Hero: 2–3 DAYS (red, ~48pt bold)
+"per ticket — regardless of complexity or volume"
 
-#### SLIDE 03 — How We Work (white background, green header)
-**Header:** "DataOS Ingestion  —  How We Run AI-Led Development Today"
+Card 2 — top-right (AMBER #FFC107 accent):
+🔍  "Pipeline Debugging"
+Hero: 30 MIN–3 HRS (amber, ~44pt bold)
+"backtracking alert issues one by one manually"
 
-**Three columns:**
+Card 3 — bottom-left (CHARCOAL #1F2937 accent):
+💥  "Hidden Blast Radius"
+Hero: 5-DAY (charcoal, ~48pt bold)
+"incident caused by a change no one knew would break"
 
-**Column 1 — What We Own (dark header):**
-Label: "DATA SOURCES" → boxes: "Billing Platform · Kafka · SFDC · Zuora · etc."
-Arrow ↓
-Green box: "INGESTION — WE OWN THIS" — "FiveTran · Kafka · NRDB · Spark · Custom Pipelines"
-Arrow ↓
-Label: "DOWNSTREAM ZONE 2" → boxes: "Consumer · Data Lake · Dashboard"
+Card 4 — bottom-right (CHARCOAL #1F2937 accent):
+🗂  "No Historical Context"
+Hero: HOURS–DAYS (charcoal, ~44pt bold)
+"re-discovering repo structure and past decisions every time someone joined, left, or came back"
 
-**Column 2 — Daily Workflow (green header):**
-6 numbered steps:
-1. "Start with full context" — "Memory + codebase graph auto-load in seconds"
-2. "Copilot: lines + blind spot check" — "Autocomplete in IDE · cross-model review catches what Claude misses"
-3. "Skills trigger automatically" — "/airflow · /pyspark · /nrql · /terraform · /sql"
-4. "Incidents diagnosed via NR MCP" — "30 min–3 hrs → 0–20 min for alert issues"
-5. "/avengers for big tasks" — "5 parallel agents — 2–3 days → 2–6 hours"
-6. "/wrap-up closes the loop" — "Jira updated · knowledge captured · graph refreshed"
-
-**Column 3 — Tools in Use (dark green header):**
-5 tool cards with left color stripe:
-- Claude Code (green): "20 skills · memory · /avengers · Team environment AI"
-- GitHub Copilot (charcoal): "Line completion · inline chat · Cross-model review (covers Claude blind spots)"
-- NR MCP (blue): "Live logs · metrics · traces · Diagnose without leaving chat"
-- Jira + Confluence (teal): "Tickets + docs auto-updated · on every /wrap-up"
-- Code Graph (purple): "28 tools · blast radius · Impact analysis before coding"
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 04 — System Architecture (white background, green header)
-**Header:** "System Architecture  —  How It All Connects Under One Environment"
+### SLIDE 03 PROMPT
+*(attach slide_03.png)*
 
-**Full-width image:** Display the architecture diagram image exactly as provided. This is a detailed technical diagram showing all components — preserve it at maximum size filling the slide body.
+```
+Redesign this slide as slide_03.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. Three equal columns.
+
+HEADER: "DataOS Ingestion  —  How We Run AI-Led Development Today"
+
+COLUMN 1 — "What We Own" (dark charcoal header):
+Vertical data flow diagram:
+  Label "DATA SOURCES" (small, grey)
+  Box: "Billing Platform · Kafka · SFDC · Zuora · etc."
+  Green arrow ↓
+  Green filled box: "INGESTION — WE OWN THIS" + "FiveTran · Kafka · NRDB · Spark · Custom Pipelines"
+  Green arrow ↓
+  Label "DOWNSTREAM ZONE 2" (small, grey)
+  Box: "Consumer · Data Lake · Dashboard"
+
+COLUMN 2 — "Daily Workflow" (green header):
+6 numbered steps (alternating light green / white rows):
+1  "Start with full context" — "Memory + codebase graph auto-load in seconds"
+2  "Copilot: lines + blind spot check" — "Autocomplete in IDE · cross-model review catches what Claude misses"
+3  "Skills trigger automatically" — "/airflow · /pyspark · /nrql · /terraform · /sql"
+4  "Incidents diagnosed via NR MCP" — "30 min–3 hrs → 0–20 min for alert issues"
+5  "/avengers for big tasks" — "5 parallel agents — 2–3 days → 2–6 hours"
+6  "/wrap-up closes the loop" — "Jira updated · knowledge captured · graph refreshed"
+
+COLUMN 3 — "Tools in Use" (dark green header):
+5 tool cards (white bg, colored left stripe):
+Claude Code (green stripe): "20 skills · memory · /avengers · Team environment AI"
+GitHub Copilot (charcoal stripe): "Line completion · inline chat · Cross-model review (covers Claude blind spots)"
+NR MCP (blue stripe): "Live logs · metrics · traces · Diagnose without leaving chat"
+Jira + Confluence (teal stripe): "Tickets + docs auto-updated · on every /wrap-up"
+Code Graph (purple stripe): "28 tools · blast radius · Impact analysis before coding"
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 05 — Lifecycle (white background, green header)
-**Header:** "Full AI-Led Development Lifecycle  —  Time Savings at Every Phase"
+### SLIDE 04 PROMPT
+*(attach slide_04.png)*
 
-**10 phase boxes in a horizontal flow (left to right), each showing:**
-- Phase number (01–10)
-- Phase name
-- Who does it
+```
+Redesign this slide as slide_04.png using the brand rules below.
 
-**Phase data (phase name / who / before / after):**
-01. Requirement / Manager/PM / — / —
-02. Spec & Plan / AI-assisted / 4–6h / 20m–1h
-03. Architect / AI + Graph / 2–4d / 1–2d
-04. Build / Task & volume dep. / 2–3d / 2–6h
-05. Review / 5-layer AI+Human / — / —
-06. Test & Gate / AI automated / — / —
-07. Deploy / Human initiates / — / —
-08. Monitor / NR MCP (AI) / 1–10h / 0–20m
-09. Document / AI auto-update / manual / auto
-10. Learn / Golden patterns / — / auto
+[PASTE BRAND RULES BLOCK HERE]
 
-Below each phase box: red row (Before time), green row (After time). Phases with "—" show no timing row.
+LAYOUT: White background. Full-width green header. Body = full-size image.
 
-**Bottom green banner:** "Confirmed by engineer · Spec+Arch+Build: days → hours · Alert diagnosis: hours → 0–20 min · Overall: 8–12×"
+HEADER: "System Architecture  —  How It All Connects Under One Environment"
+
+BODY: The architecture diagram from the attached image must be reproduced at maximum size,
+filling the entire slide body below the header. Preserve every label, arrow, box, and color
+from the original diagram exactly. Do not simplify or alter it.
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 06 — Faster Development (white background, green header)
-**Header:** "Faster Development  —  Days Became Hours"
+### SLIDE 05 PROMPT
+*(attach slide_05.png)*
 
-**Left card (before — red accent):**
+```
+Redesign this slide as slide_05.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. 10 phase boxes in horizontal flow + timing rows below.
+
+HEADER: "Full AI-Led Development Lifecycle  —  Time Savings at Every Phase"
+
+10 PHASE BOXES (left to right, each: phase number, phase name, who does it):
+01 Requirement — Manager/PM — charcoal fill
+02 Spec & Plan — AI-assisted — green fill
+03 Architect — AI + Graph — dark green fill
+04 Build — Task & volume dep. — green fill
+05 Review — 5-layer AI+Human — dark green fill
+06 Test & Gate — AI automated — green fill
+07 Deploy — Human initiates — charcoal fill
+08 Monitor — NR MCP (AI) — blue fill
+09 Document — AI auto-update — teal fill
+10 Learn — Golden patterns — purple fill
+
+TIMING ROWS below each box (skip row if value is "—"):
+Before row (light red bg, red text): 02=4–6h, 03=2–4d, 04=2–3d, 08=1–10h, 09=manual
+After row (light green bg, green text): 02=20m–1h, 03=1–2d, 04=2–6h, 08=0–20m, 09=auto, 10=auto
+
+Left labels: "Before:" (red) and "After:" (green)
+
+BOTTOM GREEN BANNER:
+"Confirmed by engineer · Spec+Arch+Build: days → hours · Alert diagnosis: hours → 0–20 min · Overall: 8–12×"
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
+
+---
+
+### SLIDE 06 PROMPT
+*(attach slide_06.png)*
+
+```
+Redesign this slide as slide_06.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. Before/After hero split top half. 3 cards bottom half.
+
+HEADER: "Faster Development  —  Days Became Hours"
+
+BEFORE panel (left, white bg, red top bar):
 Label: BEFORE
-Hero: **2–3 DAYS**
+Hero number: 2–3 DAYS (red, ~64pt bold, centered)
 Text: "Per development ticket — regardless of complexity. Context rebuilt from scratch every time."
 
-**Right card (after — green accent, light green background):**
+Arrow → between panels
+
+AFTER panel (right, light green bg, green border + top bar):
 Label: AFTER
-Hero: **2–6 HOURS**
+Hero number: 2–6 HOURS (green, ~58pt bold, centered)
 Text: "Task & volume dependent. Full context auto-loaded · skills auto-trigger · graph aware"
 
-**Three outcome cards below:**
+THREE OUTCOME CARDS (bottom, equal width, green top bar each):
 1. "Spec & Plan 4–6h → 20m–1h" — "AI assists planning from existing codebase patterns — not from scratch"
 2. "Architecture 2–4d → 1–2d" — "Code graph shows impact + CDD & Confluence auto-updated"
 3. "Context always ready" — "Memory + graph auto-load. No archaeology every session"
 
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
+
 ---
 
-#### SLIDE 07 — Parallel Build (white background, green header)
-**Header:** "/avengers — Five AI Engineers Working in Parallel on One Task"
-**Subtext (grey):** "Tasks that take one engineer one full day, completed in under 2 hours:"
+### SLIDE 07 PROMPT
+*(attach slide_07.png)*
 
-**Orchestrator bar (dark charcoal):**
-"Orchestrator (Opus model — plans, routes, validates, shuts down)"
+```
+Redesign this slide as slide_07.png using the brand rules below.
 
-**4 agent cards (green shades):**
-1. Planner — "Researches codebase → implementation plan"
-2. Coder ×N — "Parallel code writing, verifies build passes"
-3. Code Reviewer — "Code standards + security checks"
-4. Validator — "Tests + impact analysis before any merge"
+[PASTE BRAND RULES BLOCK HERE]
 
-**Right panel (light grey):**
-Hero: **1 DAY** (red) → **2 HOURS** (green)
-Text: "Airflow DAG + dbt model + NR alert — all in parallel"
-Bold text: "Engineer reviews 1 PR instead of 5 files"
+LAYOUT: White background. Green header. Left: orchestration diagram. Right: hero metric.
 
-**4 numbered process steps below:**
+HEADER: "/avengers — Five AI Engineers Working in Parallel on One Task"
+Subtext (grey): "Tasks that take one engineer one full day, completed in under 2 hours:"
+
+ORCHESTRATOR BAR (full-width charcoal):
+"Orchestrator  (Opus model — plans, routes, validates, shuts down)"
+
+4 AGENT CARDS (green shades, side by side):
+Planner (dark green): "Researches codebase → implementation plan"
+Coder ×N (green): "Parallel code writing, verifies build passes"
+Code Reviewer (green): "Code standards + security checks"
+Validator (dark green): "Tests + impact analysis before any merge"
+
+RIGHT HERO PANEL (light grey):
+1 DAY (red, ~54pt) ↓ 2 HOURS (green, ~54pt)
+"Airflow DAG + dbt model + NR alert — all in parallel"
+Bold: "Engineer reviews 1 PR instead of 5 files"
+
+4 PROCESS STEPS (numbered, alternating light green / white):
 1. "Orchestrator reads spec → spawns Planner + Coders simultaneously"
 2. "Each agent works on an independent file — zero waiting"
 3. "Reviewer + Validator run in parallel on all output"
 4. "Human sees a single clean PR to approve"
 
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
+
 ---
 
-#### SLIDE 08 — Incident Investigation (white background, green header)
-**Header:** "Incident Investigation  —  AI Queries New Relic Directly, Instantly"
+### SLIDE 08 PROMPT
+*(attach slide_08.png)*
 
-**Left panel (before — light grey, red top bar):**
+```
+Redesign this slide as slide_08.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. Left panel: before. Right panel: after. Arrow between.
+
+HEADER: "Incident Investigation  —  AI Queries New Relic Directly, Instantly"
+
+BEFORE panel (left, white bg, red top bar):
 Label: BEFORE — Manual hunt
-Hero: **2–3 HOURS** (red, large)
-Text: "Log in to NR UI · navigate to entity · scroll logs · switch tabs · compare charts · Slack teammates"
-Divider
-Text (red): "Form hypothesis → test → repeat → still uncertain. Customer impact growing every minute."
+Hero: 2–3 HOURS (red, ~56pt bold, centered)
+"Log in to NR UI · navigate to entity · scroll logs · switch tabs · compare charts · Slack teammates"
+Divider line
+Red text: "Form hypothesis → test → repeat → still uncertain. Customer impact growing every minute."
 
-**Right panel (after — light green, green top bar):**
+Arrow → between panels (green)
+
+AFTER panel (right, light green bg, green border + top bar):
 Label: AFTER — AI-powered diagnosis
-Hero: **30 MINS** (green, large) → corrected below to **0–20 MIN**
-Text: "Claude queries NR, returns structured analysis"
-Divider
-Text (dark green): "Alert data · affected services · root cause identified — fix scoped immediately"
+Hero: 0–20 MIN (green, ~56pt bold, centered)
+"Claude queries NR, returns structured analysis"
+Divider line (green)
+Dark green: "Alert data · affected services · root cause — fix scoped immediately"
 Bold: "12 New Relic tools · Jira auto-updated · root cause in minutes"
 
----
-
-#### SLIDE 09 — Impact Analysis (white background)
-**Full-width green banner:** "We see the full impact of every change BEFORE it touches production."
-
-**Left card (before — red accent):**
-"⚠ Before: Invisible blast radius"
-"Engineer changes a pipeline file. Deploys. A downstream consumer breaks silently. 5-day incident — all from one undetected dependency."
-
-**Right card (after — green accent, light green):**
-"✅ After: Instant clarity"
-"Impact analysis runs before coding. Sees 3 callers, 1 downstream consumer. Fix scoped. Ships confidently. Zero incident."
-
-**Four metric cards at bottom:**
-1. "~1 sprint/qtr" — "absorbed in surprise rework — before" (red)
-2. "< 1 day" — "rework after impact-aware development" (green)
-3. "0 blind deploys" — "every change impact-checked first" (dark green)
-4. "Auto-updates" — "dependency map rebuilt on every file save" (dark green)
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 10 — Auto-Documentation (white background, green header)
-**Header:** "Documentation That Writes Itself  —  Jira & Confluence Always Up to Date"
+### SLIDE 09 PROMPT
+*(attach slide_09.png)*
 
-**Top flow (5 steps with arrows):**
-Work session completes → /wrap-up fires (~30s) → Claude drafts summary → Jira ticket auto-updated → Confluence published
+```
+Redesign this slide as slide_09.png using the brand rules below.
 
-**Two columns below:**
+[PASTE BRAND RULES BLOCK HERE]
 
-**Jira column (blue header):**
-"Jira — What gets auto-updated"
-Rows: Status (In Review → Done), Comment (What was done + decisions), Worklog (Time logged), Links (Commits via branch)
+LAYOUT: White background. Full-width green hero banner. Before/after cards. 4 metric cards bottom.
 
-**Confluence column (teal header):**
-"Confluence — What gets published"
-Rows: Architecture (Decisions logged), Postmortem (Incident page auto-created), Release (Notes from git history), Runbooks (Updated as team learns)
+GREEN HERO BANNER (top, white text, bold):
+"We see the full impact of every change  BEFORE  it touches production."
 
-**Full-width bottom text (bold):** "Zero manual effort.  Every session documented.  Every time."
+BEFORE card (left, white bg, red top bar):
+"⚠  Before: Invisible blast radius"
+"Engineer changes a pipeline file. Deploys. A downstream consumer breaks silently.
+5-day incident — all from one undetected dependency."
+
+Arrow → (green)
+
+AFTER card (right, light green bg, green border):
+"✅  After: Instant clarity"
+"Impact analysis runs before coding. Sees 3 callers, 1 downstream consumer.
+Fix scoped. Ships confidently. Zero incident."
+
+4 METRIC CARDS (bottom row, equal width):
+1. "~1 sprint/qtr" (red) — "absorbed in surprise rework — before"
+2. "< 1 day" (green) — "rework after impact-aware development"
+3. "0 blind deploys" (dark green) — "every change impact-checked first"
+4. "Auto-updates" (dark green) — "dependency map rebuilt on every file save"
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 11 — Knowledge Compounds (dark navy background)
-**Title (white, large):** "Knowledge That Compounds"
-**Subtitle (green, italic):** "Every session makes every future session smarter — knowledge never leaves the team"
+### SLIDE 10 PROMPT
+*(attach slide_10.png)*
 
-**Three horizontal layers (dark panels with colored left stripe and badge):**
+```
+Redesign this slide as slide_10.png using the brand rules below.
 
-Layer 1 (green stripe): "ALWAYS LOADED"
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. Flow diagram top. Two columns below.
+
+HEADER: "Documentation That Writes Itself  —  Jira & Confluence Always Up to Date"
+
+TOP FLOW (5 boxes with arrows between):
+"Work session completes" → "/wrap-up fires (~30s)" → "Claude drafts summary" → "Jira ticket auto-updated" → "Confluence published"
+(Color: white → light green → light green → blue → teal)
+
+LEFT COLUMN — "Jira — What gets auto-updated" (blue header, white text):
+4 rows (alternating light/white):
+Status: "In Review → Done  ·  automatically"
+Comment: "What was done + decisions made"
+Worklog: "Time logged from session duration"
+Links: "Commits linked via branch name"
+
+RIGHT COLUMN — "Confluence — What gets published" (teal header, white text):
+4 rows:
+Architecture: "Decisions logged after every session"
+Postmortem: "Incident page auto-created on wrap-up"
+Release: "Notes from git history — auto-versioned"
+Runbooks: "Updated as team learns new patterns"
+
+BOTTOM BOLD TEXT (centered, large):
+"Zero manual effort.  Every session documented.  Every time."
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
+
+---
+
+## BATCH 2 — Upload slides 11–17 together, then use each prompt individually
+
+---
+
+### SLIDE 11 PROMPT
+*(attach slide_11.png)*
+
+```
+Redesign this slide as slide_11.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: Dark navy (#0D0D24) full background. No header bar — title centered at top.
+
+TITLE (white, large, centered): "Knowledge That Compounds"
+SUBTITLE (green, italic, centered): "Every session makes every future session smarter — knowledge never leaves the team"
+
+THREE HORIZONTAL LAYERS (dark panels, each with colored left stripe + small badge):
+
+Layer 1 (GREEN stripe + badge):
+Badge: "ALWAYS LOADED"
 Title: "Session memory — auto-loads at every session start"
-Desc: "Active priorities + recent lessons + architecture summary loaded automatically. No manual setup. Zero tokens wasted."
+Desc (grey): "Active priorities + recent lessons + architecture summary loaded automatically. No manual setup. Zero tokens wasted."
 
-Layer 2 (dark green stripe): "PULL ON DEMAND"
+Layer 2 (DARK GREEN stripe + badge):
+Badge: "PULL ON DEMAND"
 Title: "Team knowledge — retrieved only when relevant"
-Desc: "Patterns · architecture decisions · session history · past plans. Fetched on demand — only what's needed, when it's needed."
+Desc (grey): "Patterns · architecture decisions · session history · past plans. Fetched on demand — only what's needed, when it's needed."
 
-Layer 3 (purple stripe): "REPLAYABLE WINS"
+Layer 3 (PURPLE stripe + badge):
+Badge: "REPLAYABLE WINS"
 Title: "Validated fixes — saved as reusable templates"
-Desc: "After a confirmed fix: the steps are captured and indexed. Next time the same problem appears, the proven solution loads instantly."
+Desc (grey): "After a confirmed fix: the steps are captured and indexed. Next time the same problem appears, the proven solution loads instantly."
 
-**Bottom green banner:** "Every session: team knowledge grows. Every fix: the next one is faster. The system gets smarter, not staler."
+BOTTOM GREEN BANNER:
+"Every session: team knowledge grows.  Every fix: the next one is faster.  The system gets smarter, not staler."
 
----
-
-#### SLIDE 12 — The Results (white background, green header)
-**Header:** "The Results  —  Numbers the Team Has Measured"
-
-**Four hero number cards (2×2 or 4 across):**
-1. **8–12×** (green) — "overall productivity for DE tasks"
-2. **2–6h** (bright green) — "dev ticket vs 2–3 days before"
-3. **0–20m** (blue) — "Alert issue diagnosis vs 1–10 hours before"
-4. **25+ SP** (dark green) — "sprint capacity + adhoc on top"
-
-**Secondary stats bar (light grey):**
-Label: "More measurements"
-- "5–15 min" — "context reset after absence (vs hours/days before)"
-- "3–5h" — "new pipeline (full cycle) vs 2–4 days before"
-- "4–6h → 20m–1h" — "spec & plan phase"
-- "2–4d → 1–2d" — "architecture + CDD + Confluence"
-
-**Full-width green banner:** "8–12× overall for DE tasks · All metrics reported directly by Ingestion Team engineers"
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 13 — Before & After (white background, green header)
-**Header:** "Before & After  —  Ingestion Team · 3 Repos · 3 Months"
+### SLIDE 12 PROMPT
+*(attach slide_12.png)*
 
-**Three-column table:**
-Columns: "What We Measured" | "Before" | "After (AI-Led)"
+```
+Redesign this slide as slide_12.png using the brand rules below.
 
-Rows:
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. 4 large hero cards. Secondary stats bar. Green banner.
+
+HEADER: "The Results  —  Numbers the Team Has Measured"
+
+4 HERO NUMBER CARDS (side by side, each with colored top bar):
+1. 8–12× (green) — "overall productivity for DE tasks"
+2. 2–6h (bright green) — "dev ticket vs 2–3 days before"
+3. 0–20m (blue) — "Alert issue diagnosis vs 1–10 hours before"
+4. 25+ SP (dark green) — "sprint capacity + adhoc on top"
+
+SECONDARY STATS BAR (light grey bg):
+Label: "More measurements" (bold grey)
+4 stats side by side:
+"5–15 min" — "context reset after absence (vs hours/days before)"
+"3–5h" — "new pipeline (full cycle) vs 2–4 days before"
+"4–6h → 20m–1h" — "spec & plan phase"
+"2–4d → 1–2d" — "architecture + CDD + Confluence"
+
+BOTTOM GREEN BANNER:
+"8–12× overall for DE tasks  ·  All metrics reported directly by Ingestion Team engineers"
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
+
+---
+
+### SLIDE 13 PROMPT
+*(attach slide_13.png)*
+
+```
+Redesign this slide as slide_13.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. 3-column comparison table.
+
+HEADER: "Before & After  —  Ingestion Team  ·  3 Repos  ·  3 Months"
+
+TABLE — 3 columns:
+Col 1 header (light grey bg): "What We Measured"
+Col 2 header (charcoal bg, white): "Before"
+Col 3 header (green bg, white): "After (AI-Led)"
+
+9 DATA ROWS (alternating light grey / white):
 1. Spec & Plan | 4–6 hours | 20 min – 1 hour ✅
 2. Architecture + CDD | 2–4 days | 1–2 days ✅
 3. Development ticket | 2–3 days | 2–6 hours (task-dependent) ✅
@@ -315,91 +483,185 @@ Rows:
 8. Documentation effort | Manual, often skipped | Automatic via /wrap-up ✅
 9. Code review layers | Manual review only | CC Opus + Copilot GPT (blind spots) + agents + human ✅
 
-**Footer note:** "✅ = confirmed by Ingestion Team engineers · Repos: om-airflow-dags · spark-kafka-apps · tf-dataos-new-relic"
+Before column: grey text | After column: bold, dark green text
+
+FOOTER ROW (small, centered):
+"✅ = confirmed by Ingestion Team engineers  ·  om-airflow-dags · spark-kafka-apps · tf-dataos-new-relic"
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 14 — Humans in Control (white background, green header)
-**Header:** "AI Does the Work.  Humans Stay in Control.  Always."
+### SLIDE 14 PROMPT
+*(attach slide_14.png)*
 
-**5 numbered gates (rows), Gate 3 highlighted in green:**
-1. Requirements — "Human writes the spec — AI reads it, asks clarifying questions"
-2. Architecture — "Human approves the implementation plan — before a line is written"
-3. ★ Security Review — "AI flags every security vulnerability — any critical issue blocks the pipeline" (highlighted row)
-4. PR Merge — "Human reviews every PR — agent output treated like any other code"
-5. Deploy — "Human initiates the deploy — AI writes release notes + monitors"
+```
+Redesign this slide as slide_14.png using the brand rules below.
 
-**Footer note (italic, grey):** "Agent PRs treated identically to human PRs — same review, same standards, same gates."
+[PASTE BRAND RULES BLOCK HERE]
 
----
+LAYOUT: White background. Green header. 5 numbered gate rows.
 
-#### SLIDE 15 — Getting Started (white background, green header)
-**Header:** "Getting Started  —  From Zero to Productive in 4 Steps"
+HEADER: "AI Does the Work.  Humans Stay in Control.  Always."
 
-**4 step cards (side by side):**
+5 GATE ROWS (full width, numbered, Gate 3 highlighted):
 
-Step 1 — 15 MIN (green header): "Install & Setup"
-When: "One-time per engineer"
-Desc: "Claude Code + MCP servers + Budget dial. Multi-orchestration + hooks + 20 skills. Fully automated — one script."
+Gate 1 (white bg, charcoal left block):
+Number circle: 1
+Title bold: "Requirements"
+Detail grey: "Human writes the spec — AI reads it, asks clarifying questions"
 
-Step 2 — 5 MIN (dark green header): "Bootstrap New Repo"
-When: "First visit to any repo"
-Desc: "Detects your stack, seeds team memory, builds codebase graph, wires all MCPs. Runs once — context ready forever."
+Gate 2 (white bg, charcoal left block):
+Number circle: 2
+Title bold: "Architecture"
+Detail grey: "Human approves the implementation plan — before a line is written"
 
-Step 3 — ALWAYS (green header): "AI-Led Development"
-When: "Single agent or multi agent"
-Desc: "Single task: Claude Code works alongside you. Complex task: /avengers spawns parallel agents. Copilot handles lines. Claude handles investigations."
+Gate 3 ★ HIGHLIGHTED (light green bg, GREEN border, green left block):
+Number circle: 3 (green)
+Title bold: "Security Review"
+Detail grey: "AI flags every security vulnerability — any critical issue blocks the pipeline"
 
-Step 4 — 30 SEC (dark green header): "Wrap-Up"
-When: "Every session end"
-Desc: "Jira auto-updated · lessons captured. Knowledge persisted · graph refreshed. The habit that makes everything compound."
+Gate 4 (white bg, charcoal left block):
+Number circle: 4
+Title bold: "PR Merge"
+Detail grey: "Human reviews every PR — agent output treated like any other code"
 
-**Bottom section — "The Compounding Effect" (with divider):**
-Three progressive cards:
-- **Day 1** (light): "Full codebase context ready. Development tickets: days → hours."
-- **Month 1** (medium green): "Lessons accumulate. Patterns reused. Alert diagnosis: hours → 0–20 min."
-- **Month 3+** (dark green, white text): "Knowledge never leaves the team. 8–12× productivity — sustained."
+Gate 5 (white bg, charcoal left block):
+Number circle: 5
+Title bold: "Deploy"
+Detail grey: "Human initiates the deploy — AI writes release notes + monitors"
 
----
+FOOTER ROW (light grey, italic, centered):
+"Agent PRs treated identically to human PRs — same review, same standards, same gates."
 
-#### SLIDE 16 — What We're Asking (dark navy background)
-**Logo top-left**
-**Title (white, large):** "What We're Asking"
-**Green divider line**
-
-**3 ask cards (dark navy panels, green left stripe):**
-1. "Support adoption" — "Drive AI-led workflows across all Data Engineering & Management in DTM."
-2. "Allocate time" — "Support the daily wrap-up habit — 30 seconds per session. Knowledge compounds automatically."
-3. "Endorse the model" — "Establish this as the standard template for all DE teams at New Relic."
-
-**Right panel (darker navy) — 4 verified metrics:**
-- **8–12×** / Productivity
-- **2–6h** / Dev ticket
-- **0–20m** / Alert diagnosis
-- **25+ SP** / Sprint capacity
-
-**Bottom left:** "Thank You · Questions?"
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-#### SLIDE 17 — Thank You (dark navy background)
-Same dark navy style as slide 16.
-Centered: "Thank You" (very large, white)
-Below: "Questions?" (italic, grey)
-Bottom: NR logo + full disclaimer text
+### SLIDE 15 PROMPT
+*(attach slide_15.png)*
+
+```
+Redesign this slide as slide_15.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: White background. Green header. 4 step cards top. Compounding effect bottom.
+
+HEADER: "Getting Started  —  From Zero to Productive in 4 Steps"
+
+4 STEP CARDS (side by side, each with colored time badge at top):
+
+Step 1 — Badge: 15 MIN (green):
+"Install & Setup" — "One-time per engineer"
+"Claude Code + MCP servers + Budget dial. Multi-orchestration + hooks + 20 skills. Fully automated — one script."
+
+Step 2 — Badge: 5 MIN (dark green):
+"Bootstrap New Repo" — "First visit to any repo"
+"Detects your stack, seeds team memory, builds codebase graph, wires all MCPs. Runs once — context ready forever."
+
+Step 3 — Badge: ALWAYS (green):
+"AI-Led Development" — "Single agent or multi agent"
+"Single task: Claude Code works alongside you. Complex task: /avengers spawns parallel agents. Copilot handles lines. Claude handles investigations."
+
+Step 4 — Badge: 30 SEC (dark green):
+"Wrap-Up" — "Every session end"
+"Jira auto-updated · lessons captured. Knowledge persisted · graph refreshed. The habit that makes everything compound."
+
+GREEN DIVIDER LINE + Label: "The Compounding Effect"
+
+3 PROGRESSIVE CARDS (bottom, side by side):
+Day 1 (light grey): "Full codebase context ready. Development tickets: days → hours."
+Month 1 (medium green, dark green text): "Lessons accumulate. Patterns reused. Alert diagnosis: hours → 0–20 min."
+Month 3+ (solid green, white text): "Knowledge never leaves the team. 8–12× productivity — sustained."
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-### OUTPUT REQUIREMENTS
+### SLIDE 16 PROMPT
+*(attach slide_16.png)*
 
-- Deliver all 17 slides as individual high-resolution images (1920×1080px, PNG)
-- Name them slide_01 through slide_17
-- Every slide must have the NR logo bottom-right and the disclaimer text bottom-left
-- Do not use lorem ipsum or placeholder text — every word shown above must appear exactly
-- Preserve all verified metrics exactly as written — do not round, change, or embellish any number
-- The green (#00AC69) and white theme must be consistent across all slides
-- Make it stunning — this is a CEO-level presentation
+```
+Redesign this slide as slide_16.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: Dark navy (#0D0D24) background. Left: asks. Right: metrics panel.
+
+TOP LEFT: New Relic logo (large)
+TITLE (white, large, bold): "What We're Asking"
+GREEN DIVIDER LINE (below title)
+
+3 ASK CARDS (dark navy panels, green left stripe, full width to right edge of left section):
+
+Card 1:
+Label (green bold): "Support adoption"
+Text (white): "Drive AI-led workflows across all Data Engineering & Management in DTM."
+
+Card 2:
+Label (green bold): "Allocate time"
+Text (white): "Support the daily wrap-up habit — 30 seconds per session. Knowledge compounds automatically."
+
+Card 3:
+Label (green bold): "Endorse the model"
+Text (white): "Establish this as the standard template for all DE teams at New Relic."
+
+RIGHT METRICS PANEL (darker navy, 4 stats stacked):
+8–12× / "Productivity"
+2–6h / "Dev ticket"
+0–20m / "Alert diagnosis"
+25+ SP / "Sprint capacity"
+(each: large green value, small italic grey label, centered)
+
+BOTTOM LEFT (grey, large): "Thank You  ·  Questions?"
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left.
+```
 
 ---
 
-*End of prompt. Attach slide_01.png through slide_17.png from the ingestion_ai/ folder when submitting to Gemini.*
+### SLIDE 17 PROMPT
+*(attach slide_17.png)*
+
+```
+Redesign this slide as slide_17.png using the brand rules below.
+
+[PASTE BRAND RULES BLOCK HERE]
+
+LAYOUT: Dark navy (#0D0D24) full background. Centered content.
+
+Green top border line (full width, 6px)
+Green bottom border line (full width, 6px)
+
+CENTER:
+"Thank You" — very large (60pt+), white, centered, clean weight
+"Questions?" — 26pt, italic, grey, centered
+
+Green horizontal divider line (centered, 60% width)
+
+FOOTER: NR logo bottom-right + disclaimer bottom-left (same as all slides).
+```
+
+---
+
+## HOW TO USE
+
+**Batch 1 (slides 01–10):**
+1. Go to gemini.google.com
+2. Upload: slide_01.png through slide_10.png (10 files)
+3. Paste the BRAND RULES block once
+4. Then paste SLIDE 01 PROMPT → get image → save as slide_01.png
+5. Repeat for slides 02–10 (reference the correct attached image each time)
+
+**Batch 2 (slides 11–17):**
+1. New conversation in Gemini
+2. Upload: slide_11.png through slide_17.png (7 files)
+3. Paste BRAND RULES block once
+4. Then paste SLIDE 11 PROMPT → get image → save as slide_11.png
+5. Repeat for slides 12–17
+
+**Tip:** In each prompt, replace `[PASTE BRAND RULES BLOCK HERE]` with the full brand rules block at the top of this file.
