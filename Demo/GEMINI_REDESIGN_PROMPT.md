@@ -34,6 +34,13 @@ Redesign this slide as slide_01.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: Dark navy full background. Left half: content. Right half: darker navy panel.
 
 LEFT SIDE:
@@ -64,6 +71,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_02.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Full-width green header bar. 2×2 grid of cards.
 
@@ -103,6 +117,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_03.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Green header. Three equal columns.
 
@@ -148,6 +169,13 @@ Redesign this slide as slide_04.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: White background. Full-width green header. Body = full-size image.
 
 HEADER: "System Architecture  —  How It All Connects Under One Environment"
@@ -168,6 +196,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_05.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Green header. 10 phase boxes in horizontal flow + timing rows below.
 
@@ -207,6 +242,13 @@ Redesign this slide as slide_06.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: White background. Green header. Before/After hero split top half. 3 cards bottom half.
 
 HEADER: "Faster Development  —  Days Became Hours"
@@ -240,6 +282,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_07.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Green header. Left: orchestration diagram. Right: hero metric.
 
@@ -279,6 +328,13 @@ Redesign this slide as slide_08.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: White background. Green header. Left panel: before. Right panel: after. Arrow between.
 
 HEADER: "Incident Investigation  —  AI Queries New Relic Directly, Instantly"
@@ -312,6 +368,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_09.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Full-width green hero banner. Before/after cards. 4 metric cards bottom.
 
@@ -348,6 +411,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_10.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Green header. Flow diagram top. Two columns below.
 
@@ -391,6 +461,13 @@ Redesign this slide as slide_11.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: Dark navy (#0D0D24) full background. No header bar — title centered at top.
 
 TITLE (white, large, centered): "Knowledge That Compounds"
@@ -429,6 +506,13 @@ Redesign this slide as slide_12.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: White background. Green header. 4 large hero cards. Secondary stats bar. Green banner.
 
 HEADER: "The Results  —  Numbers the Team Has Measured"
@@ -462,6 +546,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_13.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Green header. 3-column comparison table.
 
@@ -500,6 +591,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_14.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: White background. Green header. 5 numbered gate rows.
 
@@ -548,6 +646,13 @@ Redesign this slide as slide_15.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: White background. Green header. 4 step cards top. Compounding effect bottom.
 
 HEADER: "Getting Started  —  From Zero to Productive in 4 Steps"
@@ -589,6 +694,13 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left.
 Redesign this slide as slide_16.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
 
 LAYOUT: Dark navy (#0D0D24) background. Left: asks. Right: metrics panel.
 
@@ -632,6 +744,13 @@ Redesign this slide as slide_17.png using the brand rules below.
 
 [PASTE BRAND RULES BLOCK HERE]
 
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display
+
 LAYOUT: Dark navy (#0D0D24) full background. Centered content.
 
 Green top border line (full width, 6px)
@@ -664,4 +783,11 @@ FOOTER: NR logo bottom-right + disclaimer bottom-left (same as all slides).
 4. Then paste SLIDE 11 PROMPT → get image → save as slide_11.png
 5. Repeat for slides 12–17
 
-**Tip:** In each prompt, replace `[PASTE BRAND RULES BLOCK HERE]` with the full brand rules block at the top of this file.
+**Tip:** In each prompt, replace `[PASTE BRAND RULES BLOCK HERE]
+
+QUALITY REQUIREMENTS:
+- Output must be 2752×1536px minimum (or 1920×1080px at 2× density) — high resolution, print quality
+- Do NOT add any Gemini logo, Google watermark, AI generation notice, or any platform branding
+- The ONLY logos on the slide are the New Relic logo (bottom-right) as specified
+- Crisp vector-style text rendering — no blurry or compressed artifacts
+- Professional presentation quality — suitable for CEO boardroom display` with the full brand rules block at the top of this file.
