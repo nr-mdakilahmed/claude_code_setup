@@ -21,6 +21,11 @@ CANVAS: very wide and tall — 2800×2000px. Dense but readable.
 IMPORTANT LAYOUT RULE: The 4 top columns MUST be exactly equal width (~700px each).
 All 4 zones must be fully visible and same size. Do not squeeze or cut off any zone.
 
+SHARPNESS RULE: Every single zone must have equally sharp, crisp text and borders.
+No blurry areas, no soft focus, no compression artifacts anywhere in the image.
+The top-right zone (/golden + /replay) and middle-right zone (Processing Pipeline)
+must be as sharp and clear as every other zone. Uniform quality across the entire canvas.
+
 ━━━ WORDING RULE — CRITICAL ━━━
 Every single line of text must follow this rule:
   • MAX 4 WORDS per item — names and short labels only
