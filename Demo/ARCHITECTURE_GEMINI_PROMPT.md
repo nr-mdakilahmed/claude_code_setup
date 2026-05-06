@@ -135,28 +135,42 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
   Subtitle: "Fury (Opus) orchestrates specialists (Sonnet) in parallel"
 
   LEFT SUB-ZONE (amber #fde8a0): "Nick Fury — Captain (Opus)"
-    Workflow:
+    Workflow (numbered list, use EXACTLY this text):
     1. Get Jira ticket or requirement
     2. Research codebase → write implementation plan
     3. Ask user to review plan
     4. Once approved → spawn parallel subagents
     5. Validates gates · blocks bad code · shuts down on completion
 
-  CENTER SUB-ZONE (light orange #fce0b8): "Coders ×N (Sonnet)"
+  CENTER-TOP SUB-ZONE (light orange #fce0b8): "Coders ×N (Sonnet)"
     Label: "parallel, different task batches"
     Badge: "write code per plan · verify build"
 
-  RIGHT SUB-ZONE (light green #d5f0d5): "Pipeline Specialists (Sonnet)"
-    [Reviewer] → [Validator] → [Pre-Validation Agent]
+  CENTER-BOTTOM SUB-ZONE (light green #d5f0d5): "Pipeline Specialists (Sonnet)"
+    [Reviewer / Contact SME] → [Validator] → [Pre-Validation Agent]
     Labels: "code standards + security | tests + blast radius | final gate"
 
-  BOTTOM — two small items:
+  RIGHT SUB-ZONE (light pink #f5d5d5): "Human Review"
+    • PR review required before merge
+    • Human approves or requests changes
+    • Creates AI-assisted PR description
+    Arrow IN from Pre-Validation Agent: "passes gate → human review"
+    Arrow OUT: "approved → merge + /wrap-up"
+
+  AFTER HUMAN REVIEW — "/wrap-up integration" (small box, teal):
+    • Update tickets · append to history
+    • Summarize session
+    • /golden save for future reference
+    Arrow: "session complete → wrap-up"
+
+  BOTTOM ROW — three items side by side:
     Left (amber): "Multi-Agent Orchestration Dashboard"
       "live mission view"
-    Right (teal): State File /tmp/avengers-{TEAM}.json
+    Center (teal): State File /tmp/avengers-{TEAM}.json
       "phase · agents · tasks · blocked"
+    Right label: "Domain + Context"
 
-  Optional specialists row (tiny, on-demand):
+  DEDICATED SUB-AGENTS ROW (tiny boxes, on-demand, below main zone):
     Solution-Architect | DE-Specialist | DevOps | NR-Expert
     Label: "spawned on-demand by Fury"
 
