@@ -153,83 +153,89 @@ def s02_problem(p):
 
 
 def s03_how_we_work(p):
-    """DataOS Ingestion — how the team actually runs AI-led development."""
+    """Slide 2 — What We Own (data flow) + Tools in Use."""
     s = blank(p)
-    hdr(s, "DataOS Ingestion  —  How We Run AI-Led Development Today")
+    hdr(s, "DataOS Ingestion  —  What We Own & Tools in Use")
 
-    # Left: 3-stage data pipeline flow
-    card(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(5.75))
-    R(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(0.48), fill=CHR)
-    T(s, "What We Own", Inches(0.6), Inches(0.9), Inches(3.7), Inches(0.34), sz=14, bold=True, c=W)
+    # ── Left: 3-stage data pipeline flow (wider) ─────────────────────────────
+    card(s, Inches(0.4), Inches(0.82), Inches(5.5), Inches(5.75))
+    R(s, Inches(0.4), Inches(0.82), Inches(5.5), Inches(0.48), fill=CHR)
+    T(s, "What We Own  —  Data Pipeline", Inches(0.6), Inches(0.9), Inches(5.1), Inches(0.34), sz=14, bold=True, c=W)
 
     # Stage 1 — Data Sources
-    T(s, "DATA SOURCES", Inches(0.6), Inches(1.44), Inches(3.7), Inches(0.26),
-      sz=9, bold=True, c=GR)
-    R(s, Inches(0.55), Inches(1.72), Inches(3.8), Inches(0.82), fill=LG, ln=MG, lw=Pt(0.75))
-    T(s, "Billing Platform  ·  Kafka\nSFDC  ·  Zuora  ·  etc.",
-      Inches(0.7), Inches(1.8), Inches(3.5), Inches(0.66), sz=11, c=BK)
+    T(s, "DATA SOURCES", Inches(0.6), Inches(1.44), Inches(5.1), Inches(0.26), sz=9, bold=True, c=GR)
+    R(s, Inches(0.55), Inches(1.72), Inches(5.2), Inches(0.72), fill=LG, ln=MG, lw=Pt(0.75))
+    T(s, "Billing Platform  ·  Kafka Connect  ·  SFDC  ·  Zuora  ·  Google Sheets  ·  etc.",
+      Inches(0.7), Inches(1.82), Inches(4.9), Inches(0.54), sz=11, c=BK)
 
-    # Arrow
-    T(s, "↓", Inches(0.55), Inches(2.6), Inches(3.8), Inches(0.38),
-      sz=20, bold=True, c=G, a=PP_ALIGN.CENTER)
+    T(s, "↓", Inches(0.55), Inches(2.5), Inches(5.2), Inches(0.38), sz=20, bold=True, c=G, a=PP_ALIGN.CENTER)
 
-    # Stage 2 — Ingestion (what we own — highlighted)
-    T(s, "INGESTION  —  WE OWN THIS", Inches(0.6), Inches(3.04), Inches(3.7), Inches(0.26),
-      sz=9, bold=True, c=G)
-    R(s, Inches(0.55), Inches(3.32), Inches(3.8), Inches(1.02), fill=G)
-    T(s, "FiveTran  ·  Kafka  ·  NRDB\nSpark  ·  Custom Pipelines",
-      Inches(0.7), Inches(3.46), Inches(3.5), Inches(0.74), sz=11, bold=True, c=W)
+    # Stage 2 — Ingestion
+    T(s, "INGESTION  —  WE OWN THIS", Inches(0.6), Inches(2.94), Inches(5.1), Inches(0.26), sz=9, bold=True, c=G)
+    R(s, Inches(0.55), Inches(3.22), Inches(5.2), Inches(0.96), fill=G)
+    T(s, "Fivetran  ·  Snowflake  ·  Iceberg  ·  Glue\nSpark  ·  NRDB  ·  Custom Pipelines",
+      Inches(0.7), Inches(3.34), Inches(4.9), Inches(0.72), sz=11, bold=True, c=W)
 
-    # Arrow
-    T(s, "↓", Inches(0.55), Inches(4.4), Inches(3.8), Inches(0.38),
-      sz=20, bold=True, c=G, a=PP_ALIGN.CENTER)
+    T(s, "↓", Inches(0.55), Inches(4.24), Inches(5.2), Inches(0.38), sz=20, bold=True, c=G, a=PP_ALIGN.CENTER)
 
     # Stage 3 — Downstream
-    T(s, "DOWNSTREAM ZONE 2", Inches(0.6), Inches(4.84), Inches(3.7), Inches(0.26),
-      sz=9, bold=True, c=GR)
-    R(s, Inches(0.55), Inches(5.12), Inches(3.8), Inches(0.82), fill=LG, ln=MG, lw=Pt(0.75))
-    T(s, "Consumer  ·  Data Lake\nDashboard",
-      Inches(0.7), Inches(5.22), Inches(3.5), Inches(0.64), sz=11, c=BK)
+    T(s, "ZONE 2 DOWNSTREAM", Inches(0.6), Inches(4.68), Inches(5.1), Inches(0.26), sz=9, bold=True, c=GR)
+    R(s, Inches(0.55), Inches(4.96), Inches(5.2), Inches(0.72), fill=LG, ln=MG, lw=Pt(0.75))
+    T(s, "Data Lake  ·  Data Warehouse  ·  Dashboard  ·  dbt",
+      Inches(0.7), Inches(5.06), Inches(4.9), Inches(0.54), sz=11, c=BK)
 
-    # Middle: daily workflow
-    card(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(5.75))
-    R(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(0.48), fill=G)
-    T(s, "Daily Workflow", Inches(4.92), Inches(0.9), Inches(3.7), Inches(0.34), sz=14, bold=True, c=W)
-    steps = [
-        ("1", "Start with full context",       "Memory + codebase graph auto-load in seconds"),
-        ("2", "Copilot: lines + blind spot check", "Autocomplete in IDE · cross-model review catches what Claude misses"),
-        ("3", "Skills trigger automatically",  "/airflow · /pyspark · /nrql · /terraform · /sql"),
-        ("4", "Incidents diagnosed via NR MCP","30 min–3 hrs → 0–20 min for alert issues"),
-        ("5", "/avengers for big tasks",       "5 parallel agents — 2–3 days → 2–6 hours"),
-        ("6", "/wrap-up closes the loop",      "Jira updated · knowledge captured · graph refreshed"),
-    ]
-    for i, (num, title, sub) in enumerate(steps):
-        y = Inches(1.46 + i * 0.72)
-        R(s, Inches(4.87), y, Inches(3.8), Inches(0.66),
-          fill=(RGBColor(0xF0, 0xFB, 0xF5) if i % 2 == 0 else W), ln=MG, lw=Pt(0.5))
-        R(s, Inches(4.87), y, Inches(0.36), Inches(0.66), fill=G)
-        T(s, num,   Inches(4.87), y + Inches(0.17), Inches(0.36), Inches(0.34),
-          sz=11, bold=True, c=W, a=PP_ALIGN.CENTER)
-        T(s, title, Inches(5.32), y + Inches(0.04), Inches(3.2), Inches(0.32), sz=11, bold=True)
-        T(s, sub,   Inches(5.32), y + Inches(0.36), Inches(3.2), Inches(0.28), sz=9.5, c=GR)
+    # ── Right: Tools in Use ────────────────────────────────────────────────────
+    card(s, Inches(6.2), Inches(0.82), Inches(6.7), Inches(5.75))
+    R(s, Inches(6.2), Inches(0.82), Inches(6.7), Inches(0.48), fill=GD)
+    T(s, "Tools in Use", Inches(6.4), Inches(0.9), Inches(6.3), Inches(0.34), sz=14, bold=True, c=W)
 
-    # Right: tools stack
-    card(s, Inches(9.05), Inches(0.82), Inches(3.85), Inches(5.75))
-    R(s, Inches(9.05), Inches(0.82), Inches(3.85), Inches(0.48), fill=GD)
-    T(s, "Tools in Use", Inches(9.25), Inches(0.9), Inches(3.45), Inches(0.34), sz=14, bold=True, c=W)
     tools = [
-        ("Claude Code",        "20 skills · memory · /avengers\nTeam environment AI",      G),
-        ("GitHub Copilot",     "Line completion · inline chat\nCross-model review (covers Claude blind spots)", CHR),
-        ("NR MCP",             "Live logs · metrics · traces\nDiagnose without leaving chat", BLU),
-        ("Jira + Confluence",  "Tickets + docs auto-updated\non every /wrap-up",            TEAL),
-        ("Code Graph",         "28 tools · blast radius\nImpact analysis before coding",   PUR),
+        ("Claude Code",          "20 skills · memory · multi-agent · Team environment AI",          G),
+        ("GitHub Copilot",       "Line completion · cross-model code review",                       CHR),
+        ("NR MCP",               "Live logs · metrics · traces · Alert diagnosis",                   BLU),
+        ("Jira + Confluence",    "Tickets + docs auto-updated every session",                        TEAL),
+        ("Code Review Graph",    "28 tools · blast radius · dependency impact analysis",             PUR),
+        ("Codeburn",             "Development analytics and metrics",                                G),
+        ("RTK",                  "Token optimisation · 60–90% Bash output savings",                  GD),
     ]
     for i, (name, desc, color) in enumerate(tools):
-        y = Inches(1.46 + i * 0.98)
-        R(s, Inches(9.2), y, Inches(3.52), Inches(0.88), fill=LG, ln=MG, lw=Pt(0.75))
-        R(s, Inches(9.2), y, Inches(0.07), Inches(0.88), fill=color)
-        T(s, name, Inches(9.36), y + Inches(0.06), Inches(2.0), Inches(0.38), sz=12, bold=True, c=color)
-        T(s, desc, Inches(9.36), y + Inches(0.46), Inches(3.1), Inches(0.36), sz=10, c=GR)
+        y = Inches(1.46 + i * 0.75)
+        R(s, Inches(6.35), y, Inches(6.38), Inches(0.68), fill=LG, ln=MG, lw=Pt(0.75))
+        R(s, Inches(6.35), y, Inches(0.07), Inches(0.68), fill=color)
+        T(s, name, Inches(6.52), y + Inches(0.06), Inches(2.2), Inches(0.32), sz=12, bold=True, c=color)
+        T(s, desc, Inches(6.52), y + Inches(0.36), Inches(6.1), Inches(0.28), sz=10, c=GR)
+    ftr(s)
+
+
+def s03_daily_workflow(p):
+    """Slide 3 — Daily Workflow (split from How We Work)."""
+    s = blank(p)
+    hdr(s, "DataOS Ingestion  —  How We Work Day to Day")
+
+    card(s, Inches(0.4), Inches(0.82), Inches(12.5), Inches(5.75))
+    R(s, Inches(0.4), Inches(0.82), Inches(12.5), Inches(0.48), fill=G)
+    T(s, "Daily Workflow", Inches(0.6), Inches(0.9), Inches(12.1), Inches(0.34), sz=16, bold=True, c=W)
+
+    steps = [
+        ("1", "Start with full context",          "Memory + codebase graph auto-load in seconds — zero manual setup"),
+        ("2", "Copilot: lines + blind spot check","Autocomplete in IDE · cross-model review catches what Claude misses"),
+        ("3", "Skills trigger automatically",     "/airflow · /pyspark · /nrql · /terraform · /sql · domain skills fire on context"),
+        ("4", "Incidents diagnosed via NR MCP",  "30 min–3 hrs → 0–20 min for alert issues · 12 NR tools available in chat"),
+        ("5", "Complex tasks via multi-agent",    "5 parallel agents — 2–3 days → 2–6 hours for big multi-file work"),
+        ("6", "Wrap-up closes the loop",          "Jira auto-updated · knowledge captured · graph refreshed · 30 seconds"),
+    ]
+
+    # Two columns of 3 steps each
+    for i, (num, title, sub) in enumerate(steps):
+        col = i % 2
+        row = i // 2
+        x = Inches(0.55 + col * 6.3)
+        y = Inches(1.46 + row * 1.48)
+        R(s, x, y, Inches(6.0), Inches(1.32), fill=(RGBColor(0xF0, 0xFB, 0xF5) if col == 0 else W), ln=MG, lw=Pt(0.5))
+        R(s, x, y, Inches(0.5), Inches(1.32), fill=G)
+        T(s, num,   x + Inches(0.06), y + Inches(0.38), Inches(0.5), Inches(0.5), sz=18, bold=True, c=W, a=PP_ALIGN.CENTER)
+        T(s, title, x + Inches(0.64), y + Inches(0.1),  Inches(5.2), Inches(0.42), sz=13, bold=True)
+        T(s, sub,   x + Inches(0.64), y + Inches(0.58), Inches(5.2), Inches(0.65), sz=11, c=GR)
     ftr(s)
 
 
@@ -855,7 +861,8 @@ SLIDES = [
     s01_title,
     s02_problem,
     # Act 2 — Our approach
-    s03_how_we_work,       # DataOS Ingestion: how we work now
+    s03_how_we_work,       # Slide 2: What We Own + Tools in Use
+    s03_daily_workflow,    # Slide 3: Daily Workflow
     s03b_two_tools,        # Copilot + Claude Code: two tools, different jobs
     s04_architecture,      # System architecture diagram
     # Act 3 — The lifecycle
