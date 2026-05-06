@@ -7,7 +7,7 @@
 > Upload: slide_01.png — paste the prompt below
 
 ```
-You are a world-class presentation designer. Redesign the attached slide for a CEO-level executive presentation.
+You are a world-class graphic designer. Generate a single high-resolution PNG image (2752×1536px, 16:9) that looks like a stunning presentation slide for a CEO-level executive audience. Use the attached image only as a content reference — do not copy its design. Create something far more beautiful.
 
 ━━━ SHARPNESS — CRITICAL ━━━
 • Every line of text must be razor-sharp, pixel-perfect, and instantly readable
