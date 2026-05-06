@@ -18,6 +18,28 @@ Subtitle (smaller italic): "hot/cold memory · code-review-graph · golden/repla
 
 CANVAS: very wide and tall — 2800×2000px. Dense but readable.
 
+━━━ WORDING RULE — CRITICAL ━━━
+Every single line of text must follow this rule:
+  • MAX 4 WORDS per item — names and short labels only
+  • NO descriptions, NO sub-text, NO explanations after the name
+  • NO colons followed by long text
+  • Write like a label on a diagram, not a sentence
+
+GOOD examples (follow this style):
+  ✓ "Token Optimization (RTK)"
+  ✓ "Load hooks · MCPs · plugins"
+  ✓ "Detect stack"
+  ✓ "Build Code Review Graph"
+  ✓ "1. Get ticket/requirement"
+  ✓ "Coders ×N (Sonnet)"
+  ✓ "Caps: daily · weekly · monthly"
+
+BAD examples (avoid this):
+  ✗ "Token Optimization (RTK) — 60-90% Bash output savings"
+  ✗ "Load ~/.claude/CLAUDE.md  global rules + routing + skills"
+  ✗ "Phase 1 → detect-stack.sh → {lang, framework, primary}"
+  ✗ "Sub: PostToolUse Grep|Glob → telemetry"
+
 ════════════════════════════════════
 LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 ════════════════════════════════════
@@ -25,9 +47,8 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 ━━━ TOP-LEFT COLUMN (soft blue #cce4f7): "Session Boot"
   Star ☆ top-left corner.
   • Claude Code starts  ☁
-  • Load ~/.claude/CLAUDE.md
-  • Load repo/.claude/CLAUDE.md
-  • Load hooks · Load MCPs · Load plugins
+  • Load CLAUDE.md files
+  • Load hooks · MCPs · plugins
 
 ━━━ TOP-CENTER-LEFT ZONE (soft yellow #fdf3c0): "Hooks Layer"
   Sparkle ✨ top-right.
@@ -41,51 +62,48 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 ━━━ TOP-CENTER-RIGHT ZONE (soft purple #e8d5f5): "Per-Project Memory (hot/cold)"
   Star ☆ top-right.
 
-  AUTO-LOADED on boot:
+  Hot (auto-loaded):
     hot.md · GRAPH_REPORT.md
 
-  Pull on demand via memory MCP:
-    MEMORY.md · architecture.md · todo.md
-    lessons.md · history.md · plans/
+  Cold (pull on demand):
+    lessons.md · architecture.md
+    history.md · todo.md · plans/
 
 ━━━ TOP-RIGHT ZONE (lavender #d4c4f0): "/golden + /replay"
   Star ☆ top-right.  "the compounding layer"
 
-  LEFT: /golden save <slug>
-    → distills session
-    → Symptom · Root Cause · Steps · Files
+  /golden save <slug>
+    distills session
+    reusable template
 
-  RIGHT: /replay <slug>
-    → validates · loads proven steps
+  /replay <slug>
+    validates · prior-art plan
 
-  cylinder: ~/.claude/golden/ + index.json
+  cylinder: ~/.claude/golden/
 
 ━━━ MIDDLE-LEFT ZONE (soft coral #ffd5c8): "First Visit Only — /bootstrap"
-  Gear ⚙ corners.  runs once per repo · Opus + high effort
+  Gear ⚙ corners.  once per repo · Opus + high effort
 
   Phase 1: Detect stack
-  Phase 2: Seed memory — 6 files + plans/
-  Phase 3: Write project CLAUDE.md + .mcp.json
-  Phase 4: build-graph.sh
-    · install code-review-graph
-    · build SQLite graph
-    · compose GRAPH_REPORT.md
+  Phase 2: Seed memory
+  Phase 3: Write project CLAUDE.md
+  Phase 4: Build Code Review Graph
   Phase 5: Populate architecture.md
 
 ━━━ MIDDLE-CENTER ZONE (soft sky blue #daeeff, LARGE):
      "/avengers — Multi-Agent Orchestration"
   Lightning ⚡ top corners.
-  Fury (Opus) orchestrates specialists (Sonnet) in parallel
+  Fury (Opus) orchestrates specialists (Sonnet)
 
   LEFT SUB-ZONE (amber #fde8a0): "Nick Fury — Captain (Opus)"
-    1. Get Jira ticket or requirement
-    2. Research codebase → write plan
-    3. Ask user to review plan
-    4. Approved → spawn parallel subagents
-    5. Validates gates · shuts down on completion
+    1. Get ticket/requirement
+    2. Research & plan
+    3. User review plan
+    4. Approve → spawn agents
+    5. Validate & close
 
   CENTER SUB-ZONE (light orange #fce0b8): "Coders ×N (Sonnet)"
-    parallel · different task batches
+    parallel tasks
 
   CENTER-RIGHT SUB-ZONE (light green #d5f0d5): "Pipeline Specialists"
     Reviewer / Contact SME
@@ -93,39 +111,38 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
     Pre-Validation Agent
 
   RIGHT SUB-ZONE (light pink #f5d5e5): "Human Review"
-    PR review before merge
-    Approves · AI-assisted PR description
+    PR review
+    Approve / request changes
 
-  FAR-RIGHT SUB-ZONE (teal #d0f0e8): "/wrap-up on Completion"
-    Update Jira · Append history
-    Summarize · /golden save
+  FAR-RIGHT SUB-ZONE (teal #d0f0e8): "/wrap-up"
+    Update Jira
+    Append history
+    /golden save
 
   BOTTOM:
-    Agent Dashboard  |  State File /tmp/avengers-{TEAM}.json  |  Domain + Context
+    Agent Dashboard  |  State File  |  Domain + Context
 
   Tiny row: Solution-Architect · DE-Specialist · DevOps · NR-Expert
-    "spawned on-demand by Fury"
 
 ━━━ MIDDLE-RIGHT ZONE (soft green #d4edda): "Processing Pipeline" ⚙
 
   Cylinder (amber): code-review-graph
-    Tree-sitter AST + SQLite + 28 MCP tools
-    semantic_search · get_impact_radius
-    detect_changes · query_graph
+    Tree-sitter AST + SQLite
+    28 MCP tools
 
   Cylinder (violet): memory MCP server
     get_memory · search_memory
-    list_lessons · get_todo · recall_plan
+    list_lessons · get_todo
 
-  Box (green): /wrap-up
+  Box (green): /wrap-up phases
     0: corrections audit
     1: append-history
     2: todo update
     3: lessons dedupe
     3.5: golden auto-prompt
-    4: CRG graph refresh
-    5: mirror-plans + regen hot.md
-    6: handoff summary
+    4: CRG refresh
+    5: regen hot.md
+    6: handoff
 
 ━━━ BOTTOM-LEFT ZONE (soft mint #c0eaca): "Domain Skills (20 total)"
 
@@ -135,29 +152,29 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
     /nralert  /terraform  /openmetadata
     /mcp-builder  /profiling
 
-  Explicit /skill_name:
+  Explicit invoke:
     /bootstrap  /wrap-up  /avengers
     /golden  /replay  /budget  /demo
 
   ⚡brainstorming  ⚡systematic-debugging
 
 ━━━ BOTTOM-CENTER-LEFT ZONE (soft purple #d4c4f5): "Model × Effort Routing"
-  default = sonnet+medium · escalate per-turn
+  default = sonnet+medium
 
-  Haiku 4.5  → lookups · NRQL · mechanical
-  Sonnet 4.6 → coding · testing · debugging  ★ DEFAULT
-  Opus 4.7   → architecture · code review · multi-agent · brainstorming
-  Opus+max   → novel research only
+  Haiku 4.5   → lookups · mechanical
+  Sonnet 4.6  → coding · debugging  ★ DEFAULT
+  Opus 4.7    → architecture · multi-agent
+  Opus+max    → novel research
 
 ━━━ BOTTOM-CENTER-RIGHT ZONE (soft red #f5b8b8): "/budget — Spend Dial"
   🟢🟡🔴 top-right
 
-  Caps: daily / weekly / monthly
-  🟢 <80%  — normal
-  🟡 80–100% — switch to Haiku
-  🔴 >cap  — override required
+  Caps: daily · weekly · monthly
+  🟢 <80%  normal
+  🟡 80–100% switch to Haiku
+  🔴 >cap  override required
 
-  /budget status · set · override · report
+  status · set · override · report
 
 ━━━ BOTTOM-RIGHT ZONE (warm peach #ffe8d8): "Plugins"
   ● nr-mcp  ● nr-kafka  ● terraform
@@ -166,13 +183,12 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 
 ━━━ BOTTOM TIMELINE STRIP (warm cream #f5f0e0)
 
-  [🔵 First Visit]     [🟢 Session Boot]    [🟡 During Work]       [🔴 Session End]      [🔵 Next Session]
-  /bootstrap           Load hooks +          graph-first ·          /wrap-up ·            smarter context ·
-  build-graph          MCPs + plugins +      MCP tools ·            golden prompt ·       library grows ·
-  seed memory          hot.md +              /golden · /replay ·    mirror-plans ·        stay in budget
-                       GRAPH_REPORT          /avengers              regen hot.md
+  [🔵 First Visit]   [🟢 Session Boot]   [🟡 During Work]    [🔴 Session End]    [🔵 Next Session]
+  /bootstrap         Load hooks +        graph-first ·       /wrap-up ·          smarter context ·
+  build-graph        MCPs + plugins +    MCP tools ·         golden prompt ·     library grows ·
+  seed memory        hot.md              /golden · /replay   mirror-plans        stay in budget
 
-  Footer: "boot → graph-first → /wrap-up → repeat  |  /golden save · /replay · /budget"
+  Footer: "boot → graph-first → /wrap-up → repeat  |  /golden · /replay · /budget"
 
 ════════════════════════════════════
 VISUAL STYLE
