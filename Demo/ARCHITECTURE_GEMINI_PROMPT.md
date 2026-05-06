@@ -1,8 +1,6 @@
 # Gemini Prompt — Architecture Diagram
-# Uses EXACT original prompt structure (what produced architecture.png)
-# with corrected content only
-
-Paste directly into Gemini (same way the original was generated).
+# Original prompt structure + targeted corrections only
+# Paste directly into Gemini (same way architecture.png was generated)
 
 ---
 
@@ -35,7 +33,7 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
   ↓ wavy "loads"
   → Box: "Load hooks · Load MCPs · Load plugins"
 
-━━━ TOP-CENTER-LEFT ZONE (soft yellow #fdf3c0): "Hooks Layer"
+━━━ TOP-CENTER-LEFT ZONE (soft yellow #fdf3c0): "Hooks Layer" (6 hooks)
   Sparkle ✨ top-right.
   Six rounded boxes stacked:
 
@@ -66,7 +64,7 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 
   TOP ROW (highlighted with bright border) — "AUTO-LOADED on boot":
     [hot.md] ← big bold, with label "curated digest, wrap-up regenerates"
-    [GRAPH_REPORT.md] ← label "code graph summary + MCP tool hints"
+    [GRAPH_REPORT.md] ← label "code graph summary + MCP hints"
 
   BOTTOM ROW (dimmer, "pull on demand via MCP"):
     [MEMORY.md] [architecture.md] [todo.md] [lessons.md] [history.md]
@@ -77,6 +75,13 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 
   Sibling folder below: ~/.claude/projects/<repo>/plans/
     Sub: "mirrored from ~/.claude/plans/ at /wrap-up"
+
+  Arrows IN:
+    • from Session Boot zone: "hot.md + GRAPH_REPORT auto-loaded"
+    • from /bootstrap: "seeds on first visit"
+    • wavy from /wrap-up: "regenerates hot.md each session end"
+    • dashed from self-heal-stop: "auto-captures corrections"
+    • dashed from memory MCP: "deeper fetches pull-on-demand"
 
 ━━━ TOP-RIGHT ZONE (lavender #d4c4f0): "/golden + /replay"
   Star ☆ top-right.
@@ -93,7 +98,7 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
       What NOT To Do → Files Touched
 
   RIGHT HALF: "/replay <slug>"
-    → validates staleness (files exist)
+    → validates staleness (<30d, files exist)
     → loads golden as prior-art plan
     Small badge: "avoids re-deriving proven fixes"
 
@@ -120,6 +125,7 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
   Thick dashed arrows OUT:
     • to memory zone: "seeds hot.md + 5 cold files + plans/"
     • to CRG cylinder: "builds SQLite graph"
+    • to MCP zone: "wires both servers in .mcp.json"
     • to repo CLAUDE.md: "@ hot.md + @ GRAPH_REPORT.md"
 
 ━━━ MIDDLE-CENTER ZONE (soft sky blue #daeeff, LARGE):
@@ -128,26 +134,29 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
   Subtitle: "Fury (Opus) orchestrates specialists (Sonnet) in parallel"
 
   LEFT SUB-ZONE (amber #fde8a0): "Nick Fury — Captain (Opus)"
-    Workflow — numbered list (use EXACTLY this text):
+    Badge: "model: opus"
+    Numbered workflow:
     1. Get Jira ticket or requirement
     2. Research codebase → write implementation plan
     3. Ask user to review plan
     4. Once approved → spawn parallel subagents
     5. Validates gates · blocks bad code · shuts down on completion
 
-  CENTER-LEFT SUB-ZONE (light orange #fce0b8): "Coders ×N (Sonnet)"
+  CENTER SUB-ZONE (light orange #fce0b8): "Coders ×N (Sonnet)"
+    Badge: "model: sonnet"
     Label: "parallel, different task batches"
-    Badge: "write code per plan · verify build"
+    Sub: "write code per plan · verify build"
 
   CENTER-RIGHT SUB-ZONE (light green #d5f0d5): "Pipeline Specialists (Sonnet)"
     [Reviewer / Contact SME] → [Validator] → [Pre-Validation Agent]
     Labels: "code standards + security | tests + blast radius | final gate"
+    Badge: "model: sonnet"
 
   RIGHT SUB-ZONE (light pink #f5d5e5): "Human Review"
     • PR review required before merge
     • Human approves or requests changes
-    • AI-assisted PR description
-    Arrow IN from Pre-Validation Agent: "passes gate → human review"
+    • AI-assisted PR description generated
+    Arrow IN: "passes gate → human review"
     Arrow OUT: "approved → merge"
 
   FAR-RIGHT SUB-ZONE (teal #d0f0e8): "/wrap-up on Completion"
@@ -157,16 +166,16 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
     • /golden save for future reference
     Arrow: "session complete → wrap-up"
 
-  BOTTOM ROW (inside zone):
-    Left (amber small box): "Agent Dashboard"
+  BOTTOM — two small items:
+    Left (amber): "Agent Dashboard"
       "live mission view"
-    Center (teal small box): "State File /tmp/avengers-{TEAM}.json"
+    Right (teal): State File /tmp/avengers-{TEAM}.json
       "phase · agents · tasks · blocked"
-    Right label: "Domain + Context"
+    Label: "Domain + Context"
 
-  BOTTOM STRIP (tiny row, inside zone):
-    Label: "Dedicated sub agents — spawned on-demand by Fury:"
-    [Solution-Architect]  [DE-Specialist]  [DevOps]  [NR-Expert]
+  Optional specialists row (tiny):
+    Solution-Architect | DE-Specialist | DevOps | NR-Expert
+    Label: "spawned on-demand by Fury"
 
 ━━━ MIDDLE-RIGHT ZONE (soft green #d4edda): "Processing Pipeline" ⚙
 
@@ -177,32 +186,36 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
       semantic_search_nodes · query_graph · get_impact_radius
       detect_changes · get_review_context · get_architecture_overview
       get_hub_nodes · refactor_tool · ...
-    Small label: "auto-updates on every Edit (<2s)"
+    Small label: "auto-updates on every Edit via hook (<2s)"
 
   MIDDLE — Cylinder (violet #c4a8f0): "memory MCP server"
-    Sub: "pull-on-demand cold memory"
+    Sub: "pull-on-demand access to cold memory"
+    Location: ~/.claude-kit/mcp-servers/memory-server/
     5 tools badges:
-      get_memory · search_memory · list_lessons · get_todo · recall_plan
+      get_memory · search_memory · list_lessons
+      get_todo · recall_plan
     Label: "no more 20k @-loads"
 
   BOTTOM — Box (green #a0e0b0): /wrap-up
     Sub: "session end ritual — 6 phases"
-    Phase list:
+    Phase list (small):
       0: corrections audit
       1: append-history
       2: todo update
       3: lessons dedupe + CLAUDE.md promotion
       3.5: golden-worthiness auto-prompt
-      4: refresh-graph-report (CRG update)
+      4: refresh-graph-report (CRG update + wiki)
       5: mirror-plans + regenerate hot.md
       6: handoff summary
 
-━━━ BOTTOM-LEFT ZONE (soft mint #c0eaca): "Domain Skills (20 total)"
+    Wavy arrows UP:
+      "persists → history · todo · lessons · hot.md · plans · GRAPH_REPORT"
 
+━━━ BOTTOM-LEFT ZONE (soft mint #c0eaca): "Domain Skills (20 total)"
   Auto-trigger on keyword or file path (compact grid):
-    /airflow    /pyspark    /python     /sql
-    /shell      /docker     /cicd       /nrql
-    /nralert    /terraform  /openmetadata  /mcp-builder
+    /python   /sql      /airflow    /pyspark
+    /shell    /docker   /cicd       /terraform
+    /openmetadata  /nrql  /nralert  /mcp-builder
     /profiling
 
   Explicit invoke using /skill_name (different color):
@@ -215,37 +228,42 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 ━━━ BOTTOM-CENTER-LEFT ZONE (soft purple #d4c4f5): "Model × Effort Routing"
   Tagline: "default = sonnet+medium, escalate per-turn not per-session"
   Four badges stacked:
-    [haiku 4.5]  → lookups · NRQL · doc search · mechanical transforms   (cheapest)
-    [sonnet 4.6] → coding · testing · debugging · refactoring             ★ DEFAULT
+    [haiku 4.5]  → lookups · NRQL · mechanical     (cheapest)
+    [sonnet 4.6] → coding · debugging · testing    ★ DEFAULT
     [opus 4.7]   → architecture · code review · multi-agent orchestration · brainstorming
     [opus+max]   → novel research only (rare)
   Note: "Avengers: Fury=opus, specialists=sonnet"
 
 ━━━ BOTTOM-CENTER-RIGHT ZONE (soft red #f5b8b8): "/budget — Spend Dial"
   Traffic light 🟢🟡🔴 top-right.
+
   Caps: daily / weekly / monthly (budget.json)
-  🟢 <80%  — normal work
-  🟡 80–100% — switch to Haiku for mechanical tasks
-  🔴 >cap  — override required
-  Commands: /budget status · set · override · report
+
+  Statusline indicator (live):
+    🟢 under 80% — spend freely
+    🟡 80-100% — switch to Haiku for mechanics
+    🔴 over 100% — override with reason or stop
+
+  Commands row:
+    /budget status · /budget set · /budget override · /budget report
 
 ━━━ BOTTOM-RIGHT ZONE (warm peach #ffe8d8): "Plugins"
-  Pill badges (enabled):
-    ● nr-mcp        ● nr-kafka
-    ● terraform     ● code-review-graph
-    ● superpowers   ● jira
-    ● confluence    ● bedrock-retrieval
+  Pill badges (green = on):
+    ● nr-mcp          ● nr-kafka
+    ● terraform       ● code-review-graph
+    ● superpowers     ● jira
+    ● confluence      ● bedrock-retrieval
 
 ━━━ BOTTOM TIMELINE STRIP (warm cream #f5f0e0)
   Horizontal arrow timeline:
 
   [🔵 First Visit]       [🟢 Session Boot]      [🟡 During Work]           [🔴 Session End]        [🔵 Next Session]
-  /bootstrap +           Load hooks +            graph-first work ·          /wrap-up (6 phases +    smarter context ·
-  build-graph +          MCPs + plugins +         MCP tools ·                 golden auto-prompt +    golden library grows ·
-  seed memory +          hot.md +                 /golden save · /replay ·    mirror-plans +          stay in budget
-  install MCPs           GRAPH_REPORT             /avengers                   regen hot.md
+  /bootstrap +           Load hooks +            graph-first nav · MCP       /wrap-up (6 phases +     loads persisted
+   build-graph +         MCPs + plugins +         tools · /golden save       golden auto-prompt +    hot.md + GRAPH
+   seed memory +         hot.md +                 /replay · /avengers         mirror-plans +          REPORT (cheap)
+   install MCPs          GRAPH_REPORT             · /budget statusline 🟢🟡🔴  regen hot.md)           (loop continues)
 
-  Footer bold italic:
+  Footer bold italic (large):
   "First Visit: bootstrap → memory MCP wire → CRG build → seed
    | Every Session: boot → graph-first work → /wrap-up → repeat
    | Capture wins: /golden save | Apply wins: /replay | Stay in budget: /budget"
@@ -254,15 +272,17 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
 EXACT VISUAL STYLE REQUIREMENTS
 ════════════════════════════════════
 
-Background: warm cream #f0ece0
+Background: warm cream #f0ece0 (NO other background behind zones)
+
+Zone colors (listed above per zone).
 
 Arrow styles:
-  Wavy zigzag:  every-session data flows
-  Solid thick:  internal zone flows
-  Dashed curved: one-time flows
-  Dotted:       auto-passive
-  Diamond ◇:    conditional branches
-  Traffic-light 🟢🟡🔴: ONLY on /budget zone + statusline
+  Wavy zigzag:  every-session data flows (boot → hot.md, wrap-up → memory)
+  Solid thick:  internal zone flows (Bootstrap phase 1→2→3)
+  Dashed curved: one-time flows (bootstrap → MCP config, golden save)
+  Dotted:       auto-passive (hook → file, MCP pull)
+  Diamond ◇:    conditional branches (save-worthy? cap exceeded?)
+  Traffic-light 🟢🟡🔴: ONLY on /budget zone + statusline arrow
 
 Typography (hand-drawn sketch, Caveat-style):
   Title: 42px bold
@@ -279,7 +299,9 @@ Decorations:
   ⚡ lightning x2: Avengers corners
   ⚙ gear x2: Bootstrap + Processing corners
   ☁ cloud: near "Claude Code starts"
+  ⏱ timer: Fury's ScheduleWakeup
   🟢🟡🔴 traffic lights: Budget zone top-right
+  💰 coin: near Model Routing / Budget
   ◇ diamond: conditional-branch nodes
 
 NO: drop shadows, gradients, sharp corners, corporate-flat look
