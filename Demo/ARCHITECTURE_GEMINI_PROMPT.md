@@ -18,6 +18,9 @@ Subtitle (smaller italic): "hot/cold memory · code-review-graph · golden/repla
 
 CANVAS: very wide and tall — 2800×2000px. Dense but readable.
 
+IMPORTANT LAYOUT RULE: The 4 top columns MUST be exactly equal width (~700px each).
+All 4 zones must be fully visible and same size. Do not squeeze or cut off any zone.
+
 ━━━ WORDING RULE — CRITICAL ━━━
 Every single line of text must follow this rule:
   • MAX 4 WORDS per item — names and short labels only
@@ -79,7 +82,7 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
   /replay <slug>
     validates · prior-art plan
 
-  cylinder: ~/.claude/golden/
+  ~/.claude/golden/
 
 ━━━ MIDDLE-LEFT ZONE (soft coral #ffd5c8): "First Visit Only — /bootstrap"
   Gear ⚙ corners.  once per repo · Opus + high effort
