@@ -3,59 +3,52 @@
 
 ---
 
-## SLIDE 01 ✅ Ready to generate
+## SLIDE 01 — Regenerate (sharper version)
 > Upload: slide_01.png — paste the prompt below
 
 ```
-You are a world-class creative director designing a CEO-level keynote presentation for New Relic's DataOS Ingestion Team. 
+You are a world-class presentation designer. Redesign the attached slide for a CEO-level executive presentation.
 
-Redesign the attached slide into something stunning and ultra-modern. You have full creative freedom on layout, composition, visual effects, and style — just deliver something a CEO would be proud to present.
+━━━ SHARPNESS — CRITICAL ━━━
+• Every line of text must be razor-sharp, pixel-perfect, and instantly readable
+• No blur, no soft glow, no anti-alias smearing on text
+• Crisp hard edges on all elements — icons, dividers, borders
+• Maximum contrast between text and background
+• Think: retina display sharpness — if you zoom in, every letter is clean
+• Output at 2752×1536px PNG — do not compress or downsample
 
-━━━ CONTENT TO INCLUDE ━━━
+━━━ CONTENT ━━━
+Left side — headline:
+  "Ingestion Team"  (large, white, bold)
+  "AI-Led Development"  (large, #00AC69 green, bold)
+  "Environment"  (large, white, bold)
 
-Title lines:
-  "Ingestion Team"
-  "AI-Led Development"
-  "Environment"
-
-Subtitle (smaller, subtle):
+Left side — subtitle below a thin green divider line:
   "Claude Code  +  GitHub Copilot  +  New Relic MCP"
 
-Five outcome statements (display as you see fit — icons welcome):
+Right side — 5 capability chips (icon + label each):
   🚀  Rapid Development
   🔍  Instant Logs & RCA
   ⚡  Multi-Agent Orchestration
   🧠  Compound Knowledge
   📈  3×  Productivity
 
-━━━ BRAND ━━━
-• New Relic colour palette — primary green: #00AC69, dark navy: #0D0D24
-• This is a dark, impactful hero slide — not white
-• New Relic logo (green hexagon + "new relic." wordmark) must appear top-left AND bottom-right
-• Disclaimer bottom-left in small grey text:
+━━━ DESIGN ━━━
+• Dark navy background #0D0D24
+• Right panel slightly darker with a single thin #00AC69 green vertical accent line
+• Chips: clean dark cards, thin green left stripe, sharp white text, line icon
+• Typography: Inter or SF Pro — bold, heavy weight — NO thin fonts
+• New Relic logo (green hexagon + "new relic." wordmark) top-left and bottom-right
+• Disclaimer bottom-left in small sharp grey text:
   "© 2025 New Relic, Inc. All rights reserved. Confidential and proprietary. For internal use only, not for external distribution."
 
 ━━━ STYLE ━━━
-• Ultra-modern — think Apple keynote, Google I/O, Stripe annual deck
-• Bold typography, strong visual hierarchy, generous white space
-• Use gradients, glassmorphism, geometric accents, subtle glows — whatever makes it stunning
-• "AI-Led Development" should be the visual hero of the headline — make it pop in green
-• The five outcomes on the right should feel like premium capability badges
-• No watermarks, no AI-generated labels, no platform branding other than New Relic
-
-━━━ OUTPUT ━━━
-• 2752×1536px PNG, 16:9
-• Professional, boardroom-ready quality
+• Clean, minimal, executive — like Stripe or Linear's design system
+• Strong visual contrast everywhere
+• No gradients on text, no drop shadows on text
+• The slide must look like it was designed in Figma by a senior designer — precise, intentional, airy
 ```
 
 ---
-
-## HOW TO USE
-1. Go to gemini.google.com
-2. Upload `ingestion_ai/slide_01.png`
-3. Copy the prompt above (between the triple backticks)
-4. Paste and send
-5. Download → run `python3 clean_slide.py <downloaded_file> ingestion_ai/Updated/slide_01_clean.png`
-6. Review clean version — if approved, move to slide 02
 
 *Slides 02–17 will be added here one by one after each is approved.*
