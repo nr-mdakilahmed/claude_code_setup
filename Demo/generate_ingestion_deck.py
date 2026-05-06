@@ -824,32 +824,42 @@ def s16_start(p):
     hdr(s, "Getting Started  —  From Zero to Productive in 4 Steps")
 
     steps = [
-        ("15 MIN",   "Install",      "One-time per engineer",       "install.sh checks prereqs, installs 20 skills,\nhooks, MCPs, budget dial — fully automated.", G),
-        ("15 SEC",   "/bootstrap",   "First visit to any repo",     "Detects stack, seeds memory, builds code graph,\nwires all MCPs — runs once, lasts forever.", GD),
-        ("ALWAYS",   "Work",         "Skills auto-trigger",         "20 skills activate on file type or topic.\nCopilot handles lines. Claude handles investigations.", G),
-        ("30 SEC",   "/wrap-up",     "Every session end",           "Persists history, updates Jira, refreshes graph,\nrebuilds hot.md. Habit that compounds daily.", GD),
+        ("15 MIN",  "Install & Setup",       "One-time per engineer",
+         "Claude Code + MCP servers + Budget dial\nMulti-orchestration + hooks + 20 skills\nFully automated — one script.", G),
+        ("5 MIN",   "Bootstrap New Repo",    "First visit to any repo",
+         "Detects your stack, seeds team memory,\nbuilds codebase graph, wires all MCPs.\nRuns once — context ready forever.", GD),
+        ("ALWAYS",  "AI-Led Development",    "Single agent or multi agent",
+         "Single task: Claude Code works alongside you.\nComplex task: /avengers spawns parallel agents.\nCopilot handles lines. Claude handles investigations.", G),
+        ("30 SEC",  "Wrap-Up",              "Every session end",
+         "Jira auto-updated · lessons captured\nKnowledge persisted · graph refreshed.\nThe habit that makes everything compound.", GD),
     ]
     for i, (time, cmd, when, desc, color) in enumerate(steps):
         x = Inches(0.4 + i * 3.22)
         card(s, x, Inches(0.82), Inches(3.06), Inches(4.7))
         R(s, x, Inches(0.82), Inches(3.06), Inches(0.72), fill=color)
         T(s, time, x + Inches(0.1), Inches(0.9),  Inches(2.86), Inches(0.54), sz=18, bold=True, c=W, a=PP_ALIGN.CENTER)
-        T(s, f"Step {i+1}  —  {cmd}", x + Inches(0.14), Inches(1.68), Inches(2.78), Inches(0.44), sz=14, bold=True, c=color)
-        T(s, when,  x + Inches(0.14), Inches(2.18), Inches(2.78), Inches(0.32), sz=11, it=True, c=GR)
-        T(s, desc,  x + Inches(0.14), Inches(2.58), Inches(2.78), Inches(1.7),  sz=11, c=BK)
+        T(s, f"Step {i+1}  —  {cmd}", x + Inches(0.14), Inches(1.68), Inches(2.78), Inches(0.44), sz=13, bold=True, c=color)
+        T(s, when,  x + Inches(0.14), Inches(2.18), Inches(2.78), Inches(0.32), sz=10, it=True, c=GR)
+        T(s, desc,  x + Inches(0.14), Inches(2.56), Inches(2.78), Inches(1.82), sz=10.5, c=BK)
 
-    HL(s, Inches(0.4), Inches(5.7), Inches(12.5))
-    T(s, "Week-by-week rollout:", Inches(0.4), Inches(5.8), Inches(3.0), Inches(0.3), sz=11, bold=True, c=GR)
-    weeks = [
-        ("Week 1", "Install + /bootstrap 1 repo + /wrap-up daily"),
-        ("Week 2", "All repos + first /golden save after a win"),
-        ("Week 3", "/avengers on a real multi-file task"),
-        ("Week 4+","Team golden library grows · 8–12× sustained"),
+    # The Compounding Effect
+    HL(s, Inches(0.4), Inches(5.7), Inches(12.5), G)
+    T(s, "The Compounding Effect", Inches(0.4), Inches(5.8), Inches(3.5), Inches(0.3),
+      sz=11, bold=True, c=G)
+    stages = [
+        ("Day 1",    "Full codebase context ready.\nDevelopment tickets: days → hours."),
+        ("Month 1",  "Lessons accumulate. Patterns reused.\nAlert diagnosis: hours → 0–20 min."),
+        ("Month 3+", "Knowledge never leaves the team.\n8–12× productivity — sustained."),
     ]
-    for i, (w, desc) in enumerate(weeks):
-        x = Inches(0.4 + i * 3.22)
-        T(s, w,    x, Inches(6.16), Inches(3.0), Inches(0.3), sz=11, bold=True, c=G)
-        T(s, desc, x, Inches(6.5),  Inches(3.0), Inches(0.62), sz=10, c=GR)
+    for i, (stage, desc) in enumerate(stages):
+        x = Inches(0.4 + i * 4.3)
+        R(s, x, Inches(6.16), Inches(4.06), Inches(1.0),
+          fill=(G if i == 2 else RGBColor(0xD0,0xF0,0xE2) if i == 1 else LG),
+          ln=(G if i > 0 else MG), lw=Pt(1))
+        T(s, stage, x + Inches(0.18), Inches(6.24), Inches(3.7), Inches(0.3),
+          sz=12, bold=True, c=(W if i == 2 else GD))
+        T(s, desc,  x + Inches(0.18), Inches(6.58), Inches(3.7), Inches(0.5),
+          sz=10.5, c=(W if i == 2 else BK))
     ftr(s)
 
 
