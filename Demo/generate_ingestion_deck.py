@@ -437,18 +437,16 @@ def s07_parallel(p):
     T(s, "Tasks that take one engineer one full day, completed in under 2 hours:",
       Inches(0.4), Inches(0.82), Inches(8.5), Inches(0.38), sz=13, c=GR)
 
-    # Fury orchestrator
+    # Orchestrator
     R(s, Inches(0.4), Inches(1.28), Inches(8.2), Inches(0.74), fill=CHR)
-    T(s, "Nick Fury  (Opus — Orchestrator)",
-      Inches(0.6), Inches(1.36), Inches(4.6), Inches(0.4), sz=14, bold=True, c=W)
-    T(s, "routes work  ·  validates gates  ·  blocks bad code  ·  shuts down on completion",
-      Inches(5.2), Inches(1.4), Inches(3.2), Inches(0.36), sz=10, it=True, c=G)
+    T(s, "Orchestrator  (Opus model — plans, routes, validates, shuts down)",
+      Inches(0.6), Inches(1.36), Inches(7.6), Inches(0.4), sz=14, bold=True, c=W)
 
     agents = [
-        ("Planner",  "Researches codebase\n→ implementation plan", GD),
-        ("Coder ×N", "Parallel code writing\nverifies build passes",G),
-        ("Reviewer", "Code standards +\nOWASP security check",    G),
-        ("Validator","Tests + impact analysis\nbefore any merge",   GD),
+        ("Planner",       "Researches codebase\n→ implementation plan", GD),
+        ("Coder ×N",      "Parallel code writing\nverifies build passes", G),
+        ("Code Reviewer", "Code standards +\nsecurity checks",           G),
+        ("Validator",     "Tests + impact analysis\nbefore any merge",    GD),
     ]
     for i, (name, desc, color) in enumerate(agents):
         x = Inches(0.4 + i * 2.06)
@@ -468,7 +466,7 @@ def s07_parallel(p):
 
     # Steps
     steps = [
-        "Fury reads spec → spawns Planner + Coders simultaneously",
+        "Orchestrator reads spec → spawns Planner + Coders simultaneously",
         "Each agent works on an independent file — zero waiting",
         "Reviewer + Validator run in parallel on all output",
         "Human sees a single clean PR to approve",
@@ -531,7 +529,7 @@ def s09_ship(p):
     top_bar(s, Inches(0.4), Inches(1.84), Inches(5.9), color=RED)
     T(s, "⚠  Before: Invisible blast radius",
       Inches(0.6), Inches(1.96), Inches(5.5), Inches(0.4), sz=14, bold=True, c=RED)
-    T(s, "Engineer changes spark_ingest.py.\nDeploys. Downstream Kafka consumer breaks silently.\n5-day incident. ~$50k in eng-hours to resolve.",
+    T(s, "Engineer changes a pipeline file.\nDeploys. A downstream consumer breaks silently.\n5-day incident — all from one undetected dependency.",
       Inches(0.6), Inches(2.44), Inches(5.5), Inches(1.6), sz=12, c=GR)
 
     card(s, Inches(7.0), Inches(1.84), Inches(5.9), Inches(2.44), border=G,
@@ -623,14 +621,14 @@ def s11_compounds(p):
       sz=16, it=True, c=G, a=PP_ALIGN.CENTER)
 
     layers = [
-        ("ALWAYS LOADED",   "hot.md  — ~2k tokens, auto-loads every session start",
-         "Active priorities + recent lessons + architecture summary. /wrap-up regenerates it. Zero manual effort.",
+        ("ALWAYS LOADED",   "Session memory — auto-loads at every session start",
+         "Active priorities + recent lessons + architecture summary loaded automatically. No manual setup. Zero tokens wasted.",
          G),
-        ("PULL ON DEMAND",  "lessons.md  ·  architecture.md  ·  history.md  ·  plans/",
-         "Team knowledge retrieved only when relevant — not loaded upfront. Cheaper, faster, no stale context drowning.",
+        ("PULL ON DEMAND",  "Team knowledge — retrieved only when relevant",
+         "Patterns · architecture decisions · session history · past plans. Fetched on demand — only what's needed, when it's needed.",
          GD),
-        ("REPLAYABLE WINS", "/golden save  →  /replay  →  50× faster on repeat problems",
-         "After each validated fix: distill it into a golden. Next time the problem recurs: /replay loads the proven steps.",
+        ("REPLAYABLE WINS", "Validated fixes — saved as reusable templates",
+         "After a confirmed fix: the steps are captured and indexed. Next time the same problem appears, the proven solution loads instantly.",
          PUR),
     ]
 
@@ -644,65 +642,11 @@ def s11_compounds(p):
         T(s, desc,  Inches(2.4),  y + Inches(0.58), Inches(10.28), Inches(0.7), sz=11, c=GR)
 
     R(s, Inches(0.4), Inches(6.48), Inches(12.5), Inches(0.56), fill=RGBColor(0x0A, 0x2A, 0x18))
-    T(s, "Month 1: 8 issues per task  →  Month 3: 1–2 issues.  The team gets sharper, not staler.",
+    T(s, "Every session: team knowledge grows.  Every fix: the next one is faster.  The system gets smarter, not staler.",
       Inches(0.6), Inches(6.58), Inches(12.1), Inches(0.38),
       sz=14, bold=True, c=G, a=PP_ALIGN.CENTER)
 
 
-def s12_roi(p):
-    """Cost & ROI — what this costs vs what it saves."""
-    s = blank(p)
-    hdr(s, "Return on Investment  —  Cost vs. Value, Per Engineer Per Month")
-
-    # Cost column
-    card(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(5.62))
-    R(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(0.5), fill=CHR)
-    T(s, "What It Costs", Inches(0.6), Inches(0.9), Inches(3.7), Inches(0.36), sz=16, bold=True, c=W)
-    cost_rows = [
-        ("Claude Code Pro",     "$20 / month"),
-        ("Session AI spend",    "~$5–15 / day"),
-        ("Monthly (est.)",      "$150–300 / eng"),
-        ("Setup time",          "15 minutes"),
-        ("Per-repo bootstrap",  "15 seconds"),
-        ("Daily habit",         "/wrap-up 30 sec"),
-    ]
-    for i, (label, val) in enumerate(cost_rows):
-        y = Inches(1.5 + i * 0.66)
-        R(s, Inches(0.55), y, Inches(3.8), Inches(0.58), fill=LG if i % 2 == 0 else W)
-        T(s, label, Inches(0.7),  y + Inches(0.12), Inches(2.0), Inches(0.36), sz=11, bold=True)
-        T(s, val,   Inches(2.75), y + Inches(0.12), Inches(1.5), Inches(0.36), sz=13, bold=True, c=GD, a=PP_ALIGN.RIGHT)
-
-    # Value column
-    card(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(5.62), border=G,
-         fill=RGBColor(0xF0, 0xFB, 0xF5))
-    R(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(0.5), fill=G)
-    T(s, "What It Saves", Inches(4.92), Inches(0.9), Inches(3.7), Inches(0.36), sz=16, bold=True, c=W)
-    val_rows = [
-        ("Hours saved / week",    "~10h / eng"),
-        ("Eng hourly rate",       "$150 fully-loaded"),
-        ("Weekly savings",        "$1,500 / eng"),
-        ("Monthly savings",       "$6,000 / eng"),
-        ("MTTR reduction",        "2.5h × 4/qtr saved"),
-        ("Onboarding saving",     "~$5k per new hire"),
-    ]
-    for i, (label, val) in enumerate(val_rows):
-        y = Inches(1.5 + i * 0.66)
-        R(s, Inches(4.87), y, Inches(3.8), Inches(0.58), fill=RGBColor(0xE8, 0xF8, 0xF0) if i % 2 == 0 else W)
-        T(s, label, Inches(5.02), y + Inches(0.12), Inches(2.0), Inches(0.36), sz=11, bold=True)
-        T(s, val,   Inches(7.07), y + Inches(0.12), Inches(1.5), Inches(0.36), sz=13, bold=True, c=GD, a=PP_ALIGN.RIGHT)
-
-    # ROI hero
-    card(s, Inches(9.05), Inches(0.82), Inches(3.85), Inches(5.62), fill=G)
-    T(s, "ROI",    Inches(9.05), Inches(1.55), Inches(3.85), Inches(0.55), sz=22, bold=True, c=W, a=PP_ALIGN.CENTER)
-    T(s, "20–40×", Inches(9.05), Inches(2.15), Inches(3.85), Inches(1.3),  sz=64, bold=True, c=W, a=PP_ALIGN.CENTER)
-    T(s, "return on\ninvestment", Inches(9.05), Inches(3.52), Inches(3.85), Inches(0.72), sz=18, c=RGBColor(0xCC, 0xFF, 0xCC), a=PP_ALIGN.CENTER)
-    HL(s, Inches(9.25), Inches(4.34), Inches(3.45), W)
-    T(s, "Payback period:\nfirst day of use",
-      Inches(9.05), Inches(4.46), Inches(3.85), Inches(0.72), sz=14, bold=True, c=W, a=PP_ALIGN.CENTER)
-    T(s, "$150–300/month\nvs $6,000 saved",
-      Inches(9.05), Inches(5.22), Inches(3.85), Inches(0.72), sz=13, c=RGBColor(0xCC, 0xFF, 0xCC), a=PP_ALIGN.CENTER)
-
-    ftr(s)
 
 
 def s13_numbers(p):
@@ -795,7 +739,7 @@ def s15_control(p):
     gates = [
         ("1", "Requirements",     "Human writes the spec — AI reads it, asks clarifying questions"),
         ("2", "Architecture",     "Human approves the implementation plan — before a line is written"),
-        ("3", "Security Review",  "AI flags every OWASP finding — any critical issue blocks the pipeline"),
+        ("3", "Security Review",  "AI flags every security vulnerability — any critical issue blocks the pipeline"),
         ("4", "PR Merge",         "Human reviews every PR — agent output treated like any other code"),
         ("5", "Deploy",           "Human initiates the deploy — AI writes release notes + monitors"),
     ]
@@ -888,10 +832,15 @@ def s17_ask(p):
         T(s, label,  Inches(0.84), y + Inches(0.08), Inches(2.5),  Inches(0.4), sz=16, bold=True, c=G)
         T(s, detail, Inches(3.45), y + Inches(0.14), Inches(6.38), Inches(0.72), sz=14, c=W)
 
-    # Right panel numbers
-    for i, (val, lbl) in enumerate([("8–12×","Productivity"),("2–6h","dev ticket"),("0–20m","alert diagnosis"),("25+ SP","sprint capacity"),("8–12×","overall DE tasks")]):
-        T(s, val, Inches(10.2), Inches(1.3 + i * 1.08), Inches(3.13), Inches(0.68), sz=26, bold=True, c=G, a=PP_ALIGN.CENTER)
-        T(s, lbl, Inches(10.2), Inches(1.95 + i * 1.08), Inches(3.13), Inches(0.3), sz=10, it=True, c=GR, a=PP_ALIGN.CENTER)
+    # Right panel — 4 distinct verified metrics only
+    for i, (val, lbl) in enumerate([
+        ("8–12×",  "Productivity"),
+        ("2–6h",   "Dev ticket"),
+        ("0–20m",  "Alert diagnosis"),
+        ("25+ SP", "Sprint capacity"),
+    ]):
+        T(s, val, Inches(10.2), Inches(1.5 + i * 1.3), Inches(3.13), Inches(0.72), sz=28, bold=True, c=G, a=PP_ALIGN.CENTER)
+        T(s, lbl, Inches(10.2), Inches(2.18 + i * 1.3), Inches(3.13), Inches(0.3), sz=10, it=True, c=GR, a=PP_ALIGN.CENTER)
 
     T(s, "Thank You  ·  Questions?",
       Inches(0.6), Inches(5.78), Inches(9.3), Inches(0.65), sz=28, c=GR)
