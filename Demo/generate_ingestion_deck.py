@@ -878,7 +878,7 @@ def s17_ask(p):
 
     asks = [
         ("Support adoption",  "Drive AI-led workflows across all Data Engineering & Management in DTM."),
-        ("Allocate time",     "Engineers need 30 min/day: /wrap-up + goldens. The compound returns are real."),
+        ("Allocate time",     "Support the daily wrap-up habit — 30 seconds per session. Knowledge compounds automatically."),
         ("Endorse the model", "Establish this as the standard template for all DE teams at New Relic."),
     ]
     for i, (label, detail) in enumerate(asks):
