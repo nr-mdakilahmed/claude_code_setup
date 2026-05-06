@@ -110,4 +110,66 @@ RTK                  Token optimisation · 60–90% Bash output savings
 
 ---
 
-*Slides 03–18 will be added here one by one after each is approved.*
+---
+
+## SLIDE 03 — How AI-Led Development Expedites Our Work
+> Upload: slide_03.png as reference — paste the prompt below
+
+```
+You are a world-class graphic designer. Generate a single high-resolution PNG image (2752×1536px, 16:9) that looks like a stunning presentation slide for a CEO-level executive audience at New Relic. Use the attached image only as a content reference — do not copy its design. Create something far more beautiful and modern.
+
+━━━ SHARPNESS — CRITICAL ━━━
+• Razor-sharp, pixel-perfect text — no blur, no soft glow
+• Maximum contrast, crisp hard edges on all elements
+• Bold heavy-weight typography — no thin fonts
+• Output: 2752×1536px PNG, do not compress
+
+━━━ BRAND ━━━
+• Dark navy background #0D0D24
+• Primary accent: #00AC69 (New Relic green)
+• New Relic logo (green hexagon + "new relic." wordmark) bottom-right
+• Disclaimer bottom-left, small grey:
+  "© 2025 New Relic, Inc. All rights reserved. Confidential and proprietary. For internal use only, not for external distribution."
+
+━━━ SLIDE TITLE ━━━
+"How AI-Led Development Expedites Our Work"
+
+━━━ CONTENT — 5 IMPACT CARDS ━━━
+Display as 5 cards — 3 on top row, 2 on bottom row. Each card has a headline, a transformation number, and a one-line context.
+
+Card 1 (accent: #00AC69 green):
+  Headline: "Sprint tickets: days become hours"
+  Number:   2–3 days → 2–6 hours
+  Context:  AI understands your codebase before you write a line
+
+Card 2 (accent: #0052CC blue):
+  Headline: "Incidents resolved before they escalate"
+  Number:   30 min–3 hrs → 0–20 min
+  Context:  Claude queries New Relic directly — root cause in seconds
+
+Card 3 (accent: #FFC107 amber):
+  Headline: "Know what breaks before you touch it"
+  Number:   Unknown → Instant visibility
+  Context:  Blast radius analysed — no more surprise 5-day incidents
+
+Card 4 (accent: #7C3AED purple):
+  Headline: "New pipeline: design to production in hours"
+  Number:   2–4 days → 3–5 hours
+  Context:  Query, implement, test, validate — all AI-assisted
+
+Card 5 (accent: #006B40 dark green):
+  Headline: "Compounding Knowledge"
+  Number:   Grows every session
+  Context:  Architecture, history, patterns — never lost, always ready
+
+━━━ STYLE ━━━
+• Ultra-modern — Apple keynote or Google I/O quality
+• Each card's transformation number should be the visual hero — large and bold
+• Cards should feel premium — think glassmorphism or clean dark cards with coloured accents
+• Strong visual contrast, generous spacing, no clutter
+• No watermarks, no AI-generated labels, no platform branding other than New Relic
+```
+
+---
+
+*Slides 04–18 will be added here one by one after each is approved.*

@@ -125,30 +125,50 @@ def s01_title(p):
 
 
 def s02_problem(p):
+    """Slide 3 — How AI-Led Development Expedites Our Work (5 impact cards)."""
     s = blank(p)
-    hdr(s, "The Challenge — Four Real Pains the DataOS Ingestion Team Was Living With")
+    hdr(s, "How AI-Led Development Expedites Our Work")
 
     cards = [
-        ("🕐", "Slow Development Tickets",  "2–3 DAYS",   "per ticket — regardless of complexity or volume",   RED),
-        ("🔍", "Pipeline Debugging",        "30 MIN–3 HRS", "backtracking alert issues one by one manually",  AMB),
-        ("💥", "Hidden Blast Radius",       "5-DAY",      "incident caused by a change no one knew would break", CHR),
-        ("🗂", "No Historical Context",     "HOURS–DAYS", "re-discovering repo structure and past decisions\nevery time someone joined, left, or came back",     CHR),
+        ("🚀", "Sprint tickets: days become hours",
+         "2–3 days → 2–6 hours",
+         "AI understands your codebase before you write a line",
+         G),
+        ("🔍", "Incidents resolved before they escalate",
+         "30 min–3 hrs → 0–20 min",
+         "Claude queries New Relic directly — root cause in seconds",
+         BLU),
+        ("💥", "Know what breaks before you touch it",
+         "Unknown → Instant visibility",
+         "Blast radius analysed — no more surprise 5-day incidents",
+         AMB),
+        ("⚡", "New pipeline: design to production in hours",
+         "2–4 days → 3–5 hours",
+         "Query, implement, test, validate — all AI-assisted",
+         PUR),
+        ("🧠", "Compounding Knowledge",
+         "Grows every session",
+         "Architecture, history, patterns — never lost, always ready",
+         GD),
     ]
-    positions = [(Inches(0.4), Inches(0.82)), (Inches(6.88), Inches(0.82)),
-                 (Inches(0.4), Inches(3.92)), (Inches(6.88), Inches(3.92))]
 
-    for (ic, title, big, sub, accent), (x, y) in zip(cards, positions):
-        w, h = Inches(6.05), Inches(2.88)
-        card(s, x, y, w, h)
-        top_bar(s, x, y, w, color=accent)
-        T(s, ic + "  " + title, x + Inches(0.22), y + Inches(0.2), w - Inches(0.44), Inches(0.44), sz=15, bold=True)
-        T(s, big,  x + Inches(0.22), y + Inches(0.72), w - Inches(0.44), Inches(0.9),
-          sz=48, bold=True, c=accent, a=PP_ALIGN.CENTER)
-        HL(s, x + Inches(0.22), y + Inches(1.72), w - Inches(0.44))
-        T(s, sub,  x + Inches(0.22), y + Inches(1.82), w - Inches(0.44), Inches(0.42), sz=13, c=GR)
+    # 3 cards top row, 2 cards bottom row
+    top_positions    = [Inches(0.3),  Inches(4.55), Inches(8.8)]
+    bottom_positions = [Inches(2.42), Inches(6.67)]
+    cw, ch = Inches(4.1), Inches(2.55)
 
-    # Total cost banner
-    R(s, Inches(0.4), Inches(6.95), Inches(12.5), Inches(0.0))  # spacer
+    for i, (ic, title, number, sub, accent) in enumerate(cards):
+        x = top_positions[i] if i < 3 else bottom_positions[i - 3]
+        y = Inches(0.85) if i < 3 else Inches(3.65)
+        card(s, x, y, cw, ch)
+        top_bar(s, x, y, cw, color=accent)
+        T(s, ic + "  " + title, x + Inches(0.18), y + Inches(0.16), cw - Inches(0.36), Inches(0.44),
+          sz=13, bold=True)
+        T(s, number, x + Inches(0.18), y + Inches(0.66), cw - Inches(0.36), Inches(0.6),
+          sz=22, bold=True, c=accent)
+        HL(s, x + Inches(0.18), y + Inches(1.32), cw - Inches(0.36))
+        T(s, sub, x + Inches(0.18), y + Inches(1.44), cw - Inches(0.36), Inches(0.86),
+          sz=11, c=GR)
     ftr(s)
 
 
@@ -857,12 +877,11 @@ def s17_ask(p):
 # ══════════════════════════════════════════════════════════════════════════════
 
 SLIDES = [
-    # Act 1 — Story: Challenge
+    # Act 1 — Who we are + what we do
     s01_title,
-    s02_problem,
-    # Act 2 — Our approach
     s03_how_we_work,       # Slide 2: What We Own + Tools in Use
-    s03_daily_workflow,    # Slide 3: Daily Workflow
+    s02_problem,           # Slide 3: How AI-Led Development Expedites Our Work
+    s03_daily_workflow,    # Slide 4: Daily Workflow
     s03b_two_tools,        # Copilot + Claude Code: two tools, different jobs
     s04_architecture,      # System architecture diagram
     # Act 3 — The lifecycle
