@@ -124,13 +124,13 @@ def s01_title(p):
 
 def s02_problem(p):
     s = blank(p)
-    hdr(s, "The Challenge — Four Pains That Cost Every Engineering Team Real Dollars")
+    hdr(s, "The Challenge — Four Real Pains the DataOS Ingestion Team Was Living With")
 
     cards = [
-        ("🕐", "New Engineer Onboarding",   "2+ WEEKS",  "to reach full productivity",          RED),
-        ("🔍", "Incident Root Cause",        "2–3 HOURS", "hunting logs manually at 2am",         AMB),
-        ("💥", "Hidden Blast Radius",        "5-DAY",     "incident from a '1-day fix'",          CHR),
-        ("🗂", "Architecture in Heads",      "KNOWLEDGE", "lost every time someone leaves",       CHR),
+        ("🕐", "New Engineer Onboarding",   "2+ WEEKS",   "to reach full productivity in the codebase",  RED),
+        ("🔍", "Incident Root Cause",        "1–10 HOURS", "backtracking pipelines one by one manually",  AMB),
+        ("💥", "Hidden Blast Radius",        "5-DAY",      "incident from what looked like a '1-day fix'", CHR),
+        ("🗂", "Context After Absence",      "HOURS–DAYS", "to rebuild codebase understanding after a break", CHR),
     ]
     positions = [(Inches(0.4), Inches(0.82)), (Inches(6.88), Inches(0.82)),
                  (Inches(0.4), Inches(3.92)), (Inches(6.88), Inches(3.92))]
@@ -150,10 +150,76 @@ def s02_problem(p):
     ftr(s)
 
 
-def s03_answer(p):
+def s03_how_we_work(p):
+    """DataOS Ingestion — how the team actually runs AI-led development."""
+    s = blank(p)
+    hdr(s, "DataOS Ingestion  —  How We Run AI-Led Development Today")
+
+    # Left: what we own
+    card(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(5.75))
+    R(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(0.48), fill=CHR)
+    T(s, "What We Own", Inches(0.6), Inches(0.9), Inches(3.7), Inches(0.34), sz=14, bold=True, c=W)
+    repos = [
+        ("om-airflow-dags",       "OpenMetadata ingestion pipelines\n(Airflow DAGs, connectors, plugins)"),
+        ("spark-kafka-apps",      "Spark + Kafka streaming pipelines\n(real-time ingestion to warehouse)"),
+        ("tf-dataos-new-relic",   "Terraform NR monitoring\n(alerts, dashboards — 55 commits/month)"),
+    ]
+    for i, (repo, desc) in enumerate(repos):
+        y = Inches(1.48 + i * 1.48)
+        R(s, Inches(0.55), y, Inches(3.8), Inches(1.3), fill=LG, ln=MG, lw=Pt(0.75))
+        top_bar(s, Inches(0.55), y, Inches(3.8), color=G)
+        T(s, repo, Inches(0.7), y + Inches(0.12), Inches(3.5), Inches(0.36),
+          sz=11, bold=True, c=GD, f="Courier New")
+        T(s, desc, Inches(0.7), y + Inches(0.52), Inches(3.5), Inches(0.68),
+          sz=10.5, c=BK)
+
+    # Middle: daily workflow
+    card(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(5.75))
+    R(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(0.48), fill=G)
+    T(s, "Daily Workflow", Inches(4.92), Inches(0.9), Inches(3.7), Inches(0.34), sz=14, bold=True, c=W)
+    steps = [
+        ("1", "Open Claude Code in repo",    "Skills auto-load context + graph"),
+        ("2", "GitHub Copilot in IDE",        "Line completion as we code"),
+        ("3", "Work — skills auto-trigger",   "/airflow /pyspark /nrql /terraform…"),
+        ("4", "NR MCP for incidents",         "Query logs, metrics, traces in-chat"),
+        ("5", "/avengers for complex tasks",  "Parallel agents — 1 day → 2 hours"),
+        ("6", "/wrap-up at session end",      "Jira updated · lessons captured · graph refreshed"),
+    ]
+    for i, (num, title, sub) in enumerate(steps):
+        y = Inches(1.46 + i * 0.72)
+        R(s, Inches(4.87), y, Inches(3.8), Inches(0.66),
+          fill=(RGBColor(0xF0, 0xFB, 0xF5) if i % 2 == 0 else W), ln=MG, lw=Pt(0.5))
+        R(s, Inches(4.87), y, Inches(0.36), Inches(0.66), fill=G)
+        T(s, num,   Inches(4.87), y + Inches(0.17), Inches(0.36), Inches(0.34),
+          sz=11, bold=True, c=W, a=PP_ALIGN.CENTER)
+        T(s, title, Inches(5.32), y + Inches(0.04), Inches(3.2), Inches(0.32), sz=11, bold=True)
+        T(s, sub,   Inches(5.32), y + Inches(0.36), Inches(3.2), Inches(0.28), sz=9.5, c=GR)
+
+    # Right: tools stack
+    card(s, Inches(9.05), Inches(0.82), Inches(3.85), Inches(5.75))
+    R(s, Inches(9.05), Inches(0.82), Inches(3.85), Inches(0.48), fill=GD)
+    T(s, "Tools in Use", Inches(9.25), Inches(0.9), Inches(3.45), Inches(0.34), sz=14, bold=True, c=W)
+    tools = [
+        ("Claude Code",        "Team environment\n+ 20 skills",        G),
+        ("GitHub Copilot",     "Line-level AI\nin IDE",                 CHR),
+        ("NR MCP",             "Live observability\n12 tools",          BLU),
+        ("Jira + Confluence",  "Auto-updated\nevery session",           TEAL),
+        ("Code Graph",         "Blast radius +\nimpact analysis",       PUR),
+    ]
+    for i, (name, desc, color) in enumerate(tools):
+        y = Inches(1.46 + i * 0.98)
+        R(s, Inches(9.2), y, Inches(3.52), Inches(0.88), fill=LG, ln=MG, lw=Pt(0.75))
+        R(s, Inches(9.2), y, Inches(0.07), Inches(0.88), fill=color)
+        T(s, name, Inches(9.36), y + Inches(0.06), Inches(2.0), Inches(0.38), sz=12, bold=True, c=color)
+        T(s, desc, Inches(9.36), y + Inches(0.46), Inches(3.1), Inches(0.36), sz=10, c=GR)
+    ftr(s)
+
+
+def s03b_two_tools(p):
+    """Copilot + Claude Code — how they work together."""
     s = blank(p)
     R(s, 0, 0, SW, Inches(1.52), fill=G)
-    T(s, "Two AI tools.  One team environment.  Gets smarter every session.",
+    T(s, "Two AI Tools.  Different Jobs.  Better Together.",
       Inches(0.5), Inches(0.28), Inches(12.3), Inches(0.95),
       sz=26, bold=True, c=W, a=PP_ALIGN.CENTER)
 
@@ -167,10 +233,10 @@ def s03_answer(p):
         ("✅", "Inline chat: explain or refactor code"),
         ("✅", "Generate tests & boilerplate fast"),
         ("", ""),
-        ("❌", "No cross-session memory"),
-        ("❌", "Can't query NR, Jira, Confluence"),
-        ("❌", "No blast-radius / impact analysis"),
-        ("❌", "No multi-agent parallel work"),
+        ("—", "No cross-session codebase memory"),
+        ("—", "Can't query NR, Jira, Confluence"),
+        ("—", "No impact / blast-radius analysis"),
+        ("—", "No multi-agent parallel work"),
     ]):
         if not ic:
             HL(s, Inches(0.62), Inches(2.42 + i * 0.46), Inches(5.3))
@@ -179,7 +245,8 @@ def s03_answer(p):
         T(s, ic + "  " + txt_, Inches(0.62), Inches(2.42 + i * 0.46), Inches(5.3), Inches(0.42), sz=12, c=c_)
 
     # Claude Code
-    card(s, Inches(7.15), Inches(1.7), Inches(5.75), Inches(4.92), fill=RGBColor(0xF0, 0xFB, 0xF5), border=G)
+    card(s, Inches(7.15), Inches(1.7), Inches(5.75), Inches(4.92),
+         fill=RGBColor(0xF0, 0xFB, 0xF5), border=G)
     R(s, Inches(7.15), Inches(1.7), Inches(5.75), Inches(0.52), fill=G)
     T(s, "Claude Code  —  Team environment AI",
       Inches(7.35), Inches(1.78), Inches(5.35), Inches(0.38), sz=16, bold=True, c=W)
@@ -188,19 +255,17 @@ def s03_answer(p):
         "✅  Queries NR logs, metrics, alerts in real time",
         "✅  Knows what breaks before you write a line",
         "✅  5 parallel agents on one task with /avengers",
-        "✅  Replayable golden patterns — 50× on repeats",
+        "✅  Replayable golden patterns from past fixes",
         "✅  20 skills auto-trigger on file type or topic",
         "✅  Jira + Confluence auto-update each session",
-        "✅  Daily spend dial  🟢 $8  🟡 $40  🔴 $75",
+        "✅  5-layer code review: CC + Copilot + agents + human",
     ]):
         T(s, txt_, Inches(7.35), Inches(2.42 + i * 0.46), Inches(5.35), Inches(0.42), sz=12, c=BK)
 
-    # Bridge + ROI callout
     T(s, "+", Inches(6.28), Inches(3.62), Inches(0.75), Inches(0.75),
       sz=42, bold=True, c=G, a=PP_ALIGN.CENTER)
-    R(s, Inches(5.88), Inches(4.52), Inches(1.55), Inches(0.46), fill=G)
-    T(s, "15–25× ROI", Inches(5.88), Inches(4.56), Inches(1.55), Inches(0.38),
-      sz=11, bold=True, c=W, a=PP_ALIGN.CENTER)
+    T(s, "Together:\n8–12×", Inches(5.9), Inches(4.44), Inches(1.52), Inches(0.72),
+      sz=12, bold=True, c=GD, a=PP_ALIGN.CENTER)
     ftr(s)
 
 
@@ -224,17 +289,19 @@ def s05_lifecycle(p):
     s = blank(p)
     hdr(s, "Full AI-Led Development Lifecycle  —  Time Savings at Every Phase")
 
+    # Before/After times: verified by engineer (marked) or omitted if not confirmed
+    # "—" = scope-dependent or not confirmed; no invented numbers
     phases = [
-        ("01", "Requirement",  "Product\n/ PM",     CHR,  W,    "2h",  "15m"),
-        ("02", "Spec & Plan",  "AI-assisted",        G,    W,    "4h",  "30m"),
-        ("03", "Architect",    "AI + Graph",         GD,   W,    "2h",  "20m"),
-        ("04", "Build",        "AI parallel\nagents",G,    W,    "16h", "3h"),
-        ("05", "Review",       "AI + Human",         GD,   W,    "3h",  "30m"),
-        ("06", "Test & Gate",  "AI automated",       G,    W,    "2h",  "20m"),
-        ("07", "Deploy",       "Human\ninitiates",   CHR,  W,    "1h",  "10m"),
-        ("08", "Monitor",      "NR MCP\n(AI)",       BLU,  W,    "3h",  "30m"),
-        ("09", "Document",     "AI auto-\nupdate",   TEAL, W,    "2h",  "0m"),
-        ("10", "Learn",        "Golden\npatterns",   PUR,  W,    "∞",   "auto"),
+        ("01", "Requirement",  "Manager\n/ PM",      CHR,  W,    "—",      "—"),
+        ("02", "Spec & Plan",  "AI-assisted",         G,    W,    "4–6h",   "20m–1h"),
+        ("03", "Architect",    "AI + Graph",          GD,   W,    "2–4d",   "1–2d"),
+        ("04", "Build",        "Task &\nvolume dep.", G,    W,    "2–3d",   "2–6h"),
+        ("05", "Review",       "5-layer\nAI+Human",  GD,   W,    "—",      "—"),
+        ("06", "Test & Gate",  "AI auto-\nmated",     G,    W,    "—",      "—"),
+        ("07", "Deploy",       "Human\ninitiates",    CHR,  W,    "—",      "—"),
+        ("08", "Monitor",      "NR MCP\n(AI)",        BLU,  W,    "1–10h",  "0–20m"),
+        ("09", "Document",     "AI auto-\nupdate",    TEAL, W,    "manual", "auto"),
+        ("10", "Learn",        "Golden\npatterns",    PUR,  W,    "—",      "auto"),
     ]
 
     BW = Inches(1.24)
@@ -279,11 +346,11 @@ def s05_lifecycle(p):
     T(s, "Before:", Inches(0.05), label_y + Inches(0.08), Inches(0.55), Inches(0.3), sz=8, c=RED, bold=True)
     T(s, "After:",  Inches(0.05), label_y + Inches(0.56), Inches(0.55), Inches(0.3), sz=8, c=GD,  bold=True)
 
-    # Bottom summary
+    # Bottom summary — only confirmed phases shown; "—" = not yet measured
     R(s, Inches(0.4), Inches(5.96), Inches(12.5), Inches(0.62), fill=G)
-    T(s, "Total cycle time:   Before ≈ 35 hours (nearly 1 week)   →   After ≈ 5–6 hours  =  5–6× faster end-to-end",
+    T(s, "Confirmed by engineer  ·  Spec+Arch+Build: days → hours  ·  Kafka diagnosis: hours → 0–20 min  ·  Overall: 8–12×",
       Inches(0.6), Inches(6.08), Inches(12.1), Inches(0.42),
-      sz=16, bold=True, c=W, a=PP_ALIGN.CENTER)
+      sz=15, bold=True, c=W, a=PP_ALIGN.CENTER)
     ftr(s)
 
 
@@ -607,11 +674,12 @@ def s13_numbers(p):
     s = blank(p)
     hdr(s, "The Results  —  Numbers the Team Has Measured")
 
+    # All numbers confirmed directly by engineer
     big4 = [
-        ("10×",  "faster on novel\nfeature work",           G),
-        ("50×",  "faster on repeat\nproblems (/replay)",    GB),
-        ("6×",   "MTTR reduction\n3h → 30 minutes",        BLU),
-        ("20×",  "ROI\n$150 cost / $3k+ saved", GD),
+        ("8–12×",  "overall productivity\nfor DE tasks",          G),
+        ("2–6h",   "dev ticket\nvs 2–3 days before",              GB),
+        ("0–20m",  "Kafka/NR diagnosis\nvs 1–10 hours before",    BLU),
+        ("25+ SP", "sprint capacity\n+ adhoc on top",             GD),
     ]
     for i, (num, label, c_) in enumerate(big4):
         x = Inches(0.4 + i * 3.22)
@@ -623,11 +691,12 @@ def s13_numbers(p):
     # Secondary stats
     R(s, Inches(0.4), Inches(4.52), Inches(12.5), Inches(1.32), fill=LG, ln=MG, lw=Pt(0.75))
     T(s, "More measurements", Inches(0.6), Inches(4.62), Inches(12.1), Inches(0.32), sz=11, bold=True, c=GR)
+    # Secondary stats — all engineer-confirmed
     secondary = [
-        ("2 weeks → 2 hours",  "onboarding"),
-        ("35h → 5–6h",         "full dev cycle"),
-        ("90% test coverage",  "vs 60–70% before"),
-        ("$0 docs overhead",   "Jira + Confluence auto"),
+        ("5–15 min",           "context reset after absence\n(vs hours/days before)"),
+        ("3–5h",               "new pipeline (full cycle)\nvs 2–4 days before"),
+        ("4–6h → 20m–1h",     "spec & plan phase"),
+        ("2–4d → 1–2d",       "architecture + CDD\n+ Confluence"),
     ]
     for i, (val, label) in enumerate(secondary):
         x = Inches(0.6 + i * 3.15)
@@ -635,7 +704,7 @@ def s13_numbers(p):
         T(s, label, x, Inches(5.48), Inches(3.0), Inches(0.28), sz=10, c=GR)
 
     R(s, Inches(0.4), Inches(6.0), Inches(12.5), Inches(0.6), fill=G)
-    T(s, "Sustained team average:  15–25×  productivity improvement  ·  measured across 3 repos over 3 months",
+    T(s, "8–12× overall for DE tasks  ·  All metrics reported directly by Ingestion Team engineers",
       Inches(0.6), Inches(6.1), Inches(12.1), Inches(0.42),
       sz=15, bold=True, c=W, a=PP_ALIGN.CENTER)
     ftr(s)
@@ -655,16 +724,17 @@ def s14_comparison(p):
         T(s, h, x + Inches(0.12), Inches(0.9), w - Inches(0.24), Inches(0.3),
           sz=12, bold=True, c=W if j < 2 else W, a=PP_ALIGN.CENTER)
 
+    # ✅ = confirmed directly by engineer   est. = reasonable estimate, not measured
     data = [
-        ("Engineer onboarding",       "2+ weeks",                 "2 hours  — context day 1"),
-        ("Incident MTTR",             "2–3 hours",                "20–30 minutes"),
-        ("Feature cycle time",        "14–20 days",               "3–5 days"),
-        ("Full dev cycle",            "~35 hours",                "~5–6 hours  (5–6× faster)"),
-        ("Blast radius visibility",   "Unknown until prod breaks", "Instant — before coding"),
-        ("Security bugs caught",      "~40%",                     "80–100%  (every PR)"),
-        ("Test coverage",             "60–70%",                   "90%  (gate enforced)"),
-        ("Docs update effort",        "Manual, often skipped",    "Zero — auto on /wrap-up"),
-        ("Monthly cost / engineer",   "—",                        "~$150–300  (20–40× ROI)"),
+        ("Spec & Plan",               "4–6 hours",                "20 min – 1 hour  ✅"),
+        ("Architecture + CDD",        "2–4 days",                 "1–2 days  ✅"),
+        ("Development ticket",        "2–3 days",                 "2–6 hours (task-dependent)  ✅"),
+        ("New pipeline (full cycle)", "2–4 days",                 "3–5 hours  ✅"),
+        ("Kafka / NR diagnosis",      "1–10 hours",               "0–20 minutes (NR MCP)  ✅"),
+        ("Context after absence",     "Hours / days",             "5–15 min via /bootstrap  ✅"),
+        ("Sprint throughput",         "25 SP (at capacity)",      "25 SP + additional + adhoc  ✅"),
+        ("Documentation effort",      "Manual, often skipped",    "Automatic via /wrap-up  ✅"),
+        ("Code review layers",        "Manual review only",       "CC Opus + Copilot + Natasha + Human  ✅"),
     ]
 
     y = Inches(1.32)
@@ -678,7 +748,7 @@ def s14_comparison(p):
         y += Inches(0.5)
 
     R(s, Inches(0.4), y + Inches(0.06), Inches(12.6), Inches(0.36), fill=W, ln=MG, lw=Pt(0.75))
-    T(s, "om-airflow-dags  ·  spark-kafka-apps  ·  tf-dataos-new-relic",
+    T(s, "✅ = confirmed by Ingestion Team engineers  ·  Repos: om-airflow-dags  ·  spark-kafka-apps  ·  tf-dataos-new-relic",
       Inches(0.6), y + Inches(0.12), Inches(12.2), Inches(0.28), sz=10, c=GR, a=PP_ALIGN.CENTER)
     ftr(s)
 
@@ -785,10 +855,29 @@ def s17_ask(p):
 # ══════════════════════════════════════════════════════════════════════════════
 
 SLIDES = [
-    s01_title, s02_problem, s03_answer, s04_architecture, s05_lifecycle,
-    s06_onboard, s07_parallel, s08_investigate, s09_ship, s10_document,
-    s11_compounds, s12_roi, s13_numbers, s14_comparison, s15_control,
-    s16_start, s17_ask,
+    # Act 1 — Story: Challenge
+    s01_title,
+    s02_problem,
+    # Act 2 — Our approach
+    s03_how_we_work,       # DataOS Ingestion: how we work now
+    s03b_two_tools,        # Copilot + Claude Code: two tools, different jobs
+    s04_architecture,      # System architecture diagram
+    # Act 3 — The lifecycle
+    s05_lifecycle,         # Full lifecycle with verified timings
+    # Act 4 — Benefits (capabilities in action)
+    s06_onboard,           # Onboard in hours
+    s07_parallel,          # /avengers parallel build
+    s08_investigate,       # NR MCP diagnosis
+    s09_ship,              # Impact analysis
+    s10_document,          # Auto-documentation
+    s11_compounds,         # Knowledge compounds
+    # Act 5 — Proof
+    s13_numbers,           # Real metrics
+    s14_comparison,        # Before & after
+    # Act 6 — Governance + Getting started + Ask
+    s15_control,           # AI works, humans in control
+    s16_start,             # Getting started
+    s17_ask,               # What we're asking
 ]
 
 OUT_PPTX = os.path.join(DIR, "Ingestion-Team-AI-Led-Demo.pptx")
