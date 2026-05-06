@@ -879,6 +879,23 @@ SLIDES = [
 OUT_PPTX = os.path.join(DIR, "Ingestion-Team-AI-Led-Demo.pptx")
 OUT_PDF  = os.path.join(DIR, "Ingestion-Team-AI-Led-Demo.pdf")
 
+def make_pdf_from_pngs():
+    """Build PDF from slide PNGs — correct landscape orientation (soffice rotates)."""
+    from PIL import Image as PILImage
+    png_dir = os.path.join(DIR, "ingestion_ai")
+    slides = sorted([
+        os.path.join(png_dir, f)
+        for f in os.listdir(png_dir)
+        if f.startswith("slide_") and f.endswith(".png")
+    ]) if os.path.isdir(png_dir) else []
+
+    if not slides:
+        return False
+    imgs = [PILImage.open(p).convert("RGB") for p in slides]
+    imgs[0].save(OUT_PDF, save_all=True, append_images=imgs[1:], format="PDF", resolution=150)
+    return True
+
+
 def main():
     pr = prs()
     for fn in SLIDES:
@@ -886,11 +903,25 @@ def main():
     pr.save(OUT_PPTX)
     print(f"✓  {len(pr.slides)} slides  →  {OUT_PPTX}")
 
+    # Export PNG slides first, then build PDF from them (correct landscape orientation)
+    from pdf2image import convert_from_path
+    import tempfile
     soffice = "/opt/homebrew/bin/soffice"
     if os.path.exists(soffice):
-        r = subprocess.run([soffice, "--headless", "--convert-to", "pdf",
-                            "--outdir", DIR, OUT_PPTX], capture_output=True, text=True)
-        print(f"✓  PDF  →  {OUT_PDF}" if r.returncode == 0 else f"⚠  PDF: {r.stderr.strip()}")
+        # Convert PPTX → PDF via soffice just to get intermediate, then re-export via PIL
+        with tempfile.TemporaryDirectory() as tmp:
+            r = subprocess.run([soffice, "--headless", "--convert-to", "pdf",
+                                "--outdir", tmp, OUT_PPTX], capture_output=True, text=True)
+            if r.returncode == 0:
+                tmp_pdf = os.path.join(tmp, "Ingestion-Team-AI-Led-Demo.pdf")
+                pages = convert_from_path(tmp_pdf, dpi=150)
+                pages[0].save(OUT_PDF, save_all=True, append_images=pages[1:],
+                              format="PDF", resolution=150)
+                print(f"✓  PDF  →  {OUT_PDF}")
+            else:
+                print(f"⚠  PDF: {r.stderr.strip()}")
+    elif make_pdf_from_pngs():
+        print(f"✓  PDF  →  {OUT_PDF}")
 
 if __name__ == "__main__":
     main()
