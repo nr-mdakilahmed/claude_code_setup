@@ -13,7 +13,7 @@ arrows for data flows every session, dashed curved arrows for one-time flows,
 folders, lightning bolt, database cylinders, traffic lights), italic labels on
 arrows, nested sub-zones inside parent zones, no drop shadows, flat sketch look.
 
-Title at top (large hand-drawn font): "Claude Code AI-Led Dev Environment — v2"
+Title at top (large hand-drawn font): "Claude Code AI-Led Dev Environment"
 Subtitle (smaller italic): "hot/cold memory · code-review-graph · golden/replay · budget dial"
 
 CANVAS: very wide and tall — 2800×2000px. Dense but readable.
@@ -164,7 +164,7 @@ LAYOUT: 4 columns top + 3 columns middle + 1 bottom strip
     Arrow: "session complete → wrap-up"
 
   BOTTOM ROW — three items side by side:
-    Left (amber): "Multi-Agent Orchestration Dashboard"
+    Left (amber): "Agent Dashboard"
       "live mission view"
     Center (teal): State File /tmp/avengers-{TEAM}.json
       "phase · agents · tasks · blocked"
