@@ -844,7 +844,7 @@ def s16_start(p):
         ("Week 1", "Install + /bootstrap 1 repo + /wrap-up daily"),
         ("Week 2", "All repos + first /golden save after a win"),
         ("Week 3", "/avengers on a real multi-file task"),
-        ("Week 4+","Team golden library grows · 15–25× steady"),
+        ("Week 4+","Team golden library grows · 8–12× sustained"),
     ]
     for i, (w, desc) in enumerate(weeks):
         x = Inches(0.4 + i * 3.22)
@@ -879,7 +879,7 @@ def s17_ask(p):
         T(s, detail, Inches(3.45), y + Inches(0.14), Inches(6.38), Inches(0.72), sz=14, c=W)
 
     # Right panel numbers
-    for i, (val, lbl) in enumerate([("15–25×","sustained avg"),("10×","novel work"),("50×","repeat tasks"),("30 min","to root cause"),("20–40×","ROI")]):
+    for i, (val, lbl) in enumerate([("8–12×","sustained avg"),("2–6h","dev ticket"),("0–20m","Kafka diagnosis"),("25+ SP","sprint capacity"),("8–12×","overall DE tasks")]):
         T(s, val, Inches(10.2), Inches(1.3 + i * 1.08), Inches(3.13), Inches(0.68), sz=26, bold=True, c=G, a=PP_ALIGN.CENTER)
         T(s, lbl, Inches(10.2), Inches(1.95 + i * 1.08), Inches(3.13), Inches(0.3), sz=10, it=True, c=GR, a=PP_ALIGN.CENTER)
 
