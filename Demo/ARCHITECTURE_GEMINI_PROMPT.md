@@ -1,23 +1,36 @@
-# Gemini Prompt — Architecture Diagram (Hand-Drawn Sketch, Premium Quality)
+# Gemini Prompt — Architecture Diagram (Hand-Drawn Sketch)
 
-Paste this entire prompt into Gemini. No reference image needed.
+Upload the reference image: `architecture.png`
+Then paste the prompt below.
 
 ---
 
 ```
-Create a premium hand-drawn sketch architecture diagram. Output as a single PNG image, 2800×2000px.
+I am attaching a hand-drawn sketch architecture diagram as a STYLE REFERENCE.
+Recreate a new version of this diagram in the EXACT SAME visual style — same font, same hand-drawn look, same pastel zone colours, same wavy arrows, same badge elements, same sketch icons, same dense layout on cream background.
 
-━━━ VISUAL STYLE — HAND-DRAWN SKETCH (HIGH QUALITY) ━━━
-• Background: warm cream/parchment #F5EDD8 — like high-quality sketchbook paper
-• All zone borders: slightly wobbly, hand-inked rounded rectangles — imperfect but intentional
-• Font: Caveat, Patrick Hand, or similar handwriting font throughout — bold for titles, lighter for body
-• Arrows: wavy/flowing lines with hand-drawn arrowheads — zigzag for active flows, dashed curves for one-time
-• Zone fills: rich pastel washes — each zone has a distinct, saturated-but-soft colour (see below)
-• Sketch icons: hand-drawn cylinders for storage, gear ⚙ for automation, lightning ⚡ for agents, star ☆ for important zones, folder for memory
-• Zone titles: bold underlined handwriting with a coloured underline stroke
-• Small hand-drawn annotation arrows (like margin notes) for labels on arrows
-• Slight paper texture, ink grain — NOT digital-flat, NOT corporate
-• Make it look like a talented engineer sketched this on a whiteboard then cleaned it up beautifully
+DO NOT copy the content from the reference image. Use ONLY the new content listed below.
+ONLY copy the visual style, colour palette, typography, and layout density.
+
+━━━ MATCH THESE STYLE ELEMENTS FROM THE REFERENCE IMAGE EXACTLY ━━━
+• Background: warm cream #F5EDD8 — same as reference
+• Font: Caveat handwriting font — same bold titles, same lighter body text as reference
+• Zone borders: same slightly wobbly hand-inked rounded rectangles as reference
+• Arrows: same wavy/zigzag style as reference — zigzag for active flows, dashed curves for one-time
+• Zone fills: same rich pastel wash colours per zone as reference
+• Badge elements: same small coloured rounded-rectangle badges for labels (like [hot.md ~2k], model badges)
+• Icons: same hand-drawn style — ☆ stars, ✨ sparkles, ⚡ lightning, ⚙ gears, ☁ cloud, 🟢🟡🔴 traffic lights
+• Zone titles: same bold handwriting with coloured underline
+• Arrow labels: same small italic annotations along arrow paths
+• Nested sub-zones: same treatment as reference (brighter borders, slightly different fill)
+• Same dense information layout — pack content tightly like the reference
+• Paper texture: same slight ink grain as reference
+• Canvas: 2800×2000px, same proportions as reference
+
+━━━ OUTPUT REQUIREMENTS ━━━
+• 2800×2000px PNG
+• No watermarks, no AI labels
+• Match the reference's hand-drawn quality exactly
 • Style reference: like Excalidraw but more artistic and detailed
 
 ━━━ TITLE (top-centre, large bold handwriting) ━━━
