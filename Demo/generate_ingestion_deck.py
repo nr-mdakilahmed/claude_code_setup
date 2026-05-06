@@ -129,10 +129,10 @@ def s02_problem(p):
     hdr(s, "The Challenge — Four Real Pains the DataOS Ingestion Team Was Living With")
 
     cards = [
-        ("🕐", "New Engineer Onboarding",   "2+ WEEKS",   "to reach full productivity in the codebase",  RED),
-        ("🔍", "Incident Root Cause",        "1–10 HOURS", "backtracking pipelines one by one manually",  AMB),
-        ("💥", "Hidden Blast Radius",        "5-DAY",      "incident from what looked like a '1-day fix'", CHR),
-        ("🗂", "Context After Absence",      "HOURS–DAYS", "to rebuild codebase understanding after a break", CHR),
+        ("🕐", "Slow Development Tickets",  "2–3 DAYS",   "per ticket — regardless of complexity or volume",   RED),
+        ("🔍", "Pipeline Debugging",        "30 MIN–3 HRS", "backtracking Kafka & NRDB pipelines one by one",  AMB),
+        ("💥", "Hidden Blast Radius",       "5-DAY",      "incident caused by a change no one knew would break", CHR),
+        ("🗂", "No Historical Context",     "HOURS–DAYS", "re-discovering repo structure and past decisions\nevery time someone joined, left, or came back",     CHR),
     ]
     positions = [(Inches(0.4), Inches(0.82)), (Inches(6.88), Inches(0.82)),
                  (Inches(0.4), Inches(3.92)), (Inches(6.88), Inches(3.92))]
@@ -157,35 +157,51 @@ def s03_how_we_work(p):
     s = blank(p)
     hdr(s, "DataOS Ingestion  —  How We Run AI-Led Development Today")
 
-    # Left: what we own
+    # Left: 3-stage data pipeline flow
     card(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(5.75))
     R(s, Inches(0.4), Inches(0.82), Inches(4.1), Inches(0.48), fill=CHR)
     T(s, "What We Own", Inches(0.6), Inches(0.9), Inches(3.7), Inches(0.34), sz=14, bold=True, c=W)
-    repos = [
-        ("om-airflow-dags",       "OpenMetadata ingestion pipelines\n(Airflow DAGs, connectors, plugins)"),
-        ("spark-kafka-apps",      "Spark + Kafka streaming pipelines\n(real-time ingestion to warehouse)"),
-        ("tf-dataos-new-relic",   "Terraform NR monitoring\n(alerts, dashboards — 55 commits/month)"),
-    ]
-    for i, (repo, desc) in enumerate(repos):
-        y = Inches(1.48 + i * 1.48)
-        R(s, Inches(0.55), y, Inches(3.8), Inches(1.3), fill=LG, ln=MG, lw=Pt(0.75))
-        top_bar(s, Inches(0.55), y, Inches(3.8), color=G)
-        T(s, repo, Inches(0.7), y + Inches(0.12), Inches(3.5), Inches(0.36),
-          sz=11, bold=True, c=GD, f="Courier New")
-        T(s, desc, Inches(0.7), y + Inches(0.52), Inches(3.5), Inches(0.68),
-          sz=10.5, c=BK)
+
+    # Stage 1 — Data Sources
+    T(s, "DATA SOURCES", Inches(0.6), Inches(1.44), Inches(3.7), Inches(0.26),
+      sz=9, bold=True, c=GR)
+    R(s, Inches(0.55), Inches(1.72), Inches(3.8), Inches(0.82), fill=LG, ln=MG, lw=Pt(0.75))
+    T(s, "Billing Platform  ·  Kafka\nSFDC  ·  Zuora  ·  etc.",
+      Inches(0.7), Inches(1.8), Inches(3.5), Inches(0.66), sz=11, c=BK)
+
+    # Arrow
+    T(s, "↓", Inches(0.55), Inches(2.6), Inches(3.8), Inches(0.38),
+      sz=20, bold=True, c=G, a=PP_ALIGN.CENTER)
+
+    # Stage 2 — Ingestion (what we own — highlighted)
+    T(s, "INGESTION  —  WE OWN THIS", Inches(0.6), Inches(3.04), Inches(3.7), Inches(0.26),
+      sz=9, bold=True, c=G)
+    R(s, Inches(0.55), Inches(3.32), Inches(3.8), Inches(1.02), fill=G)
+    T(s, "FiveTran  ·  Kafka  ·  NRDB\nSpark  ·  Custom Pipelines",
+      Inches(0.7), Inches(3.46), Inches(3.5), Inches(0.74), sz=11, bold=True, c=W)
+
+    # Arrow
+    T(s, "↓", Inches(0.55), Inches(4.4), Inches(3.8), Inches(0.38),
+      sz=20, bold=True, c=G, a=PP_ALIGN.CENTER)
+
+    # Stage 3 — Downstream
+    T(s, "DOWNSTREAM ZONE 2", Inches(0.6), Inches(4.84), Inches(3.7), Inches(0.26),
+      sz=9, bold=True, c=GR)
+    R(s, Inches(0.55), Inches(5.12), Inches(3.8), Inches(0.82), fill=LG, ln=MG, lw=Pt(0.75))
+    T(s, "Consumer  ·  Data Lake\nDashboard",
+      Inches(0.7), Inches(5.22), Inches(3.5), Inches(0.64), sz=11, c=BK)
 
     # Middle: daily workflow
     card(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(5.75))
     R(s, Inches(4.72), Inches(0.82), Inches(4.1), Inches(0.48), fill=G)
     T(s, "Daily Workflow", Inches(4.92), Inches(0.9), Inches(3.7), Inches(0.34), sz=14, bold=True, c=W)
     steps = [
-        ("1", "Open Claude Code in repo",    "Skills auto-load context + graph"),
-        ("2", "GitHub Copilot in IDE",        "Line completion as we code"),
-        ("3", "Work — skills auto-trigger",   "/airflow /pyspark /nrql /terraform…"),
-        ("4", "NR MCP for incidents",         "Query logs, metrics, traces in-chat"),
-        ("5", "/avengers for complex tasks",  "Parallel agents — 1 day → 2 hours"),
-        ("6", "/wrap-up at session end",      "Jira updated · lessons captured · graph refreshed"),
+        ("1", "Start with full context",       "Memory + codebase graph auto-load in seconds"),
+        ("2", "Copilot handles the lines",     "IDE autocomplete running alongside Claude Code"),
+        ("3", "Skills trigger automatically",  "/airflow · /pyspark · /nrql · /terraform · /sql"),
+        ("4", "Incidents diagnosed via NR MCP","30 min–3 hrs → 0–20 min for Kafka & NRDB"),
+        ("5", "/avengers for big tasks",       "5 parallel agents — 2–3 days → 2–6 hours"),
+        ("6", "/wrap-up closes the loop",      "Jira updated · knowledge captured · graph refreshed"),
     ]
     for i, (num, title, sub) in enumerate(steps):
         y = Inches(1.46 + i * 0.72)
@@ -202,11 +218,11 @@ def s03_how_we_work(p):
     R(s, Inches(9.05), Inches(0.82), Inches(3.85), Inches(0.48), fill=GD)
     T(s, "Tools in Use", Inches(9.25), Inches(0.9), Inches(3.45), Inches(0.34), sz=14, bold=True, c=W)
     tools = [
-        ("Claude Code",        "Team environment\n+ 20 skills",        G),
-        ("GitHub Copilot",     "Line-level AI\nin IDE",                 CHR),
-        ("NR MCP",             "Live observability\n12 tools",          BLU),
-        ("Jira + Confluence",  "Auto-updated\nevery session",           TEAL),
-        ("Code Graph",         "Blast radius +\nimpact analysis",       PUR),
+        ("Claude Code",        "20 skills · memory · /avengers\nTeam environment AI",      G),
+        ("GitHub Copilot",     "Line completion · inline chat\nSide by side in IDE",        CHR),
+        ("NR MCP",             "Live logs · metrics · traces\nDiagnose without leaving chat", BLU),
+        ("Jira + Confluence",  "Tickets + docs auto-updated\non every /wrap-up",            TEAL),
+        ("Code Graph",         "28 tools · blast radius\nImpact analysis before coding",   PUR),
     ]
     for i, (name, desc, color) in enumerate(tools):
         y = Inches(1.46 + i * 0.98)
@@ -220,54 +236,70 @@ def s03_how_we_work(p):
 def s03b_two_tools(p):
     """Copilot + Claude Code — how they work together."""
     s = blank(p)
-    R(s, 0, 0, SW, Inches(1.52), fill=G)
+    R(s, 0, 0, SW, Inches(1.22), fill=G)
     T(s, "Two AI Tools.  Different Jobs.  Better Together.",
-      Inches(0.5), Inches(0.28), Inches(12.3), Inches(0.95),
+      Inches(0.5), Inches(0.22), Inches(12.3), Inches(0.8),
       sz=26, bold=True, c=W, a=PP_ALIGN.CENTER)
 
-    # Copilot
-    card(s, Inches(0.4), Inches(1.7), Inches(5.75), Inches(4.92), fill=LG)
-    R(s, Inches(0.4), Inches(1.7), Inches(5.75), Inches(0.52), fill=CHR)
-    T(s, "GitHub Copilot  —  Line-level AI",
-      Inches(0.6), Inches(1.78), Inches(5.35), Inches(0.38), sz=16, bold=True, c=W)
-    for i, (ic, txt_) in enumerate([
-        ("✅", "Autocomplete lines & functions in IDE"),
-        ("✅", "Inline chat: explain or refactor code"),
-        ("✅", "Generate tests & boilerplate fast"),
-        ("", ""),
-        ("—", "No cross-session codebase memory"),
-        ("—", "Can't query NR, Jira, Confluence"),
-        ("—", "No impact / blast-radius analysis"),
-        ("—", "No multi-agent parallel work"),
-    ]):
-        if not ic:
-            HL(s, Inches(0.62), Inches(2.42 + i * 0.46), Inches(5.3))
-            continue
-        c_ = BK if ic == "✅" else GR
-        T(s, ic + "  " + txt_, Inches(0.62), Inches(2.42 + i * 0.46), Inches(5.3), Inches(0.42), sz=12, c=c_)
+    # Copilot panel
+    card(s, Inches(0.4), Inches(1.38), Inches(5.75), Inches(4.82), fill=LG)
+    R(s, Inches(0.4), Inches(1.38), Inches(5.75), Inches(0.5), fill=CHR)
+    T(s, "GitHub Copilot  —  In the IDE",
+      Inches(0.6), Inches(1.46), Inches(5.35), Inches(0.36), sz=16, bold=True, c=W)
+    copilot_items = [
+        "Autocomplete lines & functions as you type",
+        "Inline chat: explain, refactor, or debug code",
+        "Generate tests and boilerplate instantly",
+        "Works inside VS Code alongside your workflow",
+    ]
+    for i, txt_ in enumerate(copilot_items):
+        T(s, "✅  " + txt_, Inches(0.62), Inches(2.06 + i * 0.52),
+          Inches(5.3), Inches(0.44), sz=12, c=BK)
 
-    # Claude Code
-    card(s, Inches(7.15), Inches(1.7), Inches(5.75), Inches(4.92),
+    # "Claude Code fills the gap" label
+    HL(s, Inches(0.62), Inches(4.2), Inches(5.3))
+    T(s, "Claude Code takes over where Copilot stops:",
+      Inches(0.62), Inches(4.3), Inches(5.3), Inches(0.3),
+      sz=10, bold=True, c=GD, it=True)
+    gap_items = [
+        "Cross-session memory  ·  NR/Jira/Confluence queries",
+        "Blast-radius analysis  ·  Multi-agent parallel work",
+    ]
+    for i, txt_ in enumerate(gap_items):
+        T(s, txt_, Inches(0.62), Inches(4.66 + i * 0.36),
+          Inches(5.3), Inches(0.32), sz=10.5, c=GR)
+
+    # + bridge
+    T(s, "+", Inches(6.2), Inches(3.1), Inches(0.9), Inches(0.9),
+      sz=44, bold=True, c=G, a=PP_ALIGN.CENTER)
+
+    # Claude Code panel
+    card(s, Inches(7.15), Inches(1.38), Inches(5.75), Inches(4.82),
          fill=RGBColor(0xF0, 0xFB, 0xF5), border=G)
-    R(s, Inches(7.15), Inches(1.7), Inches(5.75), Inches(0.52), fill=G)
-    T(s, "Claude Code  —  Team environment AI",
-      Inches(7.35), Inches(1.78), Inches(5.35), Inches(0.38), sz=16, bold=True, c=W)
-    for i, txt_ in enumerate([
-        "✅  Full codebase context at every session start",
-        "✅  Queries NR logs, metrics, alerts in real time",
-        "✅  Knows what breaks before you write a line",
-        "✅  5 parallel agents on one task with /avengers",
-        "✅  Replayable golden patterns from past fixes",
-        "✅  20 skills auto-trigger on file type or topic",
-        "✅  Jira + Confluence auto-update each session",
-        "✅  5-layer code review: CC + Copilot + agents + human",
-    ]):
-        T(s, txt_, Inches(7.35), Inches(2.42 + i * 0.46), Inches(5.35), Inches(0.42), sz=12, c=BK)
+    R(s, Inches(7.15), Inches(1.38), Inches(5.75), Inches(0.5), fill=G)
+    T(s, "Claude Code  —  Team Environment AI",
+      Inches(7.35), Inches(1.46), Inches(5.35), Inches(0.36), sz=16, bold=True, c=W)
+    cc_items = [
+        ("Full codebase context at every session start",      ""),
+        ("Queries NR, Jira, Confluence live in the chat",     ""),
+        ("Blast radius visible before writing a single line", ""),
+        ("/avengers: 5 parallel agents — 2–3 days → 2–6h",   "✅"),
+        ("Incident diagnosis via NR MCP — 0–20 min",          "✅"),
+        ("20 skills auto-trigger on file type or topic",      ""),
+        ("Jira + Confluence auto-update on every session end",""),
+        ("5-layer review: CC + Copilot + agents + human",     ""),
+    ]
+    for i, (txt_, badge) in enumerate(cc_items):
+        line = ("⚡  " if badge else "✅  ") + txt_
+        c_ = GD if badge else BK
+        T(s, line, Inches(7.35), Inches(2.06 + i * 0.46),
+          Inches(5.35), Inches(0.42), sz=11.5, c=c_, bold=(badge == "✅"))
 
-    T(s, "+", Inches(6.28), Inches(3.62), Inches(0.75), Inches(0.75),
-      sz=42, bold=True, c=G, a=PP_ALIGN.CENTER)
-    T(s, "Together:\n8–12×", Inches(5.9), Inches(4.44), Inches(1.52), Inches(0.72),
-      sz=12, bold=True, c=GD, a=PP_ALIGN.CENTER)
+    # Full-width "Together" banner
+    R(s, Inches(0.4), Inches(6.35), Inches(12.5), Inches(0.58), fill=G)
+    T(s, "Together:  8–12×  overall productivity for DataOS Ingestion DE tasks  —  reported by the team",
+      Inches(0.6), Inches(6.44), Inches(12.1), Inches(0.4),
+      sz=15, bold=True, c=W, a=PP_ALIGN.CENTER)
     ftr(s)
 
 
