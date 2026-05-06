@@ -51,11 +51,11 @@ Right side — 5 capability chips (icon + label each):
 
 ---
 
-## SLIDE 02 — What We Own + Tools in Use
-> Generate a fresh PNG image — paste the prompt below (no reference image needed)
+## SLIDE 02 — What We Own & Tools in Use
+> Upload: slide_02.png as reference — paste the prompt below
 
 ```
-You are a world-class graphic designer. Generate a single high-resolution PNG image (2752×1536px, 16:9) that looks like a stunning presentation slide for a CEO-level executive audience at New Relic.
+You are a world-class graphic designer. Generate a single high-resolution PNG image (2752×1536px, 16:9) that looks like a stunning presentation slide for a CEO-level executive audience at New Relic. Use the attached image only as a content reference — do not copy its design. Create something far more beautiful and modern.
 
 ━━━ SHARPNESS — CRITICAL ━━━
 • Every element must be razor-sharp and pixel-perfect — no blur, no soft glow on text
@@ -71,43 +71,43 @@ You are a world-class graphic designer. Generate a single high-resolution PNG im
   "© 2025 New Relic, Inc. All rights reserved. Confidential and proprietary. For internal use only, not for external distribution."
 
 ━━━ SLIDE TITLE ━━━
-"DataOS Ingestion  —  What We Own & How We Work"
+"DataOS Ingestion  —  What We Own & Tools in Use"
 
-━━━ LEFT SECTION: What We Own (data pipeline flow) ━━━
-Show as a clean top-to-bottom flow diagram with three stages:
+━━━ CONTENT: Data Pipeline Flow ━━━
+Show as a visual flow — top to bottom or left to right, your creative choice:
 
-Stage 1 — label: "DATA SOURCES"
-Items: Billing Platform  ·  Kafka Connect  ·  SFDC  ·  Zuora  ·  Google Sheets  ·  etc.
+DATA SOURCES:
+Billing Platform  ·  Kafka Connect  ·  SFDC  ·  Zuora  ·  Google Sheets  ·  etc.
 
-↓ arrow
+↓
 
-Stage 2 — label: "INGESTION  (WE OWN THIS)" — this is the hero stage, highlight it in #00AC69 green
-Items: Fivetran  ·  Snowflake  ·  Iceberg  ·  Glue  ·  Spark  ·  NRDB  ·  Custom Pipelines
+INGESTION  —  WE OWN THIS  (hero section — make this prominent in #00AC69 green):
+Fivetran  ·  Snowflake  ·  Iceberg  ·  Glue  ·  Spark  ·  NRDB  ·  Custom Pipelines
 
-↓ arrow
+↓
 
-Stage 3 — label: "ZONE 2 DOWNSTREAM"
-Items: Data Lake  ·  Data Warehouse  ·  Dashboard  ·  dbt
+ZONE 2 DOWNSTREAM:
+Data Lake  ·  Data Warehouse  ·  Dashboard  ·  dbt
 
-━━━ RIGHT SECTION: Tools in Use ━━━
-Display as a clean grid or list of tool cards. Each card: tool name + one-line description.
+━━━ CONTENT: Tools in Use ━━━
+7 tools — display as you see fit (cards, grid, list with icons):
 
-Claude Code        AI development environment · 20 skills · multi-agent
-GitHub Copilot     Line completion · cross-model code review
-NR MCP             Live observability · logs · metrics · traces
-Jira + Confluence  Auto-updated tickets and documentation
-Code Review Graph  Blast radius analysis · dependency map
-Codeburn           Development analytics and metrics
-RTK                Token optimisation · 60–90% Bash output savings
+Claude Code          AI development environment · 20 skills · multi-agent
+GitHub Copilot       Line completion · cross-model code review
+NR MCP               Live observability · logs · metrics · traces
+Jira + Confluence    Auto-updated tickets and documentation
+Code Review Graph    Blast radius analysis · dependency map
+Codeburn             Development analytics and metrics
+RTK                  Token optimisation · 60–90% Bash output savings
 
 ━━━ STYLE ━━━
-• Clean two-column layout — left: data flow | right: tools
-• Flow diagram should feel like a modern architecture diagram — not a flowchart
-• Tool cards: minimal, sharp, consistent — icon or coloured dot per tool
-• Typography: Inter or SF Pro, bold headers, clean body
-• Design should feel like a Stripe or Linear product page — precise, spacious, confident
+• Ultra-modern — Apple keynote level quality
+• The data pipeline flow should feel like a premium architecture diagram
+• Tools section should feel like a product capability grid
+• Strong visual hierarchy — "WE OWN THIS" must stand out immediately
+• No watermarks, no AI-generated labels, no platform branding other than New Relic
 ```
 
 ---
 
-*Slides 03–17 will be added here one by one after each is approved.*
+*Slides 03–18 will be added here one by one after each is approved.*
