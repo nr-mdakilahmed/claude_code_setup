@@ -109,11 +109,11 @@ def s01_title(p):
       Inches(0.6), Inches(3.86), Inches(7.6), Inches(0.42), sz=15, c=GR, it=True)
 
     chips = [
-        ("🚀", "8–12×  productivity for DE tasks"),
-        ("⏱", "2–3 days → 2–6 hours per ticket"),
-        ("🔍", "0–20 min Alert issue diagnosis"),
-        ("⚡", "5 parallel agents with /avengers"),
-        ("📦", "Knowledge that compounds daily"),
+        ("🚀", "Rapid Development"),
+        ("🔍", "Instant Logs & RCA"),
+        ("⚡", "Multi-Agent Orchestration"),
+        ("🧠", "Compound Knowledge"),
+        ("📈", "3×  Productivity"),
     ]
     for i, (ic, lb) in enumerate(chips):
         yy = Inches(1.2 + i * 1.05)
