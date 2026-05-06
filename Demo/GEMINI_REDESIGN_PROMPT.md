@@ -172,4 +172,68 @@ Card 5 (accent: #006B40 dark green):
 
 ---
 
-*Slides 04–18 will be added here one by one after each is approved.*
+---
+
+## SLIDE 04 — System Architecture (Executive-Simplified)
+> Upload: architecture (1).png as reference — paste the prompt below
+
+```
+You are a world-class graphic designer and information architect. Generate a single high-resolution PNG image (2752×1536px, 16:9) that presents a simplified, executive-level architecture diagram for a CEO audience at New Relic. Use the attached image as a reference for the concepts and flow — but remove all tiny technical details and make it clean, readable, and visually stunning.
+
+━━━ SHARPNESS — CRITICAL ━━━
+• Every element must be razor-sharp — no blur, no soft glow on text
+• All text must be instantly readable from a projector screen
+• Minimum font size: 14pt equivalent — no small print
+• Output: 2752×1536px PNG, do not compress
+
+━━━ BRAND ━━━
+• Dark navy background #0D0D24
+• Primary accent: #00AC69 (New Relic green)
+• New Relic logo bottom-right
+• Disclaimer bottom-left:
+  "© 2025 New Relic, Inc. All rights reserved. Confidential and proprietary. For internal use only, not for external distribution."
+
+━━━ SLIDE TITLE ━━━
+"Claude Code AI-Led Dev Environment  —  How It All Works"
+
+━━━ ARCHITECTURE — HIGH LEVEL ONLY ━━━
+Show a clean, visual architecture with these layers and concepts. Do NOT include file paths, phase lists, or technical configurations. Think: executive diagram, not engineering spec.
+
+THREE ENVIRONMENT LAYERS (top to bottom or left to right):
+
+LAYER 1 — GLOBAL  (~/.claude/)
+  • Rules & Security (CLAUDE.md)
+  • 20 Skills — auto-trigger on file type or topic
+  • Budget Dial — daily spend awareness 🟢🟡🔴
+  • Hooks — auto-run on session events
+  • Golden Patterns — reusable validated fixes
+
+LAYER 2 — PROJECT  (per-repo memory)
+  • Hot Memory — auto-loads at session start
+  • Cold Memory — pulled on demand (lessons, history, architecture)
+  • Plans — session plans mirrored per repo
+  • Knowledge Graph — codebase structure + blast radius
+
+LAYER 3 — REPO  (inside the codebase)
+  • Repo-level context wired automatically on /bootstrap
+  • MCP servers: Code Graph + Memory
+
+SESSION FLOW (show as a cycle or timeline):
+  Session Start → Context Auto-Loads → Development (single or multi-agent) → Wrap-Up → Next Session (smarter)
+
+KEY CAPABILITIES (show as capability badges or icons):
+  Memory (Hot + Cold)  |  20 Skills  |  Multi-Agent (/avengers)
+  NR MCP  |  Code Graph  |  Jira + Confluence  |  Budget Dial
+
+━━━ STYLE ━━━
+• Executive boardroom quality — like a McKinsey or AWS architecture slide
+• Clean visual hierarchy — layers should be immediately obvious
+• Use colour zones to distinguish the 3 layers
+• Icons over text wherever possible
+• The session cycle should feel like a continuous improvement loop
+• No watermarks, no AI-generated labels, no platform branding other than New Relic
+```
+
+---
+
+*Slides 05–18 will be added here one by one after each is approved.*
