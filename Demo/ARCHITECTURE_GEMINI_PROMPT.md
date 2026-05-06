@@ -1,44 +1,56 @@
-# Gemini Prompt — Architecture Diagram (Modern Design)
+# Gemini Prompt — Architecture Diagram (Hand-Drawn Sketch, Premium Quality)
 
 Paste this entire prompt into Gemini. No reference image needed.
 
 ---
 
 ```
-Create a professional, modern software architecture diagram. Output as a single high-resolution PNG image, 2800×2000px.
+Create a premium hand-drawn sketch architecture diagram. Output as a single PNG image, 2800×2000px.
 
-━━━ DESIGN STYLE ━━━
-• Modern tech architecture diagram — like AWS/GCP architecture diagrams or Notion/Linear system design docs
-• Dark navy background (#0D0D24) with colour-coded zone panels
-• Clean sharp-cornered or softly-rounded panels — NOT hand-drawn, NOT sketch style
-• Modern sans-serif font (Inter or SF Pro) — crisp, readable at all sizes
-• Thin clean arrows with arrowheads — solid for always-on flows, dashed for on-demand/one-time
-• Each zone: semi-transparent darker panel with a coloured left border stripe (4px) and bold zone title
-• Minimum font size: 13px equivalent — all text must be readable
-• NO watermarks, NO AI labels, NO hand-drawn elements
-• Colour palette: dark navy base + accent colours per zone (listed below)
+━━━ VISUAL STYLE — HAND-DRAWN SKETCH (HIGH QUALITY) ━━━
+• Background: warm cream/parchment #F5EDD8 — like high-quality sketchbook paper
+• All zone borders: slightly wobbly, hand-inked rounded rectangles — imperfect but intentional
+• Font: Caveat, Patrick Hand, or similar handwriting font throughout — bold for titles, lighter for body
+• Arrows: wavy/flowing lines with hand-drawn arrowheads — zigzag for active flows, dashed curves for one-time
+• Zone fills: rich pastel washes — each zone has a distinct, saturated-but-soft colour (see below)
+• Sketch icons: hand-drawn cylinders for storage, gear ⚙ for automation, lightning ⚡ for agents, star ☆ for important zones, folder for memory
+• Zone titles: bold underlined handwriting with a coloured underline stroke
+• Small hand-drawn annotation arrows (like margin notes) for labels on arrows
+• Slight paper texture, ink grain — NOT digital-flat, NOT corporate
+• Make it look like a talented engineer sketched this on a whiteboard then cleaned it up beautifully
+• Style reference: like Excalidraw but more artistic and detailed
 
-━━━ TITLE (top-centre) ━━━
-Large bold white text: "Claude Code AI-Led Dev Environment"
-Smaller italic grey text below: "hot/cold memory  ·  code-review-graph  ·  golden/replay  ·  budget dial"
+━━━ TITLE (top-centre, large bold handwriting) ━━━
+"Claude Code AI-Led Dev Environment"
+Smaller italic below: "hot/cold memory  ·  code-review-graph  ·  golden/replay  ·  budget dial"
 
-━━━ CANVAS LAYOUT — 4 ROWS ━━━
+━━━ CANVAS LAYOUT — 4 ROWS — DO NOT REORDER ━━━
 ROW 1 (top):     4 equal columns → Session Boot | Hooks Layer | Per-Project Memory | /golden + /replay
-ROW 2 (middle):  Left third = /bootstrap | Centre half = /avengers (LARGE) | Right sixth = Processing Pipeline
-ROW 3 (lower):   3 equal columns → Domain Skills | Model × Effort Routing | /budget — Spend Dial
-ROW 3 right:     Plugins (small, stacked right of budget)
+ROW 2 (middle):  Left quarter = /bootstrap | Centre half = /avengers (LARGE) | Right quarter = Processing Pipeline
+ROW 3 (lower):   3 equal columns → Domain Skills | Model × Effort Routing | /budget — Spend Dial + Plugins
 ROW 4 (bottom):  Full-width session flow timeline strip
 
-DO NOT move any zone from its stated position. If a zone does not fit, make it smaller, not displaced.
+━━━ ZONE COLOURS (pastel, hand-wash style) ━━━
+Session Boot:              sky blue wash #B8D4F0
+Hooks Layer:               warm yellow wash #FAE8A0
+Per-Project Memory:        soft lavender #D8C8F0
+/golden + /replay:         mint green wash #B8E8D0
+/bootstrap:                peach coral wash #F8C8B0
+/avengers:                 light sky blue wash #C0DCF8 (LARGE zone)
+Processing Pipeline:       sage green wash #C0D8B8
+Domain Skills:             soft mint #C0EAD0
+Model × Effort Routing:    lilac wash #D0C0F0
+/budget — Spend Dial:      soft rose #F0C0C0
+Plugins:                   warm sand #F0E0C0
 
-━━━ ROW 1 — COLUMN 1 (accent: #4A9EFF blue): "Session Boot" ━━━
-• Claude Code starts
+━━━ ROW 1 — SESSION BOOT (sky blue, ☆ corner) ━━━
+• Claude Code starts  ☁
 • Load ~/.claude/CLAUDE.md — global rules + 20 skills
 • Load repo/.claude/CLAUDE.md — project context
 • Load hooks · Load MCPs · Load plugins
 
-━━━ ROW 1 — COLUMN 2 (accent: #FFB84A amber): "Hooks Layer" ━━━
-Six hook items (stacked):
+━━━ ROW 1 — HOOKS LAYER (warm yellow, ✨ corner) ━━━
+Six stacked items (each a small rounded box):
 • Token Optimization (RTK) — 60–90% Bash savings
 • OAuth Token Refresh — auto-refreshes MCP tokens
 • Telemetry Logging — grep fallback rate tracking
@@ -46,111 +58,110 @@ Six hook items (stacked):
 • Stop Record Cost — session $ → cost.jsonl
 • Daily Statusline — model · context % · session $ · 🟢🟡🔴
 
-━━━ ROW 1 — COLUMN 3 (accent: #A855F7 purple): "Per-Project Memory (Hot/Cold)" ━━━
-HOT — auto-loaded on boot (bright highlighted sub-panel):
-  • hot.md — active todos + recent lessons + architecture summary
-  • GRAPH_REPORT.md — code graph summary + MCP tool hints
+━━━ ROW 1 — PER-PROJECT MEMORY (lavender, ☆ corner) ━━━
+HOT sub-zone (brighter border, bold label "AUTO-LOADED on boot"):
+  hot.md — todos + lessons + architecture summary
+  GRAPH_REPORT.md — code graph summary + MCP hints
 
-COLD — pull on demand via memory MCP (dimmer sub-panel):
-  • lessons.md · architecture.md · history.md · todo.md
-  • plans/ — session plans mirrored per repo
+COLD sub-zone (dimmer, "pull on demand via memory MCP"):
+  lessons.md · architecture.md · history.md · todo.md
+  plans/ — session plans per repo
 
-Self-improvement loop note on lessons.md:
-  "corrections → append → 3× = Pattern rule"
+Tiny circular self-arrow on lessons.md:
+  "corrections → 3× = Pattern rule"  (self-improvement loop)
 
-━━━ ROW 1 — COLUMN 4 (accent: #10B981 green): "/golden + /replay  — The Compounding Layer" ━━━
-LEFT HALF:
-  /golden save <slug>
+━━━ ROW 1 — /GOLDEN + /REPLAY (mint green, ☆ corner) ━━━
+Tagline: "the compounding layer"
+
+Left half — /golden save <slug>:
   → distills validated session
   → Symptom · Root Cause · Steps That Worked · What NOT To Do
-  → stores ~/.claude/golden/<slug>.md
+  → ~/.claude/golden/<slug>.md
 
-RIGHT HALF:
-  /replay <slug>
-  → validates staleness (files exist)
-  → loads proven steps as prior-art plan
+Right half — /replay <slug>:
+  → validates staleness · loads proven steps
   Badge: "avoids re-deriving proven fixes"
 
-BOTTOM: cylinder icon — ~/.claude/golden/ + index.json
+Bottom: cylinder icon — ~/.claude/golden/ + index.json
 Dashed arrow from /wrap-up: "auto-prompts save-worthy sessions [y/n/edit]"
 
-━━━ ROW 2 — LEFT THIRD (accent: #F97316 orange): "/bootstrap — First Visit Only" ━━━
+━━━ ROW 2 LEFT — /BOOTSTRAP (peach coral, ⚙ corners) ━━━
 Sub-label: "runs once per repo · Opus + high effort"
 
-5 phases (numbered list):
 Phase 1: Detect stack — language + framework
 Phase 2: Seed memory — 6 files + plans/
 Phase 3: Write project CLAUDE.md + .mcp.json + .gitignore
 Phase 4: build-graph.sh
-  · code-review-graph install (wire MCP)
-  · code-review-graph build (SQLite graph)
+  · install code-review-graph (wire MCP)
+  · build SQLite graph
   · compose GRAPH_REPORT.md
-Phase 5: Populate architecture.md from GRAPH_REPORT.md
+Phase 5: Populate architecture.md ← from GRAPH_REPORT.md
 
-Dashed arrows out:
-  → memory zone: "seeds hot.md + cold files + plans/"
+Dashed arrows out (with italic hand-written labels):
+  → memory: "seeds hot.md + cold files"
   → CRG: "builds SQLite graph"
-  → repo CLAUDE.md: "@ hot.md + @ GRAPH_REPORT.md"
+  → CLAUDE.md: "@ hot.md + @ GRAPH_REPORT.md"
 
-━━━ ROW 2 — CENTRE HALF (accent: #3B82F6 blue, LARGE ZONE): "/avengers — Multi-Agent Orchestration" ━━━
+━━━ ROW 2 CENTRE — /AVENGERS (sky blue, ⚡ corners, LARGE) ━━━
+Zone title: "/avengers — Multi-Agent Orchestration"
 Subtitle: "Fury (Opus) orchestrates specialists (Sonnet) in parallel"
 
-This zone contains FIVE sub-panels arranged left to right, then a bottom row:
+FIVE SUB-PANELS inside this zone (left to right):
 
-SUB-PANEL 1 — amber (#FDE68A): "Nick Fury — Captain (Opus)"
-  Numbered steps (use EXACTLY this text):
+Panel 1 (amber wash): "Nick Fury — Captain (Opus)"
+  Numbered steps (EXACT text — do not paraphrase):
   1. Get Jira ticket or requirement
   2. Research codebase → write implementation plan
   3. Ask user to review plan
   4. Once approved → spawn parallel subagents
   5. Validates gates · blocks bad code · shuts down on completion
 
-SUB-PANEL 2 — light orange (#FED7AA): "Coders ×N (Sonnet)"
-  • Parallel code writing
-  • Different task batches
-  • Write code per plan · verify build
+Panel 2 (light orange wash): "Coders ×N (Sonnet)"
+  Parallel code writing
+  Different task batches
+  Write code per plan · verify build
 
-SUB-PANEL 3 — light green (#BBF7D0): "Pipeline Specialists (Sonnet)"
+Panel 3 (light green wash): "Pipeline Specialists (Sonnet)"
   [Reviewer / Contact SME] → [Validator] → [Pre-Validation Agent]
-  • Code standards + security review
-  • Tests + blast radius check
-  • Final gate before human review
+  Code standards + security
+  Tests + blast radius check
+  Final gate before human review
 
-SUB-PANEL 4 — light pink (#FECDD3): "Human Review"
-  • PR review required before merge
-  • Human approves or requests changes
-  • AI-assisted PR description generated
-  Arrow in: "Pre-Validation passes → Human Review"
-  Arrow out: "Approved → merge"
+Panel 4 (light pink wash): "Human Review"
+  PR review required before merge
+  Human approves or requests changes
+  AI-assisted PR description
+  Arrow in: "passes gate →"
+  Arrow out: "approved → merge"
 
-SUB-PANEL 5 — teal (#99F6E4): "/wrap-up on Completion"
-  • Update Jira tickets
-  • Append to session history
-  • Summarize session
-  • /golden save for future reference
+Panel 5 (teal wash): "/wrap-up on Completion"
+  Update Jira tickets
+  Append to session history
+  Summarize session
+  /golden save for future reference
 
-BOTTOM ROW inside /avengers (three items, do not place outside the zone):
+BOTTOM ROW (inside zone, do NOT place outside):
   Left box (amber): "Agent Dashboard" — live mission view
   Centre box (teal): "State File" — /tmp/avengers-{TEAM}.json — phase · agents · tasks · blocked
-  Right label: "Domain + Context"
+  Right: "Domain + Context"
 
-DEDICATED SUB-AGENTS ROW (below bottom row, inside zone, tiny):
+DEDICATED SUB-AGENTS (tiny row at very bottom of zone):
   Label: "Spawned on-demand by Fury:"
   [Solution-Architect]  [DE-Specialist]  [DevOps]  [NR-Expert]
 
-━━━ ROW 2 — RIGHT SIXTH (accent: #6366F1 indigo): "Processing Pipeline" ━━━
-TOP — cylinder icon: "code-review-graph"
-  • Tree-sitter AST + SQLite
-  • 28 MCP tools
-  • auto-updates on every Edit (<2s)
-  Tools: semantic_search · get_impact_radius · detect_changes · query_graph
+━━━ ROW 2 RIGHT — PROCESSING PIPELINE (sage green, ⚙ corner) ━━━
+TOP — cylinder: "code-review-graph"
+  Tree-sitter AST + SQLite
+  28 MCP tools
+  auto-updates on every Edit (<2s)
+  semantic_search · get_impact_radius · detect_changes · query_graph
 
-MIDDLE — cylinder icon: "memory MCP server"
-  • pull-on-demand cold memory
-  • 5 tools: get_memory · search_memory · list_lessons · get_todo · recall_plan
+MIDDLE — cylinder: "memory MCP server"
+  pull-on-demand cold memory
+  get_memory · search_memory · list_lessons · get_todo · recall_plan
 
 BOTTOM — box: "/wrap-up"
-  Session end ritual — 6 phases:
+  6 phases:
   0: corrections audit
   1: append-history
   2: todo update
@@ -160,7 +171,7 @@ BOTTOM — box: "/wrap-up"
   5: mirror-plans + regen hot.md
   6: handoff summary
 
-━━━ ROW 3 — COLUMN 1 (accent: #34D399 mint): "Domain Skills (20 total)" ━━━
+━━━ ROW 3 LEFT — DOMAIN SKILLS (mint, 20 total) ━━━
 Auto-trigger on keyword or file path:
   /airflow · /pyspark · /python · /sql · /shell
   /docker · /cicd · /nrql · /nralert · /terraform
@@ -170,52 +181,52 @@ Explicit invoke using /skill_name:
   /bootstrap · /wrap-up · /avengers
   /golden · /replay · /budget · /demo
 
-Superpowers:
-  ⚡ brainstorming · ⚡ systematic-debugging
+Superpowers: ⚡brainstorming · ⚡systematic-debugging
 
-━━━ ROW 3 — COLUMN 2 (accent: #8B5CF6 violet): "Model × Effort Routing" ━━━
-Sub-label: "default = sonnet+medium, escalate per-turn not per-session"
+━━━ ROW 3 CENTRE — MODEL × EFFORT ROUTING (lilac) ━━━
+Sub-label: "default = sonnet+medium, escalate per-turn"
 
-Four rows:
-  Haiku 4.5    → lookups · NRQL · doc search · mechanical transforms     (cheapest)
-  Sonnet 4.6   → coding · testing · debugging · refactoring              ★ DEFAULT
-  Opus 4.7     → architecture · code review · multi-agent orchestration · brainstorming
+  Haiku 4.5    → lookups · NRQL · mechanical transforms        (cheapest)
+  Sonnet 4.6   → coding · testing · debugging · refactoring     ★ DEFAULT
+  Opus 4.7     → architecture · code review · multi-agent · brainstorming
   Opus + max   → novel research only (rare)
 
-Note: "Avengers: Fury = Opus · Specialists = Sonnet"
+Note: "Fury = Opus · Specialists = Sonnet"
 
-━━━ ROW 3 — COLUMN 3 (accent: #EF4444 red): "/budget — Spend Dial" ━━━
-Traffic light icons: 🟢🟡🔴
+━━━ ROW 3 RIGHT — /BUDGET SPEND DIAL (rose) + PLUGINS (sand) ━━━
+/BUDGET:
+  Traffic lights 🟢🟡🔴 (hand-drawn icon)
+  Caps: daily / weekly / monthly (budget.json)
+  🟢 <80% — normal
+  🟡 80–100% — switch to Haiku
+  🔴 >cap — override required
+  Commands: status · set · override · report
 
-Caps: daily / weekly / monthly (budget.json)
-  🟢 <80%  — normal work
-  🟡 80–100% — switch to Haiku for mechanical tasks
-  🔴 >cap  — override required
+PLUGINS (small stacked pills):
+  ● nr-mcp  ● nr-kafka  ● terraform
+  ● code-review-graph  ● superpowers
+  ● jira  ● confluence  ● bedrock-retrieval
 
-Sources: cost.jsonl · Claude transcripts · NR MCP cache
-Commands: /budget status · set · override · report
+━━━ ROW 4 — FULL WIDTH TIMELINE (cream strip) ━━━
+Five connected boxes with arrows:
 
-━━━ ROW 3 — FAR RIGHT (accent: #64748B slate): "Plugins" ━━━
-Pill badges (enabled):
-  nr-mcp · nr-kafka · terraform
-  code-review-graph · superpowers
-  jira · confluence · bedrock-retrieval
+[First Visit]           [Session Boot]            [During Work]              [Session End]               [Next Session]
+/bootstrap →            Load hooks +              graph-first work ·         /wrap-up (6 phases) ·       smarter context ·
+memory + CRG build      MCPs + plugins +          MCP tools ·                golden auto-prompt ·        golden library grows ·
++ seed                  hot.md + GRAPH_REPORT     /golden save · /replay ·   mirror-plans +              stay in budget
+                                                  /avengers                  regen hot.md
 
-━━━ ROW 4 — FULL WIDTH TIMELINE STRIP ━━━
-Five connected steps (horizontal flow with arrows):
-
-[First Visit]              [Session Boot]              [During Work]                    [Session End]                [Next Session]
-/bootstrap →               Load hooks +                graph-first work ·               /wrap-up (6 phases) ·        smarter context ·
-memory + CRG               MCPs + plugins +            MCP tools ·                      golden auto-prompt ·         golden library grows ·
-build + seed               hot.md +                    /golden save ·                   mirror-plans +               stay in budget
-                           GRAPH_REPORT                /replay · /avengers              regen hot.md
-
-Footer (bold, bottom edge):
+Footer (bold italic handwriting, bottom edge):
 "First Visit: bootstrap → memory + CRG build → seed  |  Every Session: boot → graph-first → /wrap-up → repeat  |  /golden save · /replay · /budget"
 
-━━━ ARROWS LEGEND (bottom corner) ━━━
-—→  solid: every-session flow
-- →  dashed: one-time or on-demand
-..→  dotted: passive/auto hook
-◇   diamond: conditional branch
+━━━ DECORATIVE TOUCHES ━━━
+• ☆ star: mark Session Boot, Memory, Golden zones (top corner)
+• ✨ sparkle: Hooks Layer top-right
+• ⚡ lightning: both corners of /avengers zone
+• ⚙ gear: Bootstrap and Processing Pipeline corners
+• ☁ cloud: next to "Claude Code starts"
+• 🟢🟡🔴: Budget zone only
+• Small ink blot or smudge at a few corners for authenticity
+• Slightly different ink weight on different arrows for variety
+• Zone borders should look like they were drawn with a fine-tip marker
 ```
