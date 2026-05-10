@@ -167,12 +167,18 @@ def jsonl_daily_cost():
     return total
 
 result = nr_daily_cost()
-if result is None:
-    result = jsonl_daily_cost()
-print(f'{result:.4f}')
+if result is not None:
+    print(f'NR:{result:.4f}')
+else:
+    print(f'JSONL:{jsonl_daily_cost():.4f}')
 PYEOF
     )
-    echo "${daily_usd:-0}" > "$daily_cache"
+    # Only cache authoritative NR values — JSONL fallback is unreliable and must not persist
+    if [[ "$daily_usd" == NR:* ]]; then
+        echo "${daily_usd#NR:}" > "$daily_cache"
+    fi
+    daily_usd="${daily_usd#NR:}"
+    daily_usd="${daily_usd#JSONL:}"
 else
     daily_usd=$(cat "$daily_cache")
 fi
